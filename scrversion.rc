@@ -1,0 +1,60 @@
+/******************************************************************************
+ *  scrversion.rc
+ *
+ *  This file is part of Public Scripts
+ *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ *****************************************************************************/
+#define SCRIPT_VERSION		2,2,0,0
+#define SCRIPT_VERSTRING	"2.2"
+#define SCRIPT_NAME			"VersionCheck"
+#define SCRIPT_LONGNAME		"VersionCheck OSM"
+
+#ifndef WORKSHOP_INVOKED
+#include "windows.h"
+#endif
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION		SCRIPT_VERSION
+PRODUCTVERSION		2,2,0,0
+#if DEBUG
+FILEFLAGS		VS_FF_DEBUG
+#else
+FILEFLAGS		0
+#endif
+FILEOS			VOS_NT_WINDOWS32
+FILETYPE		VFT_DLL
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904e4"
+		BEGIN
+			VALUE	"FileDescription", SCRIPT_LONGNAME "\0"
+			VALUE	"FileVersion", SCRIPT_VERSTRING "\0"
+			VALUE	"InternalName", SCRIPT_NAME "\0"
+			VALUE	"LegalCopyright", "Copyright (C) 2003-2011 Tom N Harris" "\0"
+			VALUE	"OriginalFilename", "version.osm" "\0"
+			VALUE	"ProductName", "Public Scripts" "\0"
+			VALUE	"ProductVersion", "2.2" "\0"
+			VALUE	"DarkGameVersion", "All" "\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE	"Translation", 1033, 1252
+	END
+END
+

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<!DOCTYPE rdf:RDF [
+    <!ENTITY rdfns 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
+    <!ENTITY rdfsns 'http://www.w3.org/2000/01/rdf-schema#'>
+    <!ENTITY vins 'http://whoopdedo.org/versioninfo#'>
+    <!ENTITY darkns 'http://www.thiefmissions.com/telliamed/darkgame#'>
+    <!ENTITY tnh 'http://www.thiefmissions.com/telliamed'>
+]>
+
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:vi="http://whoopdedo.org/versioninfo#"
+         xmlns:dark="http://www.thiefmissions.com/telliamed/darkgame#"
+         xml:base="http://www.thiefmissions.com/telliamed/">
+
+  <rdf:Alt rdf:about="&vins;install-software">
+    <rdf:li rdf:resource="#PublicScripts" />
+  </rdf:Alt>
+
+  <vi:Software rdf:about="#PublicScripts">
+    <vi:Name>Public Scripts</vi:Name>
+    <vi:Install>
+      <vi:Target>
+        <vi:Version>2.2</vi:Version>
+        <dark:Game>Thief1</dark:Game>
+        <vi:Dependency rdf:resource="#DarkHook2" />
+        <vi:Dependency rdf:resource="#VersionCheck" />
+        <vi:InstallFile>
+          <vi:File>
+            <vi:Source>script-t1.osm</vi:Source>
+            <vi:Destination>script.osm</vi:Destination>
+          </vi:File>
+        </vi:InstallFile>
+      </vi:Target>
+    </vi:Install>
+    <vi:Install>
+      <vi:Target>
+        <vi:Version>2.2</vi:Version>
+        <dark:Game>Thief2</dark:Game>
+        <vi:Dependency rdf:resource="#DarkHook2" />
+        <vi:Dependency rdf:resource="#VersionCheck" />
+        <vi:InstallFile>
+          <vi:File>
+            <vi:Source>script-t2.osm</vi:Source>
+            <vi:Destination>script.osm</vi:Destination>
+          </vi:File>
+        </vi:InstallFile>
+      </vi:Target>
+    </vi:Install>
+    <vi:Install>
+      <vi:Target>
+        <vi:Version>2.2</vi:Version>
+        <dark:Game>SShock2</dark:Game>
+        <vi:Dependency rdf:resource="#DarkHook2" />
+        <vi:Dependency rdf:resource="#VersionCheck" />
+        <vi:InstallFile>
+          <vi:File>
+            <vi:Source>script-ss2.osm</vi:Source>
+            <vi:Destination>script.osm</vi:Destination>
+          </vi:File>
+        </vi:InstallFile>
+      </vi:Target>
+    </vi:Install>
+  </vi:Software>
+
+  <vi:Software rdf:about="#DarkHook2">
+    <vi:Name>Dark Hook 2</vi:Name>
+    <vi:Install>
+      <vi:Target>
+        <vi:Version>2.2</vi:Version>
+        <dark:Game>All</dark:Game>
+        <vi:InstallFile>
+          <vi:File vi:Source="dh2.osl" />
+        </vi:InstallFile>
+      </vi:Target>
+    </vi:Install>
+  </vi:Software>
+
+  <vi:Software rdf:about="#VersionCheck">
+    <vi:Name>VersionCheck</vi:Name>
+    <vi:Install>
+      <vi:Target>
+        <vi:Version>2.2</vi:Version>
+        <dark:Game>All</dark:Game>
+        <vi:InstallFile>
+          <vi:File vi:Source="version.osm" />
+        </vi:InstallFile>
+      </vi:Target>
+    </vi:Install>
+  </vi:Software>
+
+</rdf:RDF>

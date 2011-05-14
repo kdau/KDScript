@@ -1,1 +1,5 @@
- 
+*.osm
+t1obj
+t2obj
+ss2obj
+commonobj
