@@ -19,7 +19,7 @@
 ##
 ###############################################################################
 
-
+.PHONY: all clean
 .SUFFIXES:
 .SUFFIXES: .o .cpp .rc
 .PRECIOUS: %.o
@@ -38,12 +38,13 @@ SCRLIBDIR = ../ScriptLib
 DH2DIR = ../DH2
 DH2LIB = -ldh2
 
-CC = gcc
-CXX = g++
-AR = ar
-LD = g++
-DLLTOOL = dlltool
-RC = windres
+PREFIX = i686-w64-mingw32-
+CC = $(PREFIX)gcc
+CXX = $(PREFIX)g++
+AR = $(PREFIX)ar
+LD = $(PREFIX)g++
+DLLTOOL = $(PREFIX)dlltool
+RC = $(PREFIX)windres
 
 DEFINES = -DWINVER=0x0400 -D_WIN32_WINNT=0x0400 -DWIN32_LEAN_AND_MEAN
 GAME1 = -D_DARKGAME=1
@@ -69,13 +70,13 @@ SCR3LIB = -lScript3
 endif
 
 ARFLAGS = rc
-LDFLAGS = -mwindows -mdll -Wl,--enable-auto-image-base
+LDFLAGS = -mwindows -mdll -Wl,--enable-auto-image-base -static-libgcc -static-libstdc++
 LIBDIRS = -L. -L$(LGDIR) -L$(SCRLIBDIR) -L$(DH2DIR)
 LIBS = $(DH2LIB) $(LGLIB) -luuid
 INCLUDES = -I. -I$(srcdir) -I$(LGDIR) -I$(SCRLIBDIR) -I$(DH2DIR)
 # If you care for this... # -Wno-unused-variable
 # A lot of the callbacks have unused parameters, so I turn that off.
-CXXFLAGS = -W -Wall -masm=intel
+CXXFLAGS = -W -Wall -masm=intel -std=gnu++0x
 DLLFLAGS = --add-underscore
 
 OSM_OBJS = $(bindir)/ScriptModule.o $(bindir)/Script.o $(bindir)/Allocator.o $(bindir)/exports.o
