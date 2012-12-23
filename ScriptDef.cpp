@@ -45,10 +45,10 @@
  * original. (Because of a quirk in how the scripts are instantiated,
  * aliases each have to use a different factory function.)
  *
- * Customize this file by modifying the OSM_NAME macro above, and insert any
- * extra includes in the area that is guarded with SCR_GENSCRIPTS.
- * Then include the necessary script headers just below here. And by the magic
- * of recursion, everything will be automatically generated.
+ * Customize this file by inserting any extra includes in the area that is
+ * guarded with SCR_GENSCRIPTS. Then include any extra script headers just below
+ * here. And by the magic of recursion, everything will be automatically
+ * generated.
  *
  * Note that the factories this generates are static non-member functions.
  * This is because GCC doesn't like to ## a class name to a member definition.
@@ -69,7 +69,7 @@
 #undef SCR_GENSCRIPTFACTORY
 #define SCR_GENSCRIPTARRAY
 
-const char* cScriptModule::sm_ScriptModuleName = OSM_NAME;
+const char* cScriptModule::sm_ScriptModuleName = MODULE_NAME;
 const sScrClassDesc cScriptModule::sm_ScriptsArray[] = {
 #include __FILE__
 #elif defined(SCR_GENSCRIPTARRAY)

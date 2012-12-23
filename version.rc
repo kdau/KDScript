@@ -18,12 +18,11 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  *****************************************************************************/
-#ifndef SCRIPT_VERSION
-#define SCRIPT_VERSION	1,0,0,0
+
+#ifndef VERSION_NUMBER
+#define VERSION_NUMBER	1,0,0,0
 #endif
-#ifndef PACKAGE_VERSION
-#define PACKAGE_VERSION	SCRIPT_VERSION
-#endif
+
 #ifndef AUTHOR_NAME
 #define AUTHOR_NAME	"<your name here>"
 #endif
@@ -33,8 +32,8 @@
 #endif
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION		SCRIPT_VERSION
-PRODUCTVERSION		PACKAGE_VERSION
+FILEVERSION		VERSION_NUMBER
+PRODUCTVERSION		VERSION_NUMBER
 #if DEBUG
 FILEFLAGS		VS_FF_DEBUG
 #else
@@ -47,15 +46,13 @@ BEGIN
 	BEGIN
 		BLOCK "040904e4"
 		BEGIN
-			VALUE	"FileDescription", SCRIPT_LONGNAME "\0"
-			VALUE	"FileVersion", SCRIPT_VERSTRING "\0"
-			VALUE	"InternalName", SCRIPT_NAME "\0"
-			VALUE	"LegalCopyright", "Copyright (C) 2011 " AUTHOR_NAME "\0"
-			VALUE	"OriginalFilename", SCRIPT_NAME ".osm" "\0"
-#ifdef PACKAGE_NAME
-			VALUE	"ProductName", PACKAGE_NAME "\0"
-			VALUE	"ProductVersion", PACKAGE_VERSTRING "\0"
-#endif
+			VALUE	"FileDescription", "custom scripts for " MISSION_NAME "\0"
+			VALUE	"FileVersion", VERSION_STRING "\0"
+			VALUE	"InternalName", MODULE_NAME "\0"
+			VALUE	"LegalCopyright", "Copyright (C) " AUTHOR_NAME "\0"
+			VALUE	"OriginalFilename", MODULE_NAME ".osm" "\0"
+			VALUE	"ProductName", MISSION_NAME "\0"
+			VALUE	"ProductVersion", VERSION_STRING "\0"
 #if  (_DARKGAME == 1)
 			VALUE	"DarkGameVersion", "Thief1" "\0"
 #elif (_DARKGAME == 2)

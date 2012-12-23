@@ -20,11 +20,12 @@
 ##
 ###############################################################################
 
-.PHONY: all clean
+.PHONY: default all clean
 .PRECIOUS: %.o
 .INTERMEDIATE: $(bindir)/exports.o
+default: all
 
-OSM_NAME = CHANGEME_MODULE_NAME
+MODULE_NAME = CHANGEME_MODULE_NAME
 
 srcdir = .
 bindir = ./commonobj
@@ -45,7 +46,9 @@ LD = $(PREFIX)g++
 DLLTOOL = $(PREFIX)dlltool
 RC = $(PREFIX)windres
 
-DEFINES = -DWINVER=0x0400 -D_WIN32_WINNT=0x0400 -DWIN32_LEAN_AND_MEAN -DOSM_NAME=$(OSM_NAME)
+DEFINES = -DWINVER=0x0400 -D_WIN32_WINNT=0x0400 -DWIN32_LEAN_AND_MEAN
+CXXDEFINES = -DMODULE_NAME=\"$(MODULE_NAME)\"
+RCDEFINES = -DMODULE_NAME=\\\"$(MODULE_NAME)\\\"
 GAME1 = -D_DARKGAME=1
 GAME2 = -D_DARKGAME=2
 GAME3 = -D_DARKGAME=3
@@ -79,10 +82,10 @@ SCR2LIB = -lScript2
 SCR3LIB = -lScript3
 endif
 
-OSM_OBJS = $(bindir)/ScriptModule.o $(bindir)/Script.o $(bindir)/Allocator.o $(bindir)/exports.o
-OSM1_OBJS = $(bin1dir)/ScriptDef.o $(bin1dir)/script_res.o
-OSM2_OBJS = $(bin2dir)/ScriptDef.o $(bin2dir)/script_res.o
-OSM3_OBJS = $(bin3dir)/ScriptDef.o $(bin3dir)/script_res.o
+MODULE_OBJS = $(bindir)/ScriptModule.o $(bindir)/Script.o $(bindir)/Allocator.o $(bindir)/exports.o
+MODULE1_OBJS = $(bin1dir)/ScriptDef.o $(bin1dir)/script_res.o
+MODULE2_OBJS = $(bin2dir)/ScriptDef.o $(bin2dir)/script_res.o
+MODULE3_OBJS = $(bin3dir)/ScriptDef.o $(bin3dir)/script_res.o
 
 BASE_OBJS = $(bindir)/MsgHandlerArray.o
 BASE1_OBJS = $(bin1dir)/BaseTrap.o $(bin1dir)/BaseScript.o $(bin1dir)/CommonScripts.o $(bin1dir)/utils.o
@@ -103,25 +106,25 @@ $(bin3dir):
 	mkdir -p $@
 
 $(bindir)/%.o: $(srcdir)/%.cpp
-	$(CXX) $(CXXFLAGS) $(DEFINES) $(GAME2) $(INCLUDES) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(CXXDEFINES) $(INCLUDES) -o $@ -c $<
 $(bin1dir)/%.o: $(srcdir)/%.cpp
-	$(CXX) $(CXXFLAGS) $(DEFINES) $(GAME1) $(INCLUDES) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(CXXDEFINES) $(GAME1) $(INCLUDES) -o $@ -c $<
 $(bin2dir)/%.o: $(srcdir)/%.cpp
-	$(CXX) $(CXXFLAGS) $(DEFINES) $(GAME2) $(INCLUDES) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(CXXDEFINES) $(GAME2) $(INCLUDES) -o $@ -c $<
 $(bin3dir)/%.o: $(srcdir)/%.cpp
-	$(CXX) $(CXXFLAGS) $(DEFINES) $(GAME3) $(INCLUDES) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(CXXDEFINES) $(GAME3) $(INCLUDES) -o $@ -c $<
 
 $(bindir)/%_res.o: $(srcdir)/%.rc
-	$(RC) $(DEFINES) -o $@ -i $<
+	$(RC) $(DEFINES) $(RCDEFINES) -o $@ -i $<
 $(bin1dir)/%_res.o: $(srcdir)/%.rc
-	$(RC) $(DEFINES) $(GAME1) -o $@ -i $<
+	$(RC) $(DEFINES) $(RCDEFINES) $(GAME1) -o $@ -i $<
 $(bin2dir)/%_res.o: $(srcdir)/%.rc
-	$(RC) $(DEFINES) $(GAME2) -o $@ -i $<
+	$(RC) $(DEFINES) $(RCDEFINES) $(GAME2) -o $@ -i $<
 $(bin3dir)/%_res.o: $(srcdir)/%.rc
-	$(RC) $(DEFINES) $(GAME3) -o $@ -i $<
+	$(RC) $(DEFINES) $(RCDEFINES) $(GAME3) -o $@ -i $<
 
 $(bindir)/exports.o: $(bindir)/ScriptModule.o
-	$(DLLTOOL) $(DLLFLAGS) --dllname $(OSM_NAME).osm --output-exp $@ $^
+	$(DLLTOOL) $(DLLFLAGS) --dllname $(MODULE_NAME).osm --output-exp $@ $^
 
 $(bindir)/ScriptModule.o: ScriptModule.h Allocator.h
 $(bindir)/Script.o: Script.h
@@ -151,16 +154,16 @@ $(bin1dir)/script_res.o: script.rc version.rc
 $(bin2dir)/script_res.o: script.rc version.rc
 $(bin3dir)/script_res.o: script.rc version.rc
 
-$(OSM_NAME)-t1.osm: $(CUSTOM1_OBJS) $(BASE1_OBJS) $(BASE_OBJS) $(OSM_OBJS) $(OSM1_OBJS)
+$(MODULE_NAME)-t1.osm: $(CUSTOM1_OBJS) $(BASE1_OBJS) $(BASE_OBJS) $(MODULE_OBJS) $(MODULE1_OBJS)
 	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LIBDIRS) -o $@ script.def $^ $(SCR1LIB) $(LIBS)
 
-$(OSM_NAME)-t2.osm: $(CUSTOM2_OBJS) $(BASE2_OBJS) $(BASE_OBJS) $(OSM_OBJS) $(OSM2_OBJS)
+$(MODULE_NAME)-t2.osm: $(CUSTOM2_OBJS) $(BASE2_OBJS) $(BASE_OBJS) $(MODULE_OBJS) $(MODULE2_OBJS)
 	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LIBDIRS) -o $@ script.def $^ $(SCR2LIB) $(LIBS)
 
-$(OSM_NAME)-ss2.osm: $(CUSTOM3_OBJS) $(BASE3_OBJS) $(BASE_OBJS) $(OSM_OBJS) $(OSM3_OBJS)
+$(MODULE_NAME)-ss2.osm: $(CUSTOM3_OBJS) $(BASE3_OBJS) $(BASE_OBJS) $(MODULE_OBJS) $(MODULE3_OBJS)
 	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LIBDIRS) -o $@ script.def $^ $(SCR3LIB) $(LIBS)
 
-all: $(bindirectories) $(OSM_NAME)-t1.osm $(OSM_NAME)-t2.osm $(OSM_NAME)-ss2.osm
+all: $(bindirectories) $(MODULE_NAME)-t1.osm $(MODULE_NAME)-t2.osm $(MODULE_NAME)-ss2.osm
 
 clean:
 	$(RM) *.osm $(bindir)/* $(bin1dir)/* $(bin2dir)/* $(bin3dir)/*

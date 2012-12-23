@@ -19,14 +19,11 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  *****************************************************************************/
-#define SCRIPT_VERSION		0,0,0,0 // <-- CHANGEME_VERSION_NUMBER
-#define SCRIPT_VERSTRING	"CHANGEME_VERSION_NAME"
-#define PACKAGE_VERSTRING	SCRIPT_VERSTRING
 
-#define PACKAGE_NAME		"CHANGEME_MISSION_NAME"
+#define MISSION_NAME		"CHANGEME_MISSION_NAME"
 #define AUTHOR_NAME		"CHANGEME_AUTHOR_NAME"
-
-#define SCRIPT_NAME		OSM_NAME
-#define SCRIPT_LONGNAME		"custom scripts for " PACKAGE_NAME
+#define VERSION_NUMBER		1,0,0,0 // <-- CHANGEME_VERSION_NUMBER
+#define VERSION_STRING		"CHANGEME_VERSION_STRING"
 
 #include "version.rc"
+
