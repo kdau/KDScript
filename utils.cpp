@@ -1,8 +1,9 @@
 /******************************************************************************
  *  utils.cpp
  *
- *  This file is part of Public Scripts
+ *  Adapted from Public Scripts for use in mission-specific OSMs
  *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
+ *  Copyright (C) 2012 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -423,3 +424,19 @@ int strnalnumcmp(const char* str1, const char* str2, size_t len)
 	d = *q - *p;
 	return (d == 0) ? 0 : (d < 0) ? -1 : 1;
 }
+
+cAnsiStr
+GetObjectName (object iObj)
+{
+	SService<IObjectSrv> pOS (g_pScriptManager);
+	cScrStr name;
+
+	pOS->GetName (name, iObj);
+	if (!name.IsEmpty ())
+		return name;
+
+	SInterface<ITraitManager> pTM (g_pScriptManager);
+	pOS->GetName (name, pTM->GetArchetype (iObj));
+	return cAnsiStr("a ") + (const char*) name;
+}
+

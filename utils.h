@@ -1,8 +1,9 @@
 /******************************************************************************
  *  utils.h
  *
- *  This file is part of Public Scripts
+ *  Adapted from Public Scripts for use in mission-specific OSMs
  *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
+ *  Copyright (C) 2012 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -114,3 +115,12 @@ cAnsiStr GetBookText(object iObj);
  * End the comparison after reading ??len?? bytes (including spaces) from ??str1??.
  */
 int strnalnumcmp(const char* str1, const char* str2, size_t len);
+
+/**
+ * GetObjectName
+ *
+ * Returns the name of a named object or, if unnamed, its archetype's name
+ * preceded by "a " (similar to DromEd's display form).
+ */
+cAnsiStr GetObjectName (object iObj);
+
