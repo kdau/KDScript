@@ -413,415 +413,415 @@ void cBaseScript::DebugString(const char* pszMsg1, const char* pszMsg2)
 
 long cBaseScript::HandleBeginScript(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnBeginScript(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnBeginScript(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleEndScript(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnEndScript(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnEndScript(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleTimer(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnTimer(static_cast<sScrTimerMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnTimer(static_cast<sScrTimerMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleSim(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnSim(static_cast<sSimMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnSim(static_cast<sSimMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 #if (_DARKGAME == 2)
 long cBaseScript::HandleDarkGameModeChange(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnDarkGameModeChange(static_cast<sDarkGameModeScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnDarkGameModeChange(static_cast<sDarkGameModeScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 #endif
 
 long cBaseScript::HandleDifficulty(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnDifficulty(static_cast<sDiffScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnDifficulty(static_cast<sDiffScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleQuestChange(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnQuestChange(static_cast<sQuestMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnQuestChange(static_cast<sQuestMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleCreate(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnCreate(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnCreate(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleDestroy(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnDestroy(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnDestroy(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleSlain(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnSlain(static_cast<sSlayMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnSlain(static_cast<sSlayMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleDamage(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnDamage(static_cast<sDamageScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnDamage(static_cast<sDamageScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleContainer(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnContainer(static_cast<sContainerScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnContainer(static_cast<sContainerScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleContained(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnContained(static_cast<sContainedScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnContained(static_cast<sContainedScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleCombine(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnCombine(static_cast<sCombineScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnCombine(static_cast<sCombineScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleTweqComplete(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnTweqComplete(static_cast<sTweqMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnTweqComplete(static_cast<sTweqMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandlePhysMadePhysical(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnPhysMadePhysical(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnPhysMadePhysical(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandlePhysMadeNonPhysical(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnPhysMadeNonPhysical(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnPhysMadeNonPhysical(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandlePhysFellAsleep(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnPhysFellAsleep(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnPhysFellAsleep(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandlePhysWokeUp(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnPhysWokeUp(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnPhysWokeUp(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandlePhysCollision(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnPhysCollision(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnPhysCollision(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandlePhysEnter(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnPhysEnter(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnPhysEnter(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandlePhysExit(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnPhysExit(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnPhysExit(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandlePhysContactCreate(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnPhysContactCreate(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnPhysContactCreate(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandlePhysContactDestroy(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnPhysContactDestroy(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnPhysContactDestroy(static_cast<sPhysMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 #if (_DARKGAME == 2)
 long cBaseScript::HandleMediumTransition(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnMediumTransition(static_cast<sMediumTransMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnMediumTransition(static_cast<sMediumTransMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 #endif
 
 long cBaseScript::HandleObjRoomTransit(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnObjRoomTransit(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnObjRoomTransit(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleWorldFocus(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnWorldFocus(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnWorldFocus(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleWorldDeFocus(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnWorldDeFocus(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnWorldDeFocus(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleWorldSelect(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnWorldSelect(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnWorldSelect(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleWorldDeSelect(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnWorldDeSelect(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnWorldDeSelect(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleInvFocus(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnInvFocus(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnInvFocus(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleInvDeFocus(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnInvDeFocus(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnInvDeFocus(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleInvSelect(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnInvSelect(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnInvSelect(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleInvDeSelect(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnInvDeSelect(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnInvDeSelect(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleFrobWorldBegin(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnFrobWorldBegin(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnFrobWorldBegin(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleFrobWorldEnd(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnFrobWorldEnd(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnFrobWorldEnd(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleFrobInvBegin(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnFrobInvBegin(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnFrobInvBegin(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleFrobInvEnd(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnFrobInvEnd(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnFrobInvEnd(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleFrobToolBegin(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnFrobToolBegin(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnFrobToolBegin(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleFrobToolEnd(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnFrobToolEnd(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnFrobToolEnd(static_cast<sFrobMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleNowLocked(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnNowLocked(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnNowLocked(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleNowUnlocked(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnNowUnlocked(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnNowUnlocked(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleTurnOn(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnTurnOn(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnTurnOn(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleTurnOff(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnTurnOff(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnTurnOff(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleSchemaDone(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnSchemaDone(static_cast<sSchemaDoneMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnSchemaDone(static_cast<sSchemaDoneMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleSoundDone(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnSoundDone(static_cast<sSoundDoneMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnSoundDone(static_cast<sSoundDoneMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 #if (_DARKGAME == 3)
 long cBaseScript::HandleKeypadDone(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnKeypadDone(static_cast<sKeypadMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnKeypadDone(static_cast<sKeypadMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseScript::HandleYorNDone(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseScript*>(pScript)->OnYorNDone(static_cast<sYorNMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseScript*>(pScript)->OnYorNDone(static_cast<sYorNMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 #endif
 
 long cBaseRoomScript::HandleObjectRoomEnter(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseRoomScript*>(pScript)->OnObjectRoomEnter(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseRoomScript*>(pScript)->OnObjectRoomEnter(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseRoomScript::HandleObjectRoomExit(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseRoomScript*>(pScript)->OnObjectRoomExit(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseRoomScript*>(pScript)->OnObjectRoomExit(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseRoomScript::HandleCreatureRoomEnter(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseRoomScript*>(pScript)->OnCreatureRoomEnter(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseRoomScript*>(pScript)->OnCreatureRoomEnter(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseRoomScript::HandleCreatureRoomExit(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseRoomScript*>(pScript)->OnCreatureRoomExit(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseRoomScript*>(pScript)->OnCreatureRoomExit(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseRoomScript::HandlePlayerRoomEnter(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseRoomScript*>(pScript)->OnPlayerRoomEnter(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseRoomScript*>(pScript)->OnPlayerRoomEnter(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseRoomScript::HandlePlayerRoomExit(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseRoomScript*>(pScript)->OnPlayerRoomExit(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseRoomScript*>(pScript)->OnPlayerRoomExit(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseRoomScript::HandleRemotePlayerRoomEnter(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseRoomScript*>(pScript)->OnRemotePlayerRoomEnter(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseRoomScript*>(pScript)->OnRemotePlayerRoomEnter(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseRoomScript::HandleRemotePlayerRoomExit(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseRoomScript*>(pScript)->OnRemotePlayerRoomExit(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseRoomScript*>(pScript)->OnRemotePlayerRoomExit(static_cast<sRoomMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseDoorScript::HandleDoorOpen(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseDoorScript*>(pScript)->OnDoorOpen(static_cast<sDoorMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseDoorScript*>(pScript)->OnDoorOpen(static_cast<sDoorMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseDoorScript::HandleDoorClose(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseDoorScript*>(pScript)->OnDoorClose(static_cast<sDoorMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseDoorScript*>(pScript)->OnDoorClose(static_cast<sDoorMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseDoorScript::HandleDoorOpening(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseDoorScript*>(pScript)->OnDoorOpening(static_cast<sDoorMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseDoorScript*>(pScript)->OnDoorOpening(static_cast<sDoorMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseDoorScript::HandleDoorClosing(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseDoorScript*>(pScript)->OnDoorClosing(static_cast<sDoorMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseDoorScript*>(pScript)->OnDoorClosing(static_cast<sDoorMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseDoorScript::HandleDoorHalt(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseDoorScript*>(pScript)->OnDoorHalt(static_cast<sDoorMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseDoorScript*>(pScript)->OnDoorHalt(static_cast<sDoorMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 #if (_DARKGAME == 2)
 long cBaseDoorScript::HandlePickStateChange(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseDoorScript*>(pScript)->OnPickStateChange(static_cast<sPickStateScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseDoorScript*>(pScript)->OnPickStateChange(static_cast<sPickStateScrMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 #endif
 
 long cBaseAIScript::HandleAIModeChange(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnAIModeChange(static_cast<sAIModeChangeMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnAIModeChange(static_cast<sAIModeChangeMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseAIScript::HandleAlertness(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnAlertness(static_cast<sAIAlertnessMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnAlertness(static_cast<sAIAlertnessMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 #if (_DARKGAME == 2)
 long cBaseAIScript::HandleHighAlert(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnHighAlert(static_cast<sAIHighAlertMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnHighAlert(static_cast<sAIHighAlertMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 #endif
 
 long cBaseAIScript::HandleSignalAI(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnSignalAI(static_cast<sAISignalMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnSignalAI(static_cast<sAISignalMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseAIScript::HandleObjActResult(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnObjActResult(static_cast<sAIObjActResultMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnObjActResult(static_cast<sAIObjActResultMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseAIScript::HandlePatrolPoint(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnPatrolPoint(static_cast<sAIPatrolPointMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnPatrolPoint(static_cast<sAIPatrolPointMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseAIScript::HandleStartAttack(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnStartAttack(static_cast<sAttackMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnStartAttack(static_cast<sAttackMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseAIScript::HandleStartWindup(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnStartWindup(static_cast<sAttackMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnStartWindup(static_cast<sAttackMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseAIScript::HandleEndAttack(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnEndAttack(static_cast<sAttackMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnEndAttack(static_cast<sAttackMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseAIScript::HandleMotionStart(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnMotionStart(static_cast<sBodyMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnMotionStart(static_cast<sBodyMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseAIScript::HandleMotionEnd(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnMotionEnd(static_cast<sBodyMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnMotionEnd(static_cast<sBodyMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseAIScript::HandleMotionFlagReached(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseAIScript*>(pScript)->OnMotionFlagReached(static_cast<sBodyMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseAIScript*>(pScript)->OnMotionFlagReached(static_cast<sBodyMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseMovingTerrainScript::HandleMovingTerrainWaypoint(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseMovingTerrainScript*>(pScript)->OnMovingTerrainWaypoint(static_cast<sMovingTerrainMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseMovingTerrainScript*>(pScript)->OnMovingTerrainWaypoint(static_cast<sMovingTerrainMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseMovingTerrainScript::HandleWaypointReached(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseMovingTerrainScript*>(pScript)->OnWaypointReached(static_cast<sWaypointMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseMovingTerrainScript*>(pScript)->OnWaypointReached(static_cast<sWaypointMsg*>(pMsg), static_cast<cMultiParm&>(*pReply));
 }
 
 long cBaseMovingTerrainScript::HandleCall(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBaseMovingTerrainScript*>(pScript)->OnCall(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBaseMovingTerrainScript*>(pScript)->OnCall(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBasePPlateScript::HandlePressurePlateActive(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBasePPlateScript*>(pScript)->OnPressurePlateActive(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBasePPlateScript*>(pScript)->OnPressurePlateActive(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBasePPlateScript::HandlePressurePlateInactive(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBasePPlateScript*>(pScript)->OnPressurePlateInactive(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBasePPlateScript*>(pScript)->OnPressurePlateInactive(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBasePPlateScript::HandlePressurePlateActivating(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBasePPlateScript*>(pScript)->OnPressurePlateActivating(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBasePPlateScript*>(pScript)->OnPressurePlateActivating(pMsg, static_cast<cMultiParm&>(*pReply));
 }
 
 long cBasePPlateScript::HandlePressurePlateDeactivating(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)
 {
-	return static_cast<cBasePPlateScript*>(pScript)->OnPressurePlateDeactivating(pMsg, static_cast<cMultiParm&>(*pReply));
+	return dynamic_cast<cBasePPlateScript*>(pScript)->OnPressurePlateDeactivating(pMsg, static_cast<cMultiParm&>(*pReply));
 }

@@ -38,7 +38,7 @@
  * Parameter: tcf(string) - Alternative trap flags. !+ NoOn, !- NoOff, <> Invert, 01 Once
  */
 #if !SCR_GENSCRIPTS
-class cBaseTrap : public cBaseScript
+class cBaseTrap : public virtual cBaseScript
 {
 public:
 	cBaseTrap(const char* pszName, int iHostObjId)

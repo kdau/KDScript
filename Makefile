@@ -166,5 +166,5 @@ $(MODULE_NAME)-ss2.osm: $(CUSTOM3_OBJS) $(BASE3_OBJS) $(BASE_OBJS) $(MODULE_OBJS
 all: $(bindirectories) $(MODULE_NAME)-t1.osm $(MODULE_NAME)-t2.osm $(MODULE_NAME)-ss2.osm
 
 clean:
-	$(RM) *.osm $(bindir)/* $(bin1dir)/* $(bin2dir)/* $(bin3dir)/*
+	$(RM) $(MODULE_NAME)-*.osm $(bindir)/*.o $(bin1dir)/*.o $(bin2dir)/*.o $(bin3dir)/*.o
 

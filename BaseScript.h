@@ -250,7 +250,7 @@ GEN_FACTORY("BaseScript","CustomScript",cBaseScript)
  * Inherits: BaseScript
  */
 #if !SCR_GENSCRIPTS
-class cBaseRoomScript : public cBaseScript
+class cBaseRoomScript : public virtual cBaseScript
 {
 public:
 	cBaseRoomScript(const char* pszName, int iHostObjId)
@@ -298,7 +298,7 @@ GEN_FACTORY("BaseRoomScript","BaseScript",cBaseRoomScript)
  * Inherits: BaseScript
  */
 #if !SCR_GENSCRIPTS
-class cBaseDoorScript : public cBaseScript
+class cBaseDoorScript : public virtual cBaseScript
 {
 public:
 	cBaseDoorScript(const char* pszName, int iHostObjId)
@@ -344,7 +344,7 @@ GEN_FACTORY("BaseDoorScript","BaseScript",cBaseDoorScript)
  * Inherits: BaseScript
  */
 #if !SCR_GENSCRIPTS
-class cBaseAIScript : public cBaseScript
+class cBaseAIScript : public virtual cBaseScript
 {
 public:
 	cBaseAIScript(const char* pszName, int iHostObjId)
@@ -408,7 +408,7 @@ GEN_FACTORY("BaseAIScript","BaseScript",cBaseAIScript)
  * Inherits: BaseScript
  */
 #if !SCR_GENSCRIPTS
-class cBaseMovingTerrainScript : public cBaseScript
+class cBaseMovingTerrainScript : public virtual cBaseScript
 {
 public:
 	cBaseMovingTerrainScript(const char* pszName, int iHostObjId)
@@ -441,7 +441,7 @@ GEN_FACTORY("BaseMovingTerrainScript","BaseScript",cBaseMovingTerrainScript)
  * Inherits: BaseScript
  */
 #if !SCR_GENSCRIPTS
-class cBasePPlateScript : public cBaseScript
+class cBasePPlateScript : public virtual cBaseScript
 {
 public:
 	cBasePPlateScript(const char* pszName, int iHostObjId)
