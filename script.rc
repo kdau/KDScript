@@ -1,8 +1,9 @@
 /******************************************************************************
  *  script.rc
  *
- *  This file is part of Public Scripts
+ *  Adapted from Public Scripts for use in mission-specific OSMs
  *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
+ *  Copyright (C) 2012 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,22 +19,14 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  *****************************************************************************/
-#define SCRIPT_VERSION	2,2,0,0
-#define SCRIPT_VERSTRING	"2.2"
-
-#define SCRIPT_NAME		"script"
-#if  (_DARKGAME == 1)
-#define SCRIPT_LONGNAME		"Public Scripts Thief1 OSM"
-#elif (_DARKGAME == 2)
-#define SCRIPT_LONGNAME		"Public Scripts Thief2 OSM"
-#elif (_DARKGAME == 3)
-#define SCRIPT_LONGNAME		"Public Scripts SShock2 OSM"
-#else
-#define SCRIPT_LONGNAME		"Public Scripts OSM"
-#endif
-#define AUTHOR_NAME		"Tom N Harris"
-
-#define PACKAGE_NAME		"Public Scripts"
+#define SCRIPT_VERSION		0,0,0,0 // <-- CHANGEME_VERSION_NUMBER
+#define SCRIPT_VERSTRING	"CHANGEME_VERSION_NAME"
 #define PACKAGE_VERSTRING	SCRIPT_VERSTRING
+
+#define PACKAGE_NAME		"CHANGEME_MISSION_NAME"
+#define AUTHOR_NAME		"CHANGEME_AUTHOR_NAME"
+
+#define SCRIPT_NAME		OSM_NAME
+#define SCRIPT_LONGNAME		"custom scripts for " PACKAGE_NAME
 
 #include "version.rc"

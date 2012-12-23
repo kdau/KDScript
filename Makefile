@@ -1,8 +1,9 @@
 ###############################################################################
-##  Makefile-gcc
+##  Makefile
 ##
-##  This file is part of Public Scripts
+##  Adapted from Public Scripts for use in mission-specific OSMs
 ##  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
+##  Copyright (C) 2012 Kevin Daughtridge <kevin@kdau.com>
 ##
 ##  This program is free software; you can redistribute it and/or modify
 ##  it under the terms of the GNU General Public License as published by
@@ -20,11 +21,10 @@
 ###############################################################################
 
 .PHONY: all clean
-.SUFFIXES:
-.SUFFIXES: .o .cpp .rc
 .PRECIOUS: %.o
+.INTERMEDIATE: $(bindir)/exports.o
 
-GAME = 2
+OSM_NAME = CHANGEME_MODULE_NAME
 
 srcdir = .
 bindir = ./commonobj
@@ -33,10 +33,9 @@ bin2dir = ./t2obj
 bin3dir = ./ss2obj
 bindirectories = $(bindir) $(bin1dir) $(bin2dir) $(bin3dir)
 
-LGDIR = ../lg
-SCRLIBDIR = ../ScriptLib
-DH2DIR = ../DH2
-DH2LIB = -ldh2
+LGDIR = lg
+SCRLIBDIR = ScriptLib
+DH2DIR = DH2
 
 PREFIX = i686-w64-mingw32-
 CC = $(PREFIX)gcc
@@ -46,92 +45,53 @@ LD = $(PREFIX)g++
 DLLTOOL = $(PREFIX)dlltool
 RC = $(PREFIX)windres
 
-DEFINES = -DWINVER=0x0400 -D_WIN32_WINNT=0x0400 -DWIN32_LEAN_AND_MEAN
+DEFINES = -DWINVER=0x0400 -D_WIN32_WINNT=0x0400 -DWIN32_LEAN_AND_MEAN -DOSM_NAME=$(OSM_NAME)
 GAME1 = -D_DARKGAME=1
 GAME2 = -D_DARKGAME=2
 GAME3 = -D_DARKGAME=3
 
+INCLUDES = -I. -I$(srcdir) -I$(LGDIR) -I$(SCRLIBDIR) -I$(DH2DIR)
+LIBDIRS = -L. -L$(LGDIR) -L$(SCRLIBDIR) -L$(DH2DIR)
+LIBS = -ldh2 -luuid
+
+# If you care for this... # -Wno-unused-variable
+# A lot of the callbacks have unused parameters, so I turn that off.
+CXXFLAGS = -W -Wall -masm=intel -std=gnu++0x
+ARFLAGS = rc
+LDFLAGS = -mwindows -mdll -Wl,--enable-auto-image-base -static-libgcc -static-libstdc++
+DLLFLAGS = --add-underscore
+
 ifdef DEBUG
 DEFINES := $(DEFINES) -DDEBUG
-CXXDEBUG = -g -O0
-LDDEBUG = -g
-LGLIB = -llg-d
+CXXFLAGS := $(CXXFLAGS) -g -O0
+LDFLAGS := $(LDFLAGS) -g
+LIBS := $(LIBS) -llg-d
 SCR1LIB = -lScript1-d
 SCR2LIB = -lScript2-d
 SCR3LIB = -lScript3-d
 else
 DEFINES := $(DEFINES) -DNDEBUG
-CXXDEBUG = -O2
-LDDEBUG =
-LGLIB = -llg
+CXXFLAGS := $(CXXFLAGS) -O2
+# LDFLAGS := $(LDFLAGS)
+LIBS := $(LIBS) -llg
 SCR1LIB = -lScript1
 SCR2LIB = -lScript2
 SCR3LIB = -lScript3
 endif
 
-ARFLAGS = rc
-LDFLAGS = -mwindows -mdll -Wl,--enable-auto-image-base -static-libgcc -static-libstdc++
-LIBDIRS = -L. -L$(LGDIR) -L$(SCRLIBDIR) -L$(DH2DIR)
-LIBS = $(DH2LIB) $(LGLIB) -luuid
-INCLUDES = -I. -I$(srcdir) -I$(LGDIR) -I$(SCRLIBDIR) -I$(DH2DIR)
-# If you care for this... # -Wno-unused-variable
-# A lot of the callbacks have unused parameters, so I turn that off.
-CXXFLAGS = -W -Wall -masm=intel -std=gnu++0x
-DLLFLAGS = --add-underscore
-
 OSM_OBJS = $(bindir)/ScriptModule.o $(bindir)/Script.o $(bindir)/Allocator.o $(bindir)/exports.o
+OSM1_OBJS = $(bin1dir)/ScriptDef.o $(bin1dir)/script_res.o
+OSM2_OBJS = $(bin2dir)/ScriptDef.o $(bin2dir)/script_res.o
+OSM3_OBJS = $(bin3dir)/ScriptDef.o $(bin3dir)/script_res.o
+
 BASE_OBJS = $(bindir)/MsgHandlerArray.o
-BASE1_OBJS = $(bin1dir)/BaseTrap.o $(bin1dir)/BaseScript.o $(bin1dir)/CommonScripts.o
-BASE2_OBJS = $(bin2dir)/BaseTrap.o $(bin2dir)/BaseScript.o $(bin2dir)/CommonScripts.o
-BASE3_OBJS = $(bin3dir)/BaseTrap.o $(bin3dir)/BaseScript.o $(bin3dir)/CommonScripts.o
-SCR1_OBJS = $(bin1dir)/PublicScripts.o $(bin1dir)/T1Scripts.o
-SCR2_OBJS = $(bin2dir)/PublicScripts.o $(bin2dir)/T2Scripts.o
-SCR3_OBJS = $(bin3dir)/PublicScripts.o $(bin3dir)/SS2Scripts.o
-MISC1_OBJS = $(bin1dir)/ScriptDef.o $(bin1dir)/utils.o
-MISC2_OBJS = $(bin2dir)/ScriptDef.o $(bin2dir)/utils.o
-MISC3_OBJS = $(bin3dir)/ScriptDef.o $(bin3dir)/utils.o
-RES1_OBJS = $(bin1dir)/script_res.o
-RES2_OBJS = $(bin2dir)/script_res.o
-RES3_OBJS = $(bin3dir)/script_res.o
+BASE1_OBJS = $(bin1dir)/BaseTrap.o $(bin1dir)/BaseScript.o $(bin1dir)/CommonScripts.o $(bin1dir)/utils.o
+BASE2_OBJS = $(bin2dir)/BaseTrap.o $(bin2dir)/BaseScript.o $(bin2dir)/CommonScripts.o $(bin2dir)/utils.o
+BASE3_OBJS = $(bin3dir)/BaseTrap.o $(bin3dir)/BaseScript.o $(bin3dir)/CommonScripts.o $(bin3dir)/utils.o
 
-
-$(bindir)/%.o: $(srcdir)/%.cpp
-	$(CXX) $(CXXFLAGS) $(CXXDEBUG) $(DEFINES) $(GAME2) $(INCLUDES) -o $@ -c $<
-
-$(bin1dir)/%.o: $(srcdir)/%.cpp
-	$(CXX) $(CXXFLAGS) $(CXXDEBUG) $(DEFINES) $(GAME1) $(INCLUDES) -o $@ -c $<
-
-$(bin2dir)/%.o: $(srcdir)/%.cpp
-	$(CXX) $(CXXFLAGS) $(CXXDEBUG) $(DEFINES) $(GAME2) $(INCLUDES) -o $@ -c $<
-
-$(bin3dir)/%.o: $(srcdir)/%.cpp
-	$(CXX) $(CXXFLAGS) $(CXXDEBUG) $(DEFINES) $(GAME3) $(INCLUDES) -o $@ -c $<
-
-$(bindir)/%_res.o: $(srcdir)/%.rc
-	$(RC) $(DEFINES) -o $@ -i $<
-
-$(bin1dir)/%_res.o: $(srcdir)/%.rc
-	$(RC) $(DEFINES) $(GAME1) -o $@ -i $<
-
-$(bin2dir)/%_res.o: $(srcdir)/%.rc
-	$(RC) $(DEFINES) $(GAME2) -o $@ -i $<
-
-$(bin3dir)/%_res.o: $(srcdir)/%.rc
-	$(RC) $(DEFINES) $(GAME3) -o $@ -i $<
-
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(CXXDEBUG) $(DEFINES) $(GAME2) $(INCLUDES) -o $@ -c $<
-
-%_res.o: %.rc
-	$(RC) $DEFINES) -o $@ -i $<
-
-%.osm: %.o $(OSM_OBJS)
-	$(LD) $(LDFLAGS) $(LDDEBUG) $(LIBDIRS) -o $@ script.def $< $(OSM_OBJS) $(SCR2LIB) $(LIBS)
-
-all: $(bindirectories) script-t1.osm script-t2.osm script-ss2.osm version.osm
-
-clean:
-	$(RM) $(bindir)/* $(bin1dir)/* $(bin2dir)/* $(bin3dir)/*
+CUSTOM1_OBJS = $(bin1dir)/custom.o
+CUSTOM2_OBJS = $(bin2dir)/custom.o
+CUSTOM3_OBJS = $(bin3dir)/custom.o
 
 $(bindir):
 	mkdir -p $@
@@ -142,53 +102,66 @@ $(bin2dir):
 $(bin3dir):
 	mkdir -p $@
 
-#.INTERMEDIATE: $(bindir)/exports.o
+$(bindir)/%.o: $(srcdir)/%.cpp
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(GAME2) $(INCLUDES) -o $@ -c $<
+$(bin1dir)/%.o: $(srcdir)/%.cpp
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(GAME1) $(INCLUDES) -o $@ -c $<
+$(bin2dir)/%.o: $(srcdir)/%.cpp
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(GAME2) $(INCLUDES) -o $@ -c $<
+$(bin3dir)/%.o: $(srcdir)/%.cpp
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(GAME3) $(INCLUDES) -o $@ -c $<
+
+$(bindir)/%_res.o: $(srcdir)/%.rc
+	$(RC) $(DEFINES) -o $@ -i $<
+$(bin1dir)/%_res.o: $(srcdir)/%.rc
+	$(RC) $(DEFINES) $(GAME1) -o $@ -i $<
+$(bin2dir)/%_res.o: $(srcdir)/%.rc
+	$(RC) $(DEFINES) $(GAME2) -o $@ -i $<
+$(bin3dir)/%_res.o: $(srcdir)/%.rc
+	$(RC) $(DEFINES) $(GAME3) -o $@ -i $<
 
 $(bindir)/exports.o: $(bindir)/ScriptModule.o
-	$(DLLTOOL) $(DLLFLAGS) --dllname script.osm --output-exp $@ $^
+	$(DLLTOOL) $(DLLFLAGS) --dllname $(OSM_NAME).osm --output-exp $@ $^
 
-$(bindir)/ScriptModule.o: ScriptModule.cpp ScriptModule.h Allocator.h
-$(bindir)/Script.o: Script.cpp Script.h
-$(bindir)/Allocator.o: Allocator.cpp Allocator.h
+$(bindir)/ScriptModule.o: ScriptModule.h Allocator.h
+$(bindir)/Script.o: Script.h
+$(bindir)/Allocator.o: Allocator.h
 
-$(bin1dir)/BaseScript.o: BaseScript.cpp BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
-$(bin2dir)/BaseScript.o: BaseScript.cpp BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
-$(bin3dir)/BaseScript.o: BaseScript.cpp BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
-$(bin1dir)/BaseTrap.o: BaseTrap.cpp BaseTrap.h BaseScript.h Script.h
-$(bin2dir)/BaseTrap.o: BaseTrap.cpp BaseTrap.h BaseScript.h Script.h
-$(bin3dir)/BaseTrap.o: BaseTrap.cpp BaseTrap.h BaseScript.h Script.h
+$(bin1dir)/BaseScript.o: BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
+$(bin2dir)/BaseScript.o: BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
+$(bin3dir)/BaseScript.o: BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
 
-$(bin1dir)/CommonScripts.o: CommonScripts.cpp CommonScripts.h
-$(bin2dir)/CommonScripts.o: CommonScripts.cpp CommonScripts.h
-$(bin3dir)/CommonScripts.o: CommonScripts.cpp CommonScripts.h
+$(bin1dir)/BaseTrap.o: BaseTrap.h BaseScript.h Script.h
+$(bin2dir)/BaseTrap.o: BaseTrap.h BaseScript.h Script.h
+$(bin3dir)/BaseTrap.o: BaseTrap.h BaseScript.h Script.h
 
-$(bin1dir)/PublicScripts.o: PublicScripts.cpp PublicScripts.h CommonScripts.h BaseTrap.h BaseScript.h Script.h
-$(bin2dir)/PublicScripts.o: PublicScripts.cpp PublicScripts.h CommonScripts.h BaseTrap.h BaseScript.h Script.h
-$(bin3dir)/PublicScripts.o: PublicScripts.cpp PublicScripts.h CommonScripts.h BaseTrap.h BaseScript.h Script.h
+$(bin1dir)/CommonScripts.o: CommonScripts.h
+$(bin2dir)/CommonScripts.o: CommonScripts.h
+$(bin3dir)/CommonScripts.o: CommonScripts.h
 
-$(bin1dir)/T1Scripts.o: T1Scripts.cpp T1Scripts.h CommonScripts.h BaseTrap.h BaseScript.h Script.h
-$(bin2dir)/T2Scripts.o: T2Scripts.cpp T2Scripts.h CommonScripts.h BaseTrap.h BaseScript.h Script.h
-$(bin3dir)/SS2Scripts.o: SS2Scripts.cpp SS2Scripts.h CommonScripts.h BaseTrap.h BaseScript.h Script.h
+$(bin1dir)/custom.o: custom.h BaseScript.h Script.h scriptvars.h utils.h
+$(bin2dir)/custom.o: custom.h BaseScript.h Script.h scriptvars.h utils.h
+$(bin3dir)/custom.o: custom.h BaseScript.h Script.h scriptvars.h utils.h
 
-$(bin1dir)/ScriptDef.o: ScriptDef.cpp PublicScripts.h T1Scripts.h BaseTrap.h BaseScript.h ScriptModule.h genscripts.h
-$(bin2dir)/ScriptDef.o: ScriptDef.cpp PublicScripts.h T2Scripts.h BaseTrap.h BaseScript.h ScriptModule.h genscripts.h
-$(bin3dir)/ScriptDef.o: ScriptDef.cpp PublicScripts.h SS2Scripts.h BaseTrap.h BaseScript.h ScriptModule.h genscripts.h
+$(bin1dir)/ScriptDef.o: custom.h BaseTrap.h BaseScript.h ScriptModule.h genscripts.h
+$(bin2dir)/ScriptDef.o: custom.h BaseTrap.h BaseScript.h ScriptModule.h genscripts.h
+$(bin3dir)/ScriptDef.o: custom.h BaseTrap.h BaseScript.h ScriptModule.h genscripts.h
 
 $(bin1dir)/script_res.o: script.rc version.rc
 $(bin2dir)/script_res.o: script.rc version.rc
 $(bin3dir)/script_res.o: script.rc version.rc
 
-script-t1.osm: $(SCR1_OBJS) $(BASE1_OBJS) $(BASE_OBJS) $(OSM_OBJS) $(MISC1_OBJS) $(RES1_OBJS)
-	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LDDEBUG) $(LIBDIRS) -o $@ script.def $^ $(SCR1LIB) $(LIBS)
+$(OSM_NAME)-t1.osm: $(CUSTOM1_OBJS) $(BASE1_OBJS) $(BASE_OBJS) $(OSM_OBJS) $(OSM1_OBJS)
+	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LIBDIRS) -o $@ script.def $^ $(SCR1LIB) $(LIBS)
 
-script-t2.osm: $(SCR2_OBJS) $(BASE2_OBJS) $(BASE_OBJS) $(OSM_OBJS) $(MISC2_OBJS) $(RES2_OBJS)
-	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LDDEBUG) $(LIBDIRS) -o $@ script.def $^ $(SCR2LIB) $(LIBS)
+$(OSM_NAME)-t2.osm: $(CUSTOM2_OBJS) $(BASE2_OBJS) $(BASE_OBJS) $(OSM_OBJS) $(OSM2_OBJS)
+	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LIBDIRS) -o $@ script.def $^ $(SCR2LIB) $(LIBS)
 
-script-ss2.osm: $(SCR3_OBJS) $(BASE3_OBJS) $(BASE_OBJS) $(OSM_OBJS) $(MISC3_OBJS) $(RES3_OBJS)
-	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LDDEBUG) $(LIBDIRS) -o $@ script.def $^ $(SCR3LIB) $(LIBS)
+$(OSM_NAME)-ss2.osm: $(CUSTOM3_OBJS) $(BASE3_OBJS) $(BASE_OBJS) $(OSM_OBJS) $(OSM3_OBJS)
+	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LIBDIRS) -o $@ script.def $^ $(SCR3LIB) $(LIBS)
 
-$(bindir)/scrversion.o: scrversion.cpp scrversion.h
-	$(CXX) $(CXXFLAGS) $(CXXDEBUG) $(DEFINES) $(GAME3) $(INCLUDES) -o $@ -c $<
+all: $(bindirectories) $(OSM_NAME)-t1.osm $(OSM_NAME)-t2.osm $(OSM_NAME)-ss2.osm
 
-version.osm: $(bindir)/scrversion.o $(OSM_OBJS) $(bindir)/scrversion_res.o
-	$(LD) $(LDFLAGS) -Wl,--image-base=0x12100000 $(LDDEBUG) $(LIBDIRS) -o $@ script.def $^ $(SCR2LIB) $(LIBS) -lversion
+clean:
+	$(RM) *.osm $(bindir)/* $(bin1dir)/* $(bin2dir)/* $(bin3dir)/*
+

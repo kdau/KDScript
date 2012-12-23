@@ -1,8 +1,9 @@
 /******************************************************************************
  *  ScriptDef.cpp
  *
- *  This file is part of Public Scripts
+ *  Adapted from Public Scripts for use in mission-specific OSMs
  *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
+ *  Copyright (C) 2012 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,8 +22,6 @@
 #include "genscripts.h"
 
 #if !SCR_GENSCRIPTS
-#define OSM_NAME	"script"
-
 #include "ScriptModule.h"
 #endif // SCR_GENSCRIPTS
 
@@ -59,23 +58,11 @@
  */
 #include "BaseScript.h"
 #include "BaseTrap.h"
-#include "PublicScripts.h"
-#if (_DARKGAME == 1)
-#include "T1Scripts.h"
-#endif
-#if (_DARKGAME == 2)
-#include "T2Scripts.h"
-#endif
-#if (_DARKGAME == 3)
-#include "SS2Scripts.h"
-#endif
+#include "custom.h"
 
 #undef BASESCRIPT_H
 #undef BASETRAP_H
-#undef PUBLICSCRIPTS_H
-#undef T1SCRIPTS_H
-#undef T2SCRIPTS_H
-#undef SS2SCRIPTS_H
+#undef CUSTOM_H
 
 #if defined(SCR_GENSCRIPTFACTORY)
 

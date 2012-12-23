@@ -1,8 +1,19 @@
-Public Scripts
+Mission OSM Base
 
-A group of script modules for Dark Engine based games. These modules collect
-a number of well-known scripts into a single place. So fan-mission designers
-have greater freedom to create novel and entertaining experiences.
+This directory contains an abbreviated group of files from Tom N Harris'
+Public Scripts, adapted to be used as the base for a custom OSM for a fan
+mission or campaign. To use it, search across the files for "CHANGEME" and
+put in real information. Add your script headers to custom.h and your code to
+custom.cpp, then compile with the MinGW toolchain. Three OSM files will be
+generated: YOURNAME-t1.osm, YOURNAME-t2.osm, and YOURNAME-ss2.osm. Rename the
+appropriate file to YOURNAME.osm and place it in your mission's root directory.
 
+Remember that the licensing terms require you to make your source code available
+along with your compiled OSM; while it would be unusual (and size-expensive) to
+include it in the mission ZIP file, you are encouraged to make it available in a
+separate ZIP archive through the same distribution channels.
+
+These adaptations are copyright (c) 2012 Kevin Daughtridge.
 Public Scripts are copyright (c) 2005-2011 Tom N Harris.
 This software is released under the terms of the GNU General Public License.
+
