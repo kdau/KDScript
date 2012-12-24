@@ -28,6 +28,7 @@
 
 #include <exception>
 #include <cstring>
+#include <cstdarg>
 
 #ifdef __BORLANDC__
 /* The free BCC doesn't include TASM. */
@@ -409,6 +410,15 @@ long cBaseScript::OnTimer(sScrTimerMsg* pTimerMsg, cMultiParm&)
 void cBaseScript::DebugString(const char* pszMsg1, const char* pszMsg2)
 {
 	g_pfnMPrintf("%s [%d]: %s%s\n", Name(), ObjId(), pszMsg1, pszMsg2);
+}
+
+void cBaseScript::DebugPrintf(const char* pszFormat, ...)
+{
+	va_list va; char psz[1000];
+	va_start (va, pszFormat);
+	_vsnprintf (psz, 999, pszFormat, va);
+	va_end (va);
+	DebugString (psz);
 }
 
 long cBaseScript::HandleBeginScript(cScript* pScript, sScrMsg* pMsg, sMultiParm* pReply)

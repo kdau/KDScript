@@ -234,13 +234,24 @@ protected:
 
 	int FixupPlayerLinks(void);
 
-	void DebugString(const char* pszMsg1, const char* pszmsg2 = "");
+	void DebugString(const char* pszMsg1, const char* pszMsg2 = "");
+	__attribute__((format (printf,2,3)))
+		void DebugPrintf(const char* pszFormat, ...);
 
 private:
 	bool m_bSim;
 	int m_iMessageTime;
 
 };
+#ifdef DEBUG
+#define DEBUG_STRING(pszMsg) DebugString(pszMsg)
+#define DEBUG_STRING2(pszMsg1, pszMsg2) DebugString(pszMsg1, pszMsg2)
+#define DEBUG_PRINTF(pszFormat, ...) DebugPrintf(pszFormat, __VA_ARGS__)
+#else
+#define DEBUG_STRING(pszMsg)
+#define DEBUG_STRING2(pszMsg1, pszMsg2)
+#define DEBUG_PRINTF(pszFormat, ...)
+#endif // DEBUG
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("BaseScript","CustomScript",cBaseScript)
 #endif // SCR_GENSCRIPTS
