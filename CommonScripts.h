@@ -138,4 +138,4 @@ protected:
 #endif // SCR_GENSCRIPTS
 
 
-#endif // PUBLICSCRIPTS_H
+#endif // COMMONSCRIPTS_H

@@ -425,18 +425,89 @@ int strnalnumcmp(const char* str1, const char* str2, size_t len)
 	return (d == 0) ? 0 : (d < 0) ? -1 : 1;
 }
 
-cAnsiStr
-GetObjectName (object iObj)
+/* ObjectExists */
+
+bool
+ObjectExists (object target)
 {
 	SService<IObjectSrv> pOS (g_pScriptManager);
-	cScrStr name;
+	true_bool result;
+	pOS->Exists (result, target);
+	return result;
+}
 
-	pOS->GetName (name, iObj);
+/* ObjectToStr */
+
+cAnsiStr
+ObjectToStr (object target)
+{
+	SService<IObjectSrv> pOS (g_pScriptManager);
+	cScrStr result;
+	pOS->GetName (result, target);
+	return result;
+}
+
+/* FormatObjectName */
+
+cAnsiStr
+FormatObjectName (object target)
+{
+	if (!target) return "None (0)";
+	cAnsiStr result, name = ObjectToStr (target);
 	if (!name.IsEmpty ())
-		return name;
+		result.FmtStr ("%s (%d)", (const char*) name, (int) target);
+	else
+	{
+		SInterface<ITraitManager> pTM (g_pScriptManager);
+		name = ObjectToStr (pTM->GetArchetype (target));
+		result.FmtStr ("a %s (%d)", (const char*) name, (int) target);
+	}
+	return result;
+}
 
-	SInterface<ITraitManager> pTM (g_pScriptManager);
-	pOS->GetName (name, pTM->GetArchetype (iObj));
-	return cAnsiStr("a ") + (const char*) name;
+/* CreateLink */
+
+link
+CreateLink (const char* _flavor, object source, object destination,
+	const void* data)
+{
+	SService<ILinkSrv> pLS (g_pScriptManager);
+	SService<ILinkToolsSrv> pLTS (g_pScriptManager);
+	SInterface<ILinkManager> pLM (g_pScriptManager);
+
+	linkkind flavor = _flavor ? pLTS->LinkKindNamed (_flavor) : 0;
+	if (!flavor || !source || !destination) return link ();
+
+	link the_link;
+	pLS->Create (the_link, flavor, source, destination);
+
+	if (data)
+		pLM->SetData (the_link, const_cast<void*> (data));
+
+	return the_link;
+}
+
+/* DestroyLink */
+
+void
+DestroyLink (link destroy)
+{
+	SService<ILinkSrv> pLS (g_pScriptManager);
+	pLS->Destroy (destroy);
+}
+
+/* GetObjectParamColor */
+
+ulong
+GetObjectParamColor (object target, const char* param, ulong Default)
+{
+	ulong result = Default;
+	char* param_value = GetObjectParamString (target, param);
+	if (param_value)
+	{
+		result = strtocolor (param_value);
+		g_pMalloc->Free (param_value);
+	}
+	return result;
 }
 

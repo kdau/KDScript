@@ -77,7 +77,7 @@ bool PlaySound(object host, const cScrStr& name, const cScrVec& location, eSound
 bool PlaySound(object host, const cScrStr& name, object obj, eSoundSpecial flags=kSoundNormal, eSoundNetwork net=kSoundNetNormal);
 bool PlaySound(object host, const cScrStr& name, eSoundSpecial flags=kSoundNormal, eSoundNetwork net=kSoundNetNormal);
 bool PlayAmbient(object host, const cScrStr& name, eSoundSpecial flags=kSoundNormal, eSoundNetwork net=kSoundNetNormal);
-bool PlaySchema(object host, int schema, const cScrVec& location, eSoundNetwork net=kSoundNetNormal);
+bool PlaySchema(object host, object schema, const cScrVec& location, eSoundNetwork net=kSoundNetNormal);
 bool PlaySchema(object host, object schema, object obj, eSoundNetwork net=kSoundNetNormal);
 bool PlaySchema(object host, object schema, eSoundNetwork net=kSoundNetNormal);
 bool PlaySchemaAmbient(object host, object schema, eSoundNetwork net=kSoundNetNormal);
@@ -117,10 +117,48 @@ cAnsiStr GetBookText(object iObj);
 int strnalnumcmp(const char* str1, const char* str2, size_t len);
 
 /**
- * GetObjectName
+ * ObjectExists
+ *
+ * Returns whether the object currently exists.
+ */
+bool ObjectExists (object target);
+
+/**
+ * ObjectToStr
+ *
+ * Returns the name of a named object or, if unnamed, an empty string.
+ */
+cAnsiStr ObjectToStr (object target);
+
+/**
+ * FormatObjectName
  *
  * Returns the name of a named object or, if unnamed, its archetype's name
- * preceded by "a " (similar to DromEd's display form).
+ * preceded by "a "; all followed by the object number in parentheses (similar
+ * to DromEd's display form).
  */
-cAnsiStr GetObjectName (object iObj);
+cAnsiStr FormatObjectName (object target);
+
+/**
+ * CreateLink
+ *
+ * Creates a link, optionally setting link data.
+ */
+link CreateLink (const char* flavor, object source, object destination,
+	const void* data = NULL);
+
+/**
+ * DestroyLink
+ *
+ * Destroys a link.
+ */
+void DestroyLink (link destroy);
+
+/**
+ * GetObjectParamColor
+ *
+ * Read a parameter from the Editor/Design Note property, interprets it as a
+ * color value, and returns the value in COLORREF format.
+ */
+ulong GetObjectParamColor (object target, const char* param, ulong Default = 0);
 
