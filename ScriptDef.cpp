@@ -1,9 +1,9 @@
 /******************************************************************************
  *  ScriptDef.cpp
  *
- *  Adapted from Public Scripts for use in mission-specific OSMs
+ *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
+ *  Adapted from Public Scripts
  *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
- *  Copyright (C) 2012 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,11 +58,11 @@
  */
 #include "BaseScript.h"
 #include "BaseTrap.h"
-#include "custom.h"
+#include "NewDark.h"
 
 #undef BASESCRIPT_H
 #undef BASETRAP_H
-#undef CUSTOM_H
+#undef NEWDARK_H
 
 #if defined(SCR_GENSCRIPTFACTORY)
 

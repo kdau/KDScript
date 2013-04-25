@@ -1,9 +1,9 @@
 ###############################################################################
 ##  Makefile
 ##
-##  Adapted from Public Scripts for use in mission-specific OSMs
+##  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
+##  Adapted in part from Public Scripts
 ##  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
-##  Copyright (C) 2012 Kevin Daughtridge <kevin@kdau.com>
 ##
 ##  This program is free software; you can redistribute it and/or modify
 ##  it under the terms of the GNU General Public License as published by
@@ -22,13 +22,10 @@
 
 .PHONY: default all clean
 .PRECIOUS: %.o
-.INTERMEDIATE: $(bindir)/exports.o
+.INTERMEDIATE: exports.o
 default: all
 
-MODULE_NAME = CHANGEME_MODULE_NAME
-
-srcdir = .
-bindir = .
+MODULE_NAME = KDScript
 
 LGDIR = lg
 SCRLIBDIR = ScriptLib
@@ -47,7 +44,7 @@ DEFINES = -DWINVER=0x0400 -D_WIN32_WINNT=0x0400 -DWIN32_LEAN_AND_MEAN \
 CXXDEFINES = -DMODULE_NAME=\"$(MODULE_NAME)\"
 RCDEFINES = -DMODULE_NAME=\\\"$(MODULE_NAME)\\\"
 
-INCLUDES = -I. -I$(srcdir) -I$(LGDIR) -I$(SCRLIBDIR) -I$(DH2DIR)
+INCLUDES = -I. -I$(LGDIR) -I$(SCRLIBDIR) -I$(DH2DIR)
 LIBDIRS = -L. -L$(LGDIR) -L$(SCRLIBDIR) -L$(DH2DIR)
 LIBS = -ldh2 -luuid
 
@@ -58,6 +55,7 @@ ARFLAGS = rc
 LDFLAGS = -mwindows -mdll -Wl,--enable-auto-image-base -static-libgcc -static-libstdc++
 DLLFLAGS = --add-underscore
 
+DEBUG = DEBUG #XBETA
 ifdef DEBUG
 DEFINES := $(DEFINES) -DDEBUG
 CXXFLAGS := $(CXXFLAGS) -g -O0
@@ -70,50 +68,52 @@ CXXFLAGS := $(CXXFLAGS) -O2
 LIBS := -lScript2 $(LIBS) -llg
 endif
 
-MODULE_OBJS = \
-	$(bindir)/Allocator.o \
-	$(bindir)/Script.o \
-	$(bindir)/ScriptDef.o \
-	$(bindir)/ScriptModule.o \
-	$(bindir)/exports.o \
-	$(bindir)/script_res.o
-$(bindir)/Allocator.o: Allocator.h
-$(bindir)/Script.o: Script.h
-$(bindir)/ScriptDef.o: custom.h BaseTrap.h BaseScript.h ScriptModule.h genscripts.h
-$(bindir)/ScriptModule.o: ScriptModule.h Allocator.h
-$(bindir)/script_res.o: script.rc version.rc
-
 BASE_OBJS = \
-	$(bindir)/BaseScript.o \
-	$(bindir)/BaseTrap.o \
-	$(bindir)/CommonScripts.o \
-	$(bindir)/MsgHandlerArray.o \
-	$(bindir)/utils.o
-$(bindir)/BaseScript.o: BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
-$(bindir)/BaseTrap.o: BaseTrap.h BaseScript.h Script.h
-$(bindir)/CommonScripts.o: CommonScripts.h
+	BaseScript.o \
+	BaseTrap.o \
+	CommonScripts.o \
+	MsgHandlerArray.o \
+	utils.o
+BASE_HEADERS = \
+	BaseScript.h \
+	BaseTrap.h
+BaseScript.o: BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
+BaseTrap.o: BaseTrap.h BaseScript.h Script.h
+CommonScripts.o: CommonScripts.h
 
-CUSTOM_OBJS = \
-	$(bindir)/custom.o
-$(bindir)/custom.o: custom.h BaseScript.h Script.h scriptvars.h utils.h
+KDSCRIPT_OBJS = \
+	NewDark.o
+KDSCRIPT_HEADERS = \
+	NewDark.h
+NewDark.o: NewDark.h BaseScript.h Script.h scriptvars.h utils.h
 
-$(bindir):
-	mkdir -p $@
+MODULE_OBJS = \
+	Allocator.o \
+	Script.o \
+	ScriptDef.o \
+	ScriptModule.o \
+	exports.o \
+	script_res.o
+Allocator.o: Allocator.h
+Script.o: Script.h
+ScriptDef.o: $(BASE_HEADERS) $(KDSCRIPT_HEADERS) ScriptModule.h genscripts.h
+ScriptModule.o: ScriptModule.h Allocator.h
+script_res.o: script.rc version.rc
 
-$(bindir)/%.o: $(srcdir)/%.cpp
+%.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(DEFINES) $(CXXDEFINES) $(INCLUDES) -o $@ -c $<
 
-$(bindir)/%_res.o: $(srcdir)/%.rc
+%_res.o: %.rc
 	$(RC) $(DEFINES) $(RCDEFINES) -o $@ -i $<
 
-$(bindir)/exports.o: $(bindir)/ScriptModule.o
+exports.o: ScriptModule.o
 	$(DLLTOOL) $(DLLFLAGS) --dllname $(MODULE_NAME).osm --output-exp $@ $^
 
-$(MODULE_NAME).osm: $(CUSTOM_OBJS) $(BASE_OBJS) $(MODULE_OBJS)
+$(MODULE_NAME).osm: $(BASE_OBJS) $(KDSCRIPT_OBJS) $(MODULE_OBJS)
 	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LIBDIRS) -o $@ script.def $^ $(LIBS)
 
-all: $(bindir) $(MODULE_NAME).osm
+all: $(MODULE_NAME).osm
 
 clean:
-	$(RM) $(MODULE_NAME).osm $(bindir)/*.o
+	$(RM) $(MODULE_NAME).osm *.o
 

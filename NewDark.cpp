@@ -1,9 +1,9 @@
 /******************************************************************************
- *  custom.h
+ *  NewDark.cpp: scripts exposing NewDark script-only features
  *
- *  Adapted from Public Scripts for use in mission-specific OSMs
+ *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
+ *  Adapted in part from Public Scripts
  *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
- *  Copyright (C) 2012 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,15 +20,7 @@
  *
  *****************************************************************************/
 
-#ifndef CUSTOM_H
-#define CUSTOM_H
-
-#if !SCR_GENSCRIPTS
-#include "BaseScript.h"
-#include "scriptvars.h"
-#endif // SCR_GENSCRIPTS
-
-// CHANGEME_YOUR_HEADERS
-
-#endif // CUSTOM_H
+#include "NewDark.h"
+#include <ScriptLib.h>
+#include "utils.h"
 
