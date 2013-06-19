@@ -85,7 +85,7 @@ KDSCRIPT_OBJS = \
 	NewDark.o
 KDSCRIPT_HEADERS = \
 	NewDark.h
-NewDark.o: NewDark.h BaseScript.h Script.h scriptvars.h utils.h
+NewDark.o: NewDark.h BaseScript.h Script.h BaseTrap.h scriptvars.h utils.h
 
 MODULE_OBJS = \
 	Allocator.o \

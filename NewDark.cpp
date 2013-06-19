@@ -29,6 +29,78 @@
 
 
 
+/* KDTransitionTrap */
+
+cScr_TransitionTrap::cScr_TransitionTrap (const char* pszName, int iHostObjId)
+	: cBaseScript (pszName, iHostObjId),
+	  cBaseTrap (pszName, iHostObjId),
+	  // associate to final script's name to avoid collisions
+	  timer (pszName, "transition_timer", iHostObjId),
+	  time_remaining (pszName, "transition_remaining", iHostObjId)
+{}
+
+long
+cScr_TransitionTrap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
+{
+	if (!OnPrepare (bState))
+		return 1;
+
+	if (timer.Valid ()) // stop any previous transition
+	{
+		KillTimedMessage (timer);
+		timer.Clear ();
+	}
+
+	time_remaining = GetObjectParamTime (ObjId (), "transition", 0);
+	Increment ();
+
+	return 0;
+}
+
+long
+cScr_TransitionTrap::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
+{
+	if (!strcmp (pMsg->name, "Increment") &&
+	    pMsg->data.type == kMT_String && !strcmp (pMsg->data, Name ()))
+	{
+		Increment ();
+		return 0;
+	}
+	else
+		return cBaseTrap::OnTimer (pMsg, mpReply);
+}
+
+float
+cScr_TransitionTrap::GetProgress ()
+{
+	float total = GetObjectParamTime (ObjId (), "transition", 0);
+	if (!time_remaining.Valid ())
+		return 0.0;
+	else if (total == 0.0 || time_remaining == 0)
+		return 1.0;
+	else
+		return (total - float (time_remaining)) / total;
+}
+
+void
+cScr_TransitionTrap::Increment ()
+{
+	if (OnIncrement () && time_remaining > 0)
+	{
+		time_remaining =
+			std::max (0, time_remaining - GetIncrementDelta ());
+		timer = SetTimedMessage ("Increment", GetIncrementDelta (),
+			kSTM_OneShot, Name ());
+	}
+	else
+	{
+		timer.Clear ();
+		time_remaining.Clear ();
+	}
+}
+
+
+
 /* KDGetInfo */
 
 cScr_GetInfo::cScr_GetInfo (const char* pszName, int iHostObjId)
@@ -126,9 +198,8 @@ cScr_TrapEnvMapTexture::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 cScr_TrapFog::cScr_TrapFog (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cBaseTrap (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, timer, iHostObjId),
+	  cScr_TransitionTrap (pszName, iHostObjId),
 	  SCRIPT_VAROBJ (TrapFog, zone, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, time_total, iHostObjId),
 	  SCRIPT_VAROBJ (TrapFog, start_red, iHostObjId),
 	  SCRIPT_VAROBJ (TrapFog, start_green, iHostObjId),
 	  SCRIPT_VAROBJ (TrapFog, start_blue, iHostObjId),
@@ -139,85 +210,61 @@ cScr_TrapFog::cScr_TrapFog (const char* pszName, int iHostObjId)
 	  SCRIPT_VAROBJ (TrapFog, end_dist, iHostObjId)
 {}
 
-long
-cScr_TrapFog::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
+bool
+cScr_TrapFog::OnPrepare (bool state)
 {
-	if (timer.Valid ()) // stop any previous transition
-	{
-		KillTimedMessage (timer);
-		timer.Clear ();
-	}
+	int _zone = GetObjectParamInt (ObjId (), "fog_zone", 0);
+	ulong _end_color = GetObjectParamColor (ObjId (),
+		state ? "fog_color_on" : "fog_color_off", 0);
+	float _end_dist = GetObjectParamFloat (ObjId (),
+		state ? "fog_dist_on" : "fog_dist_off", -1.0);
 
-	zone = GetObjectParamInt (ObjId (), "fog_zone", -1);
-	time_total = GetObjectParamTime (ObjId (), "fog_time", 0);
-	int end_color = GetObjectParamColor (ObjId (),
-		bState ? "fog_color_on" : "fog_color_off", -1);
-	end_dist = GetObjectParamFloat (ObjId (),
-		bState ? "fog_dist_on" : "fog_dist_off", -1.0);
+	if (_zone < 0 || _zone > 8 || (_end_color == 0 && _end_dist < 0.0))
+		return false;
 
-	if (zone < 0 || zone > 8 || end_color < 0 || end_dist < 0.0) return 1;
+	zone = _zone;
 
-	end_red = GetRValue (end_color),
-	end_green = GetGValue (end_color),
-	end_blue = GetBValue (end_color);
-
-	DEBUG_PRINTF ("setting fog for zone %d to RGB %d,%d,%d at distance %f over %d ms",
-		(int) zone, (int) end_red, (int) end_green, (int) end_blue,
-		(float) end_dist, (int) time_total);
-
-	int sr, sg, sb; float sd;
+	int _sr, _sg, _sb; float _sd;
 	SService<IEngineSrv> pES (g_pScriptManager);
 	if (zone == 0)
-		pES->GetFog (sr, sg, sb, sd);
+		pES->GetFog (_sr, _sg, _sb, _sd);
 	else
-		pES->GetFogZone (zone, sr, sg, sb, sd);
-	start_red = sr;
-	start_green = sg;
-	start_blue = sb;
-	start_dist = sd;
+		pES->GetFogZone (zone, _sr, _sg, _sb, _sd);
+	start_red = _sr;
+	start_green = _sg;
+	start_blue = _sb;
+	start_dist = _sd;
 
-	IncrementFog (time_total);
+	end_red = _end_color ? GetRValue (_end_color) : _sr;
+	end_green = _end_color ? GetGValue (_end_color) : _sg;
+	end_blue = _end_color ? GetBValue (_end_color) : _sb;
+	end_dist = (_end_dist >= 0.0) ? _end_dist : _sd;
 
-	return 0;
+	DEBUG_PRINTF ("setting fog for zone %d to RGB %d,%d,%d at distance %f",
+		(int) zone, (int) end_red, (int) end_green, (int) end_blue,
+		(float) end_dist);
+
+	return true;
 }
 
-long
-cScr_TrapFog::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
+bool
+cScr_TrapFog::OnIncrement ()
 {
-	if (!strcmp (pMsg->name, "IncrementFog"))
-	{
-		if (timer.Valid ()) timer.Clear (); // one-shot
-		IncrementFog (pMsg->data.type == kMT_Int
-			? (int) pMsg->data : 0);
-	}
+	int red = Interpolate (start_red, end_red),
+		green = Interpolate (start_green, end_green),
+		blue = Interpolate (start_blue, end_blue);
 
-	return cBaseTrap::OnTimer (pMsg, mpReply);
-}
-
-void
-cScr_TrapFog::IncrementFog (int time_remaining)
-{
-	time_remaining =
-		std::max (0, std::min ((int) time_total, time_remaining));
-	if (time_remaining > 0)
-		timer = SetTimedMessage ("IncrementFog", 50, kSTM_OneShot,
-			time_remaining - 50);
-
-	float progress = (time_total - time_remaining) / time_total;
-
-	int red = start_red + progress * (end_red - start_red),
-		green = start_green + progress * (end_green - start_green),
-		blue = start_blue + progress * (end_blue - start_blue);
-
-	float fake_end_dist = (end_dist == 0.0 && progress < 1.0)
+	float fake_end_dist = (end_dist == 0.0 && GetProgress () < 1.0)
 		? 100000.0 : end_dist;
-	float dist = start_dist + progress * (fake_end_dist - start_dist);
+	float dist = Interpolate (start_dist, fake_end_dist);
 
 	SService<IEngineSrv> pES (g_pScriptManager);
 	if (zone == 0)
 		pES->SetFog (red, green, blue, dist);
 	else
 		pES->SetFogZone (zone, red, green, blue, dist);
+
+	return true;
 }
 
 
@@ -308,34 +355,59 @@ DarkWeather::ApplyToMission () const
 
 cScr_TrapWeather::cScr_TrapWeather (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
-	  cBaseTrap (pszName, iHostObjId)
+	  cBaseTrap (pszName, iHostObjId),
+	  cScr_TransitionTrap (pszName, iHostObjId),
+	  SCRIPT_VAROBJ (TrapWeather, start_freq, iHostObjId),
+	  SCRIPT_VAROBJ (TrapWeather, end_freq, iHostObjId),
+	  SCRIPT_VAROBJ (TrapWeather, start_speed, iHostObjId),
+	  SCRIPT_VAROBJ (TrapWeather, end_speed, iHostObjId)
 {}
 
-long
-cScr_TrapWeather::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
+bool
+cScr_TrapWeather::OnPrepare (bool state)
 {
-	float freq = GetObjectParamFloat (ObjId (),
-		bState ? "precip_freq_on" : "precip_freq_off", -1.0);
-	float speed = GetObjectParamFloat (ObjId (),
-		bState ? "precip_speed_on" : "precip_speed_off", -1.0);
+	float _freq = GetObjectParamFloat (ObjId (),
+		state ? "precip_freq_on" : "precip_freq_off", -1.0);
+	float _speed = GetObjectParamFloat (ObjId (),
+		state ? "precip_speed_on" : "precip_speed_off", -1.0);
 
-	if (freq < 0.0 && speed < 0.0) return 1; // either may be set
+	if (_freq < 0.0 && _speed < 0.0) return false;
+
+	DarkWeather current;
+	start_freq = current.precip_freq;
+	start_speed = current.precip_speed;
+
+	if (_freq >= 0.0)
+	{
+		DEBUG_PRINTF ("setting precipitation frequency to %f drops/sec",
+			_freq);
+		end_freq = _freq;
+	}
+	else
+		end_freq = start_freq;
+
+	if (_speed >= 0.0)
+	{
+		DEBUG_PRINTF ("setting precipitation speed to %f ft/sec",
+			_speed);
+		end_speed = _speed;
+	}
+	else
+		end_speed = start_speed;
+
+	return true;
+}
+
+bool
+cScr_TrapWeather::OnIncrement ()
+{
+	float freq = Interpolate (start_freq, end_freq),
+		speed = Interpolate (start_speed, end_speed);
 
 	DarkWeather weather;
-
-	if (freq >= 0.0)
-	{
-		DEBUG_PRINTF ("setting precipitation frequency to %f", freq);
-		weather.precip_freq = freq;
-	}
-
-	if (speed >= 0.0)
-	{
-		DEBUG_PRINTF ("setting precipitation speed to %f", speed);
-		weather.precip_speed = speed;
-	}
-
+	weather.precip_freq = freq;
+	weather.precip_speed = speed;
 	weather.ApplyToMission ();
-	return 0;
+	return true;
 }
 

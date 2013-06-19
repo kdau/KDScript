@@ -32,8 +32,57 @@
 
 
 /**
+ * AbstractScript: KDTransitionTrap
+ * Inherits: BaseTrap
+ * Parameter: transition (time) - Length of the transition, in milliseconds.
+ *
+ * Abstract base script for traps that create smooth transitions between two
+ * states. The length of the transition in milliseconds is specified in the
+ * "transition" parameter. If that parameter is undefined or set to zero, the
+ * transition will be instantaneous. The usual trap control flags, locking, and
+ * timing (before the start of the transition, not its length) are respected.
+ *
+ * A concrete script inheriting from TransitionTrap should implement OnPrepare
+ * and OnIncrement, making preliminary calculations for the transition in the
+ * former and actually performing the change of state in the latter. OnPrepare
+ * has an argument "state" which will indicate the trap's new on/off state.
+ * The GetProgress method returns a float value ranging linearly from 0.0 at the
+ * start of the transition to 1.0 at its end. The GetIncrementDelta method can
+ * be overridden to change the time between increments in milliseconds.
+ */
+#if !SCR_GENSCRIPTS
+class cScr_TransitionTrap : public virtual cBaseTrap
+{
+public:
+	cScr_TransitionTrap (const char* pszName, int iHostObjId);
+
+protected:
+	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
+
+	virtual bool OnPrepare (bool state) = 0;
+	virtual bool OnIncrement () = 0;
+
+	float GetProgress ();
+	float Interpolate (float start, float end)
+		{ return start + GetProgress () * (end - start); }
+
+	virtual int GetIncrementDelta () const { return 50; }
+
+private:
+	void Increment ();
+
+	script_handle<tScrTimer> timer;
+	script_int time_total, time_remaining;
+};
+#endif // !SCR_GENSCRIPTS
+
+
+
+/**
  * Script: KDGetInfo
  * Inherits: BaseScript
+ * Quest Vars: (see below)
  *
  * Every time the mission is loaded or game mode is entered, populates a number
  * of mission quest variables with information about the game environment. These
@@ -112,50 +161,46 @@ GEN_FACTORY("KDTrapEnvMapTexture","BaseScript",cScr_TrapEnvMapTexture)
 
 /**
  * Script: KDTrapFog
- * Inherits: BaseTrap
+ * Inherits: KDTransitionTrap
  * Parameter: fog_zone (integer) - The zone to change the fog for (0-8).
- * Parameter: fog_time (time) - Length of the fog change, in milliseconds.
  * Parameter: fog_color_on (color) - The color of fog to set when turned on.
  * Parameter: fog_dist_on (real) - The distance of fog to set when turned on.
  * Parameter: fog_color_off (color) - The color of fog to set when turned off.
  * Parameter: fog_dist_off (real) - The distance of fog to set when turned off.
  *
  * When triggered, changes the color and distance of fog for the specified fog
- * zone. If the fog_zone parameter is 0, the global fog is changed. (The
- * default fog, both global and per zone, is defined in the Mission Variables ->
- * Fog Zones dialog.) The fog_time parameter specifies how long it will take to
- * reach the new fog values; if it is set to 0 or undefined, the change will be
- * instant.
+ * zone. If the fog_zone parameter is 0 or undefined, the global fog is changed.
+ * (The initial fog, both global and per zone, is defined in the Mission
+ * Variables -> Fog Zones dialog.) See TransitionTrap for more behavior details.
  *
  * When turned on, sets the fog color and distance for the specified zone to the
- * values of the fog_color_on and fog_dist_on parameters, if both are defined.
- * When turned off, sets the fog to fog_color_off and fog_dist_off, if defined.
- * If fog_dist_{on,off} is 0.0, fog is turned off completely. (Transitions to
- * and from a lack of fog are handled correctly.) The usual trap control flags,
- * locking, and timing (before the start of the effect, not its duration) are
- * respected.
+ * values of the fog_color_on and fog_dist_on parameters, respectively. (If the
+ * color is undefined or black #000000, it will not be changed. If the distance
+ * is undefined or less than zero, it will not be changed.) If the specified
+ * distance is 0.0, fog is turned off completely; transitions to and from
+ * turned-off fog are handled correctly.
+ *
+ * When turned off, sets the fog color and distance to fog_color_off and
+ * fog_dist_off, with the same behaviors as above.
  */
 #if !SCR_GENSCRIPTS
-class cScr_TrapFog : public virtual cBaseTrap
+class cScr_TrapFog : public cScr_TransitionTrap
 {
 public:
 	cScr_TrapFog (const char* pszName, int iHostObjId);
 
 protected:
-	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
+	virtual bool OnPrepare (bool state);
+	virtual bool OnIncrement ();
 
 private:
-	void IncrementFog (int time_remaining);
-
-	script_handle<tScrTimer> timer;
-	script_int zone, time_total,
+	script_int zone,
 		start_red, start_green, start_blue,
 		end_red, end_green, end_blue;
 	script_float start_dist, end_dist;
 };
 #else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapFog","BaseScript",cScr_TrapFog)
+GEN_FACTORY("KDTrapFog","KDTransitionTrap",cScr_TrapFog)
 #endif // SCR_GENSCRIPTS
 
 
@@ -196,7 +241,7 @@ GEN_FACTORY("KDTrapNextMission","BaseScript",cScr_TrapNextMission)
 
 /**
  * Script: KDTrapWeather
- * Inherits: BaseTrap
+ * Inherits: KDTransitionTrap
  * Parameter: precip_freq_on (real) - The frequency to set when turned on.
  * Parameter: precip_speed_on (real) - The speed to set when turned on.
  * Parameter: precip_freq_off (real) - The frequency to set when turned off.
@@ -206,26 +251,33 @@ GEN_FACTORY("KDTrapNextMission","BaseScript",cScr_TrapNextMission)
  * The frequency is expressed in number of new drops per second, while the speed
  * is expressed in feet per second. Both values must be greater than or equal
  * to zero. (The default weather, including a number of other values, is defined
- * in the Mission Variables -> Weather dialog.)
+ * in the Mission Variables -> Weather dialog.) See TransitionTrap for more
+ * behavior details.
  *
  * When turned on, sets the precipitation frequency and speed to the values of
- * either or both of the precip_freq_on and precip_speed_on parameters, if
- * defined. When turned off, sets the precipitation to precip_freq_off and
- * precip_speed_off, if defined. If precip_freq_{on,off} is 0.0, precipitation
- * is turned off completely. The usual trap control flags, locking, and timing
- * are respected.
+ * the precip_freq_on and precip_speed_on parameters, respectively. (If either
+ * is not defined or is less than zero, it will not be changed.) If the defined
+ * frequency is 0.0, precipitation will be turned off completely.
+ *
+ * When turned off, sets the precipitation frequency and speed to
+ * precip_freq_off and precip_speed_off, with the same behaviors as above.
  */
 #if !SCR_GENSCRIPTS
-class cScr_TrapWeather : public virtual cBaseTrap
+class cScr_TrapWeather : public cScr_TransitionTrap
 {
 public:
 	cScr_TrapWeather (const char* pszName, int iHostObjId);
 
 protected:
-	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual bool OnPrepare (bool state);
+	virtual bool OnIncrement ();
+
+private:
+	script_float start_freq, end_freq,
+		start_speed, end_speed;
 };
 #else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapWeather","BaseScript",cScr_TrapWeather)
+GEN_FACTORY("KDTrapWeather","KDTransitionTrap",cScr_TrapWeather)
 #endif // SCR_GENSCRIPTS
 
 
