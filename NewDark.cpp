@@ -110,7 +110,7 @@ cScr_GetInfo::cScr_GetInfo (const char* pszName, int iHostObjId)
 long
 cScr_GetInfo::OnBeginScript (sScrMsg*, cMultiParm&)
 {
-	UpdateVariables ();
+	SetTimedMessage ("UpdateVariables", 10, kSTM_OneShot);
 	return 0;
 }
 
@@ -120,6 +120,18 @@ cScr_GetInfo::OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg, cMultiParm&)
 	if (pMsg->fResuming)
 		UpdateVariables ();
 	return 0;
+}
+
+long
+cScr_GetInfo::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
+{
+	if (!strcmp (pMsg->name, "UpdateVariables"))
+	{
+		UpdateVariables ();
+		return 0;
+	}
+	else
+		return cBaseScript::OnTimer (pMsg, mpReply);
 }
 
 void
@@ -302,7 +314,11 @@ struct DarkWeather
 	void SetFromMission ();
 	void ApplyToMission () const;
 
-	int precip_type;
+	enum PrecipType
+	{
+		PRECIP_SNOW = 0,
+		PRECIP_RAIN = 1
+	} precip_type;
 	float precip_freq;
 	float precip_speed;
 	float vis_dist;
@@ -320,11 +336,11 @@ struct DarkWeather
 };
 
 DarkWeather::DarkWeather ()
-	: precip_type (0), precip_freq (0.0), precip_speed (0.0), vis_dist (0.0),
-	  rend_radius (0.0), alpha (0.0), brightness (0.0), snow_jitter (0.0),
-	  rain_length (0.0), splash_freq (0.0), splash_radius (0.0),
-	  splash_height (0.0), splash_duration (0.0), texture (),
-	  wind (0.0, 0.0, 0.0)
+	: precip_type (PRECIP_SNOW), precip_freq (0.0), precip_speed (0.0),
+	  vis_dist (0.0), rend_radius (0.0), alpha (0.0), brightness (0.0),
+	  snow_jitter (0.0), rain_length (0.0), splash_freq (0.0),
+	  splash_radius (0.0), splash_height (0.0), splash_duration (0.0),
+	  texture (), wind (0.0, 0.0, 0.0)
 {
 	SetFromMission ();
 }
@@ -333,10 +349,12 @@ void
 DarkWeather::SetFromMission ()
 {
 	SService<IEngineSrv> pES (g_pScriptManager);
-	pES->GetWeather (precip_type, precip_freq, precip_speed, vis_dist,
+	int _type;
+	pES->GetWeather (_type, precip_freq, precip_speed, vis_dist,
 		rend_radius, alpha, brightness, snow_jitter, rain_length,
 		splash_freq, splash_radius, splash_height, splash_duration,
 		texture, wind);
+	precip_type = (PrecipType) _type;
 }
 
 void
@@ -401,12 +419,9 @@ cScr_TrapWeather::OnPrepare (bool state)
 bool
 cScr_TrapWeather::OnIncrement ()
 {
-	float freq = Interpolate (start_freq, end_freq),
-		speed = Interpolate (start_speed, end_speed);
-
 	DarkWeather weather;
-	weather.precip_freq = freq;
-	weather.precip_speed = speed;
+	weather.precip_freq = Interpolate (start_freq, end_freq);
+	weather.precip_speed = Interpolate (start_speed, end_speed);
 	weather.ApplyToMission ();
 	return true;
 }

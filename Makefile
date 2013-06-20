@@ -82,10 +82,13 @@ BaseTrap.o: BaseTrap.h BaseScript.h Script.h
 CommonScripts.o: CommonScripts.h
 
 KDSCRIPT_OBJS = \
-	NewDark.o
+	NewDark.o \
+	Other.o
 KDSCRIPT_HEADERS = \
-	NewDark.h
+	NewDark.h \
+	Other.h
 NewDark.o: NewDark.h BaseScript.h Script.h BaseTrap.h scriptvars.h utils.h
+Other.o: Other.h BaseScript.h Script.h utils.h
 
 MODULE_OBJS = \
 	Allocator.o \

@@ -56,13 +56,18 @@
  * to be a member. Plus, it frees you from having to write the factory into your
  * class definition.
  */
+
 #include "BaseScript.h"
 #include "BaseTrap.h"
+
 #include "NewDark.h"
+#include "Other.h"
 
 #undef BASESCRIPT_H
 #undef BASETRAP_H
+
 #undef NEWDARK_H
+#undef OTHER_H
 
 #if defined(SCR_GENSCRIPTFACTORY)
 

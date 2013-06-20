@@ -116,6 +116,7 @@ protected:
 	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg,
 		cMultiParm& mpReply);
+	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
 
 private:
 	void UpdateVariables ();
@@ -154,7 +155,7 @@ protected:
 	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
 };
 #else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapEnvMapTexture","BaseScript",cScr_TrapEnvMapTexture)
+GEN_FACTORY("KDTrapEnvMapTexture","BaseTrap",cScr_TrapEnvMapTexture)
 #endif // SCR_GENSCRIPTS
 
 
@@ -212,9 +213,9 @@ GEN_FACTORY("KDTrapFog","KDTransitionTrap",cScr_TrapFog)
  * Parameter: next_mission_off (integer) - The mission to set when turned off.
  *
  * When triggered, changes which mission will begin after the current mission
- * ends. (By default, the next mission is one past the current mission, or else
- * the mission specified in <missflag.str> in "miss_N_next" [where N is the
- * current mission].)
+ * ends. (By default, the next mission is the mission specified in missflag.str
+ * in "miss_N_next" [where N is the current mission], or else one mission past
+ * the current mission.)
  *
  * When turned on, sets the next mission to the value of the next_mission_on
  * parameter, if defined; when turned off, sets it to next_mission_off. The
@@ -222,7 +223,10 @@ GEN_FACTORY("KDTrapFog","KDTransitionTrap",cScr_TrapFog)
  *
  * IMPORTANT: The engine does not perform any validation on mission numbers.
  * If the next mission is set to a nonexistent mission, the game will crash
- * as soon as it tries to load it.
+ * as soon as it tries to load it. If the chosen mission has the "skip" flag
+ * set, it will still be skipped (e.g. choosing 3 in T2 will get mission 4).
+ * If the mission calling this script has the "end" flag, this script will have
+ * no effect.
  */
 #if !SCR_GENSCRIPTS
 class cScr_TrapNextMission : public virtual cBaseTrap
@@ -234,7 +238,7 @@ protected:
 	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
 };
 #else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapNextMission","BaseScript",cScr_TrapNextMission)
+GEN_FACTORY("KDTrapNextMission","BaseTrap",cScr_TrapNextMission)
 #endif // SCR_GENSCRIPTS
 
 
