@@ -29,32 +29,6 @@
 
 
 
-/**
- * Script: KDShortText
- * Inherits: BaseScript
- * Property: Book\Text - The name of the message in short.str to display.
- * Parameter: text (string) - The name of the message from short.str to display.
- * Parameter: color (color) - The color to display the message in.
- * Parameter: time (time) - How long to display the message, in milliseconds.
- * Parameter: on_frob (bool) - Whether to display the message when frobbed.
- * Parameter: on_focus (bool) - Whether to display the message when highlighted.
- *
- * When triggered, displays text in an on-screen message of the specified color
- * for the specified duration. The Book\Text property, if present, gives the
- * name of a message in the strings\short.str file. (If not, the text parameter
- * is consulted instead.) This allows for the cleaner updating and translation
- * of short readables without requiring a separate .str file for each.
- *
- * If the color parameter is not specified, the message is displayed in white.
- * If the time parameter is not specified, the message is displayed for a time
- * calculated based on its length.
- *
- * If on_frob is true or not specified, and the WorldAction of the object's
- * FrobInfo includes Script, the message will be displayed when the object is
- * frobbed. If on_focus is true or not specified, and the WorldAction of the
- * object's FrobInfo includes FocusScript, the message will be displayed when
- * the object is highlighted (focused/pointed to).
- */
 #if !SCR_GENSCRIPTS
 class cScr_ShortText : public virtual cBaseScript
 {

@@ -187,7 +187,7 @@ cScr_TrapEnvMapTexture::cScr_TrapEnvMapTexture
 long
 cScr_TrapEnvMapTexture::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 {
-	int zone = GetObjectParamInt (ObjId (), "env_map_zone", -1);
+	int zone = GetObjectParamInt (ObjId (), "env_map_zone", 0);
 	char* texture = GetObjectParamString (ObjId (),
 		bState ? "env_map_on" : "env_map_off", NULL);
 
