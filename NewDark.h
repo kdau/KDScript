@@ -87,12 +87,14 @@ public:
 
 protected:
 	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg,
 		cMultiParm& mpReply);
 	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
 
 private:
 	void UpdateVariables ();
+	bool did_initial_update; // not persistent
 };
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("KDGetInfo","BaseScript",cScr_GetInfo)

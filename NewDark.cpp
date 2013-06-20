@@ -104,13 +104,25 @@ cScr_TransitionTrap::Increment ()
 /* KDGetInfo */
 
 cScr_GetInfo::cScr_GetInfo (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId)
+	: cBaseScript (pszName, iHostObjId),
+	  did_initial_update (false)
 {}
 
 long
 cScr_GetInfo::OnBeginScript (sScrMsg*, cMultiParm&)
 {
 	SetTimedMessage ("UpdateVariables", 10, kSTM_OneShot);
+	return 0;
+}
+
+long
+cScr_GetInfo::OnSim (sSimMsg* pMsg, cMultiParm&)
+{
+	if (pMsg->fStarting && !did_initial_update)
+	{
+		did_initial_update = true;
+		UpdateVariables ();
+	}
 	return 0;
 }
 
@@ -125,8 +137,9 @@ cScr_GetInfo::OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg, cMultiParm&)
 long
 cScr_GetInfo::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
 {
-	if (!strcmp (pMsg->name, "UpdateVariables"))
+	if (!strcmp (pMsg->name, "UpdateVariables") && !did_initial_update)
 	{
+		did_initial_update = true;
 		UpdateVariables ();
 		return 0;
 	}

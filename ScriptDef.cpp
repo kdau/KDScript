@@ -60,12 +60,14 @@
 #include "BaseScript.h"
 #include "BaseTrap.h"
 
+#include "CustomHUD.h"
 #include "NewDark.h"
 #include "Other.h"
 
 #undef BASESCRIPT_H
 #undef BASETRAP_H
 
+#undef CUSTOMHUD_H
 #undef NEWDARK_H
 #undef OTHER_H
 

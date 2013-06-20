@@ -29,7 +29,6 @@ MODULE_NAME = KDScript
 
 LGDIR = lg
 SCRLIBDIR = ScriptLib
-DH2DIR = DH2
 
 PREFIX = i686-w64-mingw32-
 CC = $(PREFIX)gcc
@@ -44,9 +43,9 @@ DEFINES = -DWINVER=0x0400 -D_WIN32_WINNT=0x0400 -DWIN32_LEAN_AND_MEAN \
 CXXDEFINES = -DMODULE_NAME=\"$(MODULE_NAME)\"
 RCDEFINES = -DMODULE_NAME=\\\"$(MODULE_NAME)\\\"
 
-INCLUDES = -I. -I$(LGDIR) -I$(SCRLIBDIR) -I$(DH2DIR)
-LIBDIRS = -L. -L$(LGDIR) -L$(SCRLIBDIR) -L$(DH2DIR)
-LIBS = -ldh2 -luuid
+INCLUDES = -I. -I$(LGDIR) -I$(SCRLIBDIR)
+LIBDIRS = -L. -L$(LGDIR) -L$(SCRLIBDIR)
+LIBS = -luuid
 
 # If you care for this... # -Wno-unused-variable
 # A lot of the callbacks have unused parameters, so I turn that off.
@@ -82,11 +81,14 @@ BaseTrap.o: BaseTrap.h BaseScript.h Script.h
 CommonScripts.o: CommonScripts.h
 
 KDSCRIPT_OBJS = \
+	CustomHUD.o \
 	NewDark.o \
 	Other.o
 KDSCRIPT_HEADERS = \
+	CustomHUD.h \
 	NewDark.h \
 	Other.h
+CustomHUD.o: CustomHUD.h BaseScript.h Script.h scriptvars.h utils.h
 NewDark.o: NewDark.h BaseScript.h Script.h BaseTrap.h scriptvars.h utils.h
 Other.o: Other.h BaseScript.h Script.h utils.h
 
