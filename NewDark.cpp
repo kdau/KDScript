@@ -42,19 +42,13 @@ cScr_TransitionTrap::cScr_TransitionTrap (const char* pszName, int iHostObjId)
 long
 cScr_TransitionTrap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 {
-	if (!OnPrepare (bState))
-		return 1;
-
-	if (timer.Valid ()) // stop any previous transition
+	if (OnPrepare (bState))
 	{
-		KillTimedMessage (timer);
-		timer.Clear ();
+		Begin ();
+		return 0;
 	}
-
-	time_remaining = GetObjectParamTime (ObjId (), "transition", 0);
-	Increment ();
-
-	return 0;
+	else
+		return 1;
 }
 
 long
@@ -68,6 +62,19 @@ cScr_TransitionTrap::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
 	}
 	else
 		return cBaseTrap::OnTimer (pMsg, mpReply);
+}
+
+void
+cScr_TransitionTrap::Begin ()
+{
+	if (timer.Valid ()) // stop any previous transition
+	{
+		KillTimedMessage (timer);
+		timer.Clear ();
+	}
+
+	time_remaining = GetObjectParamTime (ObjId (), "transition", 0);
+	Increment ();
 }
 
 float
@@ -104,8 +111,7 @@ cScr_TransitionTrap::Increment ()
 /* KDGetInfo */
 
 cScr_GetInfo::cScr_GetInfo (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  did_initial_update (false)
+	: cBaseScript (pszName, iHostObjId)
 {}
 
 long
@@ -118,11 +124,8 @@ cScr_GetInfo::OnBeginScript (sScrMsg*, cMultiParm&)
 long
 cScr_GetInfo::OnSim (sSimMsg* pMsg, cMultiParm&)
 {
-	if (pMsg->fStarting && !did_initial_update)
-	{
-		did_initial_update = true;
+	if (pMsg->fStarting)
 		UpdateVariables ();
-	}
 	return 0;
 }
 
@@ -137,9 +140,8 @@ cScr_GetInfo::OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg, cMultiParm&)
 long
 cScr_GetInfo::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
 {
-	if (!strcmp (pMsg->name, "UpdateVariables") && !did_initial_update)
+	if (!strcmp (pMsg->name, "UpdateVariables"))
 	{
-		did_initial_update = true;
 		UpdateVariables ();
 		return 0;
 	}
@@ -185,6 +187,116 @@ cScr_GetInfo::UpdateVariables ()
 	pVS->GetVersion (version_major, version_minor);
 	pQS->Set ("info_version_major", version_major, kQuestDataMission);
 	pQS->Set ("info_version_minor", version_minor, kQuestDataMission);
+}
+
+
+
+/* KDSyncGlobalFog */
+
+cScr_SyncGlobalFog::cScr_SyncGlobalFog (const char* pszName, int iHostObjId)
+	: cBaseScript (pszName, iHostObjId),
+	  cBaseTrap (pszName, iHostObjId),
+	  cScr_TransitionTrap (pszName, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, last_room_zone, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, start_red, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, start_green, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, start_blue, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, end_red, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, end_green, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, end_blue, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, start_dist, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, end_dist, iHostObjId)
+{}
+
+long
+cScr_SyncGlobalFog::OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm&)
+{
+	SService<IPropertySrv> pPS (g_pScriptManager);
+	cMultiParm _zone; pPS->Get (_zone, pMsg->ToObjId, "Weather", "fog");
+	if (_zone.type != kMT_Int) return 1;
+
+	int new_zone = int (_zone) - 1; // disabled=-1, global=1, zone_1=2, etc.
+	if (last_room_zone.Valid () && last_room_zone == new_zone)
+		return 1; // no change
+
+	if (new_zone == -1) // disabled
+		Sync (0, 0, 0, 0.0);
+	else if (new_zone >= 1 && new_zone <= 8)
+	{
+		SService<IEngineSrv> pES (g_pScriptManager);
+		int _r, _g, _b; float _d;
+		pES->GetFogZone (new_zone, _r, _g, _b, _d);
+		Sync (_r, _g, _b, _d);
+	}
+	else
+		return 1;
+
+	last_room_zone = new_zone;
+	return 0;
+}
+
+long
+cScr_SyncGlobalFog::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
+{
+	if (!strcmp (pMsg->message, "FogZoneChanging") &&
+	    pMsg->data.type == kMT_Int && last_room_zone == int (pMsg->data) &&
+	    pMsg->data2.type == kMT_Int && pMsg->data3.type == kMT_Float)
+	{
+		ulong color = (int) pMsg->data2;
+		Sync (GetRValue (color), GetGValue (color), GetBValue (color),
+			(float) pMsg->data3);
+		return 0;
+	}
+	else
+		return cBaseScript::OnMessage (pMsg, mpReply);
+}
+
+void
+cScr_SyncGlobalFog::Sync (int red, int green, int blue, float dist)
+{
+	bool sync_color = GetObjectParamBool (ObjId (), "sync_fog_color", true),
+		sync_dist = GetObjectParamBool (ObjId (), "sync_fog_dist", true);
+
+	SService<IEngineSrv> pES (g_pScriptManager);
+	int _sr, _sg, _sb; float _sd;
+	pES->GetFog (_sr, _sg, _sb, _sd);
+
+	start_red = _sr;
+	start_green = _sg;
+	start_blue = _sb;
+	start_dist = _sd;
+
+	end_red = sync_color ? red : start_red;
+	end_green = sync_color ? green : start_green;
+	end_blue = sync_color ? blue : start_blue;
+
+	float mult = GetObjectParamFloat (ObjId (), "fog_dist_mult", 1.0),
+		add = GetObjectParamFloat (ObjId (), "fog_dist_add", 0.0);
+	end_dist = (sync_dist || start_dist == 0.0 || dist == 0.0)
+		? (dist == 0.0 ? dist : dist * mult + add) : start_dist;
+
+	DEBUG_PRINTF ("synchronizing global fog to zone %d: RGB %d,%d,%d at distance %f",
+		(int) last_room_zone, (int) end_red, (int) end_green, (int) end_blue,
+		(float) end_dist);
+
+	Begin ();
+}
+
+bool
+cScr_SyncGlobalFog::OnIncrement ()
+{
+	int red = Interpolate (start_red, end_red),
+		green = Interpolate (start_green, end_green),
+		blue = Interpolate (start_blue, end_blue);
+
+	float fake_end_dist = (end_dist == 0.0 && GetProgress () < 1.0)
+		? 100000.0 : end_dist;
+	float dist = Interpolate (start_dist, fake_end_dist);
+
+	SService<IEngineSrv> pES (g_pScriptManager);
+	pES->SetFog (red, green, blue, dist);
+
+	return true;
 }
 
 
@@ -268,6 +380,13 @@ cScr_TrapFog::OnPrepare (bool state)
 	DEBUG_PRINTF ("setting fog for zone %d to RGB %d,%d,%d at distance %f",
 		(int) zone, (int) end_red, (int) end_green, (int) end_blue,
 		(float) end_dist);
+
+	// notify KDSyncGlobalFog if present
+	object player = StrToObject ("Player");
+	if (player)
+		SimpleSend (ObjId (), player, "FogZoneChanging", (int) zone,
+			RGB ((int) end_red, (int) end_green, (int) end_blue),
+			(float) end_dist);
 
 	return true;
 }

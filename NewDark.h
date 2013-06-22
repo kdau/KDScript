@@ -49,6 +49,10 @@
  * The GetProgress method returns a float value ranging linearly from 0.0 at the
  * start of the transition to 1.0 at its end. The GetIncrementDelta method can
  * be overridden to change the time between increments in milliseconds.
+ *
+ * A non-trap script may inherit from TransitionTrap. It should return false
+ * from OnPrepare (to prevent response to TurnOn/TurnOff) and call Begin after
+ * its own preparations to start each transition.
  */
 #if !SCR_GENSCRIPTS
 class cScr_TransitionTrap : public virtual cBaseTrap
@@ -61,6 +65,7 @@ protected:
 	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
 
 	virtual bool OnPrepare (bool state) = 0;
+	void Begin ();
 	virtual bool OnIncrement () = 0;
 
 	float GetProgress ();
@@ -94,10 +99,35 @@ protected:
 
 private:
 	void UpdateVariables ();
-	bool did_initial_update; // not persistent
 };
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("KDGetInfo","BaseScript",cScr_GetInfo)
+#endif // SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
+class cScr_SyncGlobalFog : public cScr_TransitionTrap
+{
+public:
+	cScr_SyncGlobalFog (const char* pszName, int iHostObjId);
+
+protected:
+	virtual long OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+
+	void Sync (int red, int green, int blue, float dist);
+	virtual bool OnPrepare (bool) { return false; } // not really a trap
+	virtual bool OnIncrement ();
+
+private:
+	script_int last_room_zone,
+		start_red, start_green, start_blue,
+		end_red, end_green, end_blue;
+	script_float start_dist, end_dist;
+};
+#else // SCR_GENSCRIPTS
+GEN_FACTORY("KDSyncGlobalFog","KDTransitionTrap",cScr_SyncGlobalFog)
 #endif // SCR_GENSCRIPTS
 
 
