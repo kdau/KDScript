@@ -329,16 +329,15 @@ cScr_SyncGlobalFog::OnIncrement ()
 
 
 
-/* KDTrapEnvMapTexture */
+/* KDTrapEnvMap */
 
-cScr_TrapEnvMapTexture::cScr_TrapEnvMapTexture
-		(const char* pszName, int iHostObjId)
+cScr_TrapEnvMap::cScr_TrapEnvMap (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cBaseTrap (pszName, iHostObjId)
 {}
 
 long
-cScr_TrapEnvMapTexture::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
+cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 {
 	int zone = GetObjectParamInt (ObjId (), "env_map_zone", 0);
 	char* texture = GetObjectParamString (ObjId (),
@@ -346,7 +345,7 @@ cScr_TrapEnvMapTexture::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 
 	if (zone < 0 || zone > 63 || !texture) return 1;
 
-	DEBUG_PRINTF ("setting cubemap texture for enviroment zone %d to `%s'",
+	DEBUG_PRINTF ("setting texture for enviroment zone %d to `%s'",
 		zone, texture);
 
 	SService<IEngineSrv> pES (g_pScriptManager);

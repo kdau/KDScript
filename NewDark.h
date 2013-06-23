@@ -135,16 +135,16 @@ GEN_FACTORY("KDSyncGlobalFog","KDTransitionTrap",cScr_SyncGlobalFog)
 
 
 #if !SCR_GENSCRIPTS
-class cScr_TrapEnvMapTexture : public virtual cBaseTrap
+class cScr_TrapEnvMap : public virtual cBaseTrap
 {
 public:
-	cScr_TrapEnvMapTexture (const char* pszName, int iHostObjId);
+	cScr_TrapEnvMap (const char* pszName, int iHostObjId);
 
 protected:
 	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
 };
 #else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapEnvMapTexture","BaseTrap",cScr_TrapEnvMapTexture)
+GEN_FACTORY("KDTrapEnvMap","BaseTrap",cScr_TrapEnvMap)
 #endif // SCR_GENSCRIPTS
 
 
