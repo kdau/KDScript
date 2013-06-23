@@ -245,26 +245,29 @@ cScr_SyncGlobalFog::OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm&)
 	if (last_room_zone.Valid () && last_room_zone == new_zone)
 		return 1; // no change
 
+	int _r, _g, _b; float _d;
 	if (new_zone == -1) // disabled
-		Sync (-1, -1, -1, 0.0); // don't change color
+	{
+		_r = _g = _b = -1; // don't change color
+		_d = 0.0;
+	}
 	else if (new_zone >= 1 && new_zone <= 8)
 	{
 		SService<IEngineSrv> pES (g_pScriptManager);
-		int _r, _g, _b; float _d;
 		pES->GetFogZone (new_zone, _r, _g, _b, _d);
-		Sync (_r, _g, _b, _d);
 	}
 	else
 		return 1;
 
 	last_room_zone = new_zone;
+	Sync (_r, _g, _b, _d);
 	return 0;
 }
 
 long
 cScr_SyncGlobalFog::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	if (!strcmp (pMsg->message, "FogZoneChanging") &&
+	if (!strcmp (pMsg->message, "FogZoneChanging") && last_room_zone.Valid () &&
 	    pMsg->data.type == kMT_Int && last_room_zone == int (pMsg->data) &&
 	    pMsg->data2.type == kMT_Int && pMsg->data3.type == kMT_Float)
 	{
