@@ -96,9 +96,11 @@ protected:
 	virtual long OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg,
 		cMultiParm& mpReply);
 	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 
 private:
 	void UpdateVariables ();
+	void DeleteVariables ();
 };
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("KDGetInfo","BaseScript",cScr_GetInfo)

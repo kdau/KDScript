@@ -149,6 +149,13 @@ cScr_GetInfo::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
 		return cBaseScript::OnTimer (pMsg, mpReply);
 }
 
+long
+cScr_GetInfo::OnEndScript (sScrMsg*, cMultiParm&)
+{
+	DeleteVariables ();
+	return 0;
+}
+
 void
 cScr_GetInfo::UpdateVariables ()
 {
@@ -189,6 +196,25 @@ cScr_GetInfo::UpdateVariables ()
 	pQS->Set ("info_version_minor", version_minor, kQuestDataMission);
 }
 
+void
+cScr_GetInfo::DeleteVariables ()
+{
+	DEBUG_STRING ("deleting info_* quest variables");
+	SService<IQuestSrv> pQS (g_pScriptManager);
+	pQS->Delete ("info_directx_version");
+	pQS->Delete ("info_display_height");
+	pQS->Delete ("info_display_width");
+	pQS->Delete ("info_has_eax");
+	pQS->Delete ("info_has_fog");
+	pQS->Delete ("info_has_hw3d");
+	pQS->Delete ("info_has_sky");
+	pQS->Delete ("info_has_weather");
+	pQS->Delete ("info_mission");
+	pQS->Delete ("info_mode");
+	pQS->Delete ("info_version_major");
+	pQS->Delete ("info_version_minor");
+}
+
 
 
 /* KDSyncGlobalFog */
@@ -220,7 +246,7 @@ cScr_SyncGlobalFog::OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm&)
 		return 1; // no change
 
 	if (new_zone == -1) // disabled
-		Sync (0, 0, 0, 0.0);
+		Sync (-1, -1, -1, 0.0); // don't change color
 	else if (new_zone >= 1 && new_zone <= 8)
 	{
 		SService<IEngineSrv> pES (g_pScriptManager);
@@ -256,6 +282,8 @@ cScr_SyncGlobalFog::Sync (int red, int green, int blue, float dist)
 {
 	bool sync_color = GetObjectParamBool (ObjId (), "sync_fog_color", true),
 		sync_dist = GetObjectParamBool (ObjId (), "sync_fog_dist", true);
+	if (red < 0 || green < 0 || blue < 0) sync_color = false;
+	if (dist < 0.0) sync_dist = false;
 
 	SService<IEngineSrv> pES (g_pScriptManager);
 	int _sr, _sg, _sb; float _sd;
@@ -266,18 +294,18 @@ cScr_SyncGlobalFog::Sync (int red, int green, int blue, float dist)
 	start_blue = _sb;
 	start_dist = _sd;
 
-	end_red = sync_color ? red : start_red;
-	end_green = sync_color ? green : start_green;
-	end_blue = sync_color ? blue : start_blue;
+	int _er, _eg, _eb;
+	end_red = _er = sync_color ? red : start_red;
+	end_green = _eg = sync_color ? green : start_green;
+	end_blue = _eb = sync_color ? blue : start_blue;
 
-	float mult = GetObjectParamFloat (ObjId (), "fog_dist_mult", 1.0),
+	float _ed, mult = GetObjectParamFloat (ObjId (), "fog_dist_mult", 1.0),
 		add = GetObjectParamFloat (ObjId (), "fog_dist_add", 0.0);
-	end_dist = (sync_dist || start_dist == 0.0 || dist == 0.0)
+	end_dist = _ed = (sync_dist || start_dist == 0.0 || dist == 0.0)
 		? (dist == 0.0 ? dist : dist * mult + add) : start_dist;
 
 	DEBUG_PRINTF ("synchronizing global fog to zone %d: RGB %d,%d,%d at distance %f",
-		(int) last_room_zone, (int) end_red, (int) end_green, (int) end_blue,
-		(float) end_dist);
+		(int) last_room_zone, _er, _eg, _eb, _ed);
 
 	Begin ();
 }
