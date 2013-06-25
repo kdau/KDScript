@@ -237,11 +237,13 @@ cScr_SyncGlobalFog::cScr_SyncGlobalFog (const char* pszName, int iHostObjId)
 long
 cScr_SyncGlobalFog::OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm&)
 {
+	if (pMsg->ObjType != sRoomMsg::kPlayer) return 1; // we're not the player yet
+
 	SService<IPropertySrv> pPS (g_pScriptManager);
 	cMultiParm _zone; pPS->Get (_zone, pMsg->ToObjId, "Weather", "fog");
 	if (_zone.type != kMT_Int) return 1;
 
-	int new_zone = int (_zone) - 1; // disabled=-1, global=1, zone_1=2, etc.
+	int new_zone = int (_zone) - 1; // disabled = -1, global = 1, zone_1 =2, etc.
 	if (last_room_zone.Valid () && last_room_zone == new_zone)
 		return 1; // no change
 
