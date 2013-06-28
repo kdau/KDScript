@@ -131,6 +131,13 @@ bool ObjectExists (object target);
 cAnsiStr ObjectToStr (object target);
 
 /**
+ * InheritsFrom
+ *
+ * Returns whether the object inherits from the named archetype or metaproperty.
+ */
+bool InheritsFrom (const char* ancestor, object target);
+
+/**
  * FormatObjectName
  *
  * Returns the name of a named object or, if unnamed, its archetype's name
@@ -161,4 +168,70 @@ void DestroyLink (link destroy);
  * color value, and returns the value in COLORREF format.
  */
 ulong GetObjectParamColor (object target, const char* param, ulong Default = 0);
+
+
+
+/**
+ * Iterator: LinkIter
+ *
+ * Iterates through links that share a source, destination, and/or flavor.
+ * Subclasses can further limit the set (for example, based on data) by
+ * overriding the Matches function (and calling AdvanceToMatch in their ctors).
+ */
+#if !SCR_GENSCRIPTS
+class LinkIter
+{
+public:
+	LinkIter (object source, object dest, const char* flavor);
+	virtual ~LinkIter () noexcept;
+
+	virtual operator bool () const;
+	virtual LinkIter& operator++ ();
+
+	operator link () const;
+	object Source () const;
+	object Destination () const;
+
+	const void* GetData () const;
+	void GetDataField (const char* field, cMultiParm& value) const;
+
+protected:
+	void AdvanceToMatch ();
+	virtual bool Matches () { return true; }
+
+private:
+	linkset links;
+};
+#endif // !SCR_GENSCRIPTS
+
+
+
+/**
+ * Iterator: ScriptParamsIter
+ *
+ * Iterates through ScriptParams links from a source object that share a certain
+ * link data string. If the string is "Self" or "Player", iterates over only the
+ * source object or the object named Player, respectively.
+ */
+#if !SCR_GENSCRIPTS
+class ScriptParamsIter : public LinkIter
+{
+public:
+	ScriptParamsIter (object source, const char* data,
+		object destination = object ());
+	virtual ~ScriptParamsIter () noexcept;
+
+	virtual operator bool () const;
+	virtual ScriptParamsIter& operator++ ();
+
+	operator object () const;
+
+protected:
+	virtual bool Matches ();
+
+private:
+	cAnsiStr data;
+	object only;
+};
+#endif // !SCR_GENSCRIPTS
 

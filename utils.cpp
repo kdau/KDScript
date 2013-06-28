@@ -32,6 +32,8 @@
 #include <cstdlib>
 #include <cmath>
 #include <cctype>
+#include <stdexcept>
+
 
 static const char* g_pszAbbrevMsgArray[][2] = {
 	{"FIB",      "FrobInvBegin"},
@@ -465,6 +467,20 @@ FormatObjectName (object target)
 	return result;
 }
 
+/* InheritsFrom */
+
+bool
+InheritsFrom (const char* _ancestor, object target)
+{
+	object ancestor = StrToObject (_ancestor);
+	if (!ancestor || !target) return false;
+
+	SService<IObjectSrv> pOS (g_pScriptManager);
+	true_bool result;
+	pOS->InheritsFrom (result, target, ancestor);
+	return result;
+}
+
 /* CreateLink */
 
 link
@@ -509,5 +525,125 @@ GetObjectParamColor (object target, const char* param, ulong Default)
 		g_pMalloc->Free (param_value);
 	}
 	return result;
+}
+
+
+
+/* LinkIter */
+
+LinkIter::LinkIter (object source, object dest, const char* flavor)
+{
+	SService<ILinkSrv> pLS (g_pScriptManager);
+	SService<ILinkToolsSrv> pLTS (g_pScriptManager);
+	pLS->GetAll (links, flavor ? pLTS->LinkKindNamed (flavor) : 0,
+		source, dest);
+}
+
+LinkIter::~LinkIter () noexcept
+{}
+
+LinkIter::operator bool () const
+{
+	return links.AnyLinksLeft ();
+}
+
+LinkIter&
+LinkIter::operator++ ()
+{
+	links.NextLink ();
+	AdvanceToMatch ();
+	return *this;
+}
+
+LinkIter::operator link () const
+{
+	return links.AnyLinksLeft () ? links.Link () : link ();
+}
+
+object
+LinkIter::Source () const
+{
+	return links.AnyLinksLeft () ? links.Get ().source : object ();
+}
+
+object
+LinkIter::Destination () const
+{
+	return links.AnyLinksLeft () ? links.Get ().dest : object ();
+}
+
+const void*
+LinkIter::GetData () const
+{
+	return links.AnyLinksLeft () ? links.Data () : NULL;
+}
+
+void
+LinkIter::GetDataField (const char* field, cMultiParm& value) const
+{
+	if (!field)
+		throw std::invalid_argument ("invalid link data field");
+	SService<ILinkToolsSrv> pLTS (g_pScriptManager);
+	pLTS->LinkGetData (value, links.Link (), field);
+}
+
+void
+LinkIter::AdvanceToMatch ()
+{
+	while (links.AnyLinksLeft () && !Matches ())
+		links.NextLink ();
+}
+
+
+
+/* ScriptParamsIter */
+
+ScriptParamsIter::ScriptParamsIter (object source, const char* _data,
+                                    object destination)
+	: LinkIter (source, destination, "ScriptParams"),
+	  data (_data), only ()
+{
+	if (!source && !destination)
+		throw std::invalid_argument ("invalid source/destination");
+	if (_data && !strcmp (_data, "Self"))
+		only = source;
+	else if (_data && !strcmp (_data, "Player"))
+		only = StrToObject ("Player");
+	AdvanceToMatch ();
+}
+
+ScriptParamsIter::~ScriptParamsIter () noexcept
+{}
+
+ScriptParamsIter::operator bool () const
+{
+	return only ? true : LinkIter::operator bool ();
+}
+
+ScriptParamsIter&
+ScriptParamsIter::operator++ ()
+{
+	if (only)
+		only = 0;
+	else
+		LinkIter::operator++ ();
+	return *this;
+}
+
+ScriptParamsIter::operator object () const
+{
+	return only ? only : Destination ();
+}
+
+bool
+ScriptParamsIter::Matches ()
+{
+	if (!LinkIter::operator bool ())
+		return false;
+	else if (data)
+		return !strnicmp (data, (const char*) GetData (),
+			data.GetLength () + 1);
+	else
+		return true;
 }
 
