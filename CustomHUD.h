@@ -35,6 +35,15 @@
 
 
 #if !SCR_GENSCRIPTS
+enum HUDPlayMode
+{
+	PLAY_MODE_NONE = 0,
+	PLAY_MODE_NORMAL = 1,
+	PLAY_MODE_WEAPON = 2,
+	PLAY_MODE_CAMERA = 4,
+	PLAY_MODE_ALL = PLAY_MODE_NORMAL | PLAY_MODE_WEAPON | PLAY_MODE_CAMERA
+};
+
 class HUDElement
 {
 public:
@@ -44,19 +53,7 @@ public:
 
 	void Draw ();
 	void UpdatePosition ();
-
-	enum PlayMode
-	{
-		MODE_NONE = 0,
-		MODE_NORMAL = 1,
-		MODE_WEAPON = 2,
-		MODE_CAMERA = 4,
-		MODE_TRACK_OFFSCREEN = 8,
-		MODE_DEFAULT = MODE_NORMAL | MODE_WEAPON,
-		MODE_ALL = MODE_NORMAL | MODE_WEAPON | MODE_CAMERA |
-			MODE_TRACK_OFFSCREEN
-	};
-	void OnModesChanged (PlayMode play_modes);
+	void ModeChanged (HUDPlayMode mode);
 
 private:
 	void InitializeParameters ();
@@ -110,7 +107,8 @@ private:
 	// current state
 
 	int position_x, position_y;
-	int current_play_modes;
+	HUDPlayMode current_play_mode;
+	bool redraw;
 };
 typedef std::shared_ptr<HUDElement> HUDElementPtr;
 typedef std::vector<HUDElementPtr> HUDElements;

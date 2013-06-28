@@ -36,8 +36,8 @@ HUDElement::HUDElement (object _host, unsigned _number)
 	  position_type (POS_NONE), offset_x (0), offset_y (0), width (-1),
 	  height (-1), color_fg (0x00ffffff), color_bg (-1), color_border (-1),
 	  image (), image_width (-1), image_height (-1), symbol (SYM_NONE),
-	  text (), play_modes (MODE_DEFAULT), opacity (255), position_x (0),
-	  position_y (0), current_play_modes (MODE_NORMAL)
+	  text (), play_modes (PLAY_MODE_ALL), opacity (255), position_x (0),
+	  position_y (0), current_play_mode (PLAY_MODE_NORMAL), redraw (true)
 {
 	if (number > 63) throw std::invalid_argument ("bad element number");
 
@@ -57,9 +57,14 @@ HUDElement::HUDElement (object _host, unsigned _number)
 void
 HUDElement::Draw ()
 {
-	//FIXME Redraw as needed.
+	if (redraw && pDOS->BeginTOverlayUpdate (handle))
+	{
+		redraw = false;
+		//FIXME Redraw.
+		pDOS->EndTOverlayUpdate ();
+	}
 
-	if (handle != -1)
+	if (handle != -1) //FIXME && (enabled per various params)
 		pDOS->DrawTOverlayItem (handle);
 }
 
@@ -124,9 +129,9 @@ HUDElement::UpdatePosition ()
 }
 
 void
-HUDElement::OnModesChanged (PlayMode play_modes)
+HUDElement::ModeChanged (HUDPlayMode mode)
 {
-	current_play_modes = play_modes;
+	current_play_mode = mode;
 	//FIXME Enable/disable/redraw as needed.
 }
 
@@ -221,7 +226,12 @@ HUDElement::InitializeParameters ()
 		image = _image;
 		g_pMalloc->Free (_image);
 
-		//FIXME Interpret and prepare.
+		//FIXME Interpret and prepare. Set width and height.
+	}
+	else // set default width and height if needed
+	{
+		if (width < 0) width = 200; //FIXME 50
+		if (height < 0) height = 50;
 	}
 
 	set_param_name ("symbol");
@@ -259,7 +269,7 @@ HUDElement::InitializeParameters ()
 
 	set_param_name ("play_modes");
 	int _play_modes = GetObjectParamInt (host, param_name, -1);
-	if (_play_modes >= MODE_NONE && _play_modes <= MODE_ALL)
+	if (_play_modes >= PLAY_MODE_NONE && _play_modes <= PLAY_MODE_ALL)
 		play_modes = _play_modes;
 
 	set_param_name ("opacity");
@@ -281,7 +291,7 @@ HUDHandler::HUDHandler (object _host)
 			elements.push_back
 				(std::make_shared<HUDElement> (host, number));
 		}
-		catch (...) {} //FIXME Log?
+		catch (...) {} //FIXME Log if actual error?
 }
 
 void
