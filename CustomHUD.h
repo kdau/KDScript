@@ -24,10 +24,10 @@
 #define CUSTOMHUD_H
 
 #if !SCR_GENSCRIPTS
-#include <memory>
-#include <vector>
+#include <list>
 #include <lg/interface.h>
 #include <lg/scrservices.h>
+#include <darkhook.h>
 #include "BaseScript.h"
 #include "scriptvars.h"
 #endif // SCR_GENSCRIPTS
@@ -35,124 +35,139 @@
 
 
 #if !SCR_GENSCRIPTS
-enum HUDPlayMode
-{
-	PLAY_MODE_NONE = 0,
-	PLAY_MODE_NORMAL = 1,
-	PLAY_MODE_WEAPON = 2,
-	PLAY_MODE_CAMERA = 4,
-	PLAY_MODE_ALL = PLAY_MODE_NORMAL | PLAY_MODE_WEAPON | PLAY_MODE_CAMERA
-};
+class cScr_HUDElement;
+typedef std::list<cScr_HUDElement*> HUDElements;
 
-class HUDElement
-{
-public:
-	HUDElement (object host, unsigned number);
-	HUDElement (const HUDElement&) = delete;
-	virtual ~HUDElement () {}
-
-	void Draw ();
-	void UpdatePosition ();
-	void ModeChanged (HUDPlayMode mode);
-
-private:
-	void InitializeParameters ();
-
-	object host;
-	unsigned number;
-
-	SService<IDarkOverlaySrv> pDOS;
-	int handle;
-
-	// configuration
-
-	enum PositionType
-	{
-		POS_NONE,
-		POS_NW,
-		POS_N,
-		POS_NE,
-		POS_E,
-		POS_SE,
-		POS_S,
-		POS_SW,
-		POS_W,
-		POS_CENTER,
-		POS_TRACK
-	} position_type;
-
-	static constexpr int EDGE_OFFSET = 20;
-	int offset_x, offset_y;
-
-	int width, height;
-
-	long color_fg, color_bg, color_border;
-
-	std::string image;
-	int image_width, image_height;
-
-	enum Symbol
-	{
-		SYM_NONE,
-		SYM_ARROW,
-		SYM_CROSS
-	} symbol;
-
-	std::string text;
-
-	int play_modes;
-
-	unsigned opacity;
-
-	// current state
-
-	int position_x, position_y;
-	HUDPlayMode current_play_mode;
-	bool redraw;
-};
-typedef std::shared_ptr<HUDElement> HUDElementPtr;
-typedef std::vector<HUDElementPtr> HUDElements;
-#endif // !SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class HUDHandler : public IDarkOverlayHandler
-{
-public:
-	HUDHandler (object host);
-	HUDHandler (const HUDHandler&) = delete;
-	virtual ~HUDHandler () {}
-
-	STDMETHOD_(void, DrawHUD) () {}
-	STDMETHOD_(void, DrawTOverlay) ();
-	STDMETHOD_(void, OnUIEnterMode) ();
-	//FIXME Detect play mode changes and notify elements.
-
-private:
-
-	object host;
-	HUDElements elements;
-};
-#endif // !SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_CustomHUD : public virtual cBaseScript
+class cScr_CustomHUD : public virtual cBaseScript, public IDarkOverlayHandler
 {
 public:
 	cScr_CustomHUD (const char* pszName, int iHostObjId);
+
+	STDMETHOD_(void, DrawHUD) ();
+	STDMETHOD_(void, DrawTOverlay) ();
+	STDMETHOD_(void, OnUIEnterMode) ();
+
+protected:
+	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
+
+private:
+	HUDElements elements;
+};
+#else // SCR_GENSCRIPTS
+GEN_FACTORY("KDCustomHUD","BaseScript",cScr_CustomHUD)
+#endif // SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
+class cScr_HUDElement : public virtual cBaseScript
+{
+public:
+	cScr_HUDElement (const char* pszName, int iHostObjId);
+
+	void DrawStage1 ();
+	void DrawStage2 ();
+	virtual void CanvasChanged ();
 
 protected:
 	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 
+	bool GetParamBool (const char* param, bool default_value);
+	ulong GetParamColor (const char* param, ulong default_value);
+	float GetParamFloat (const char* param, float default_value);
+	int GetParamInt (const char* param, int default_value);
+	char* GetParamString (const char* param, const char* default_value);
+	void SetParamBool (const char* param, bool value);
+	// no support for setting a color parameter
+	void SetParamFloat (const char* param, float value);
+	void SetParamInt (const char* param, int value);
+	void SetParamString (const char* param, const char* value);
+
+	virtual bool Prepare ();
+	virtual void Redraw () = 0;
+	bool NeedsRedraw ();
+	void ScheduleRedraw ();
+
+	void SetOpacity (int opacity);
+
+	void GetCanvasSize (int& width, int& height);
+	void SetPosition (int x, int y);
+	void SetSize (int width, int height);
+
+	void FillBackground (int color, int opacity);
+	void SetDrawingColor (ulong color);
+	void DrawLine (int x1, int y1, int x2, int y2);
+
+	void GetTextSize (const char* text, int& width, int& height);
+	void DrawText (const char* text, int x, int y);
+
+	int LoadBitmap (const char* path);
+	void GetBitmapSize (int bitmap, int& width, int& height);
+	void DrawBitmap (int bitmap, int x, int y, int src_x = 0, int src_y = 0,
+		int src_width = -1, int src_height = -1);
+	void FreeBitmap (int bitmap);
+
+	bool LocationToScreen (const cScrVec& location, int& x, int& y);
+	bool ObjectToScreen (object target, int& x1, int& y1, int& x2, int& y2);
+
 private:
-	std::shared_ptr<HUDHandler> handler;
+	SService<IDarkOverlaySrv> pDOS;
+	object handler;
+	int handle;
+	bool draw, redraw, redrawing;
+};
+#endif // !SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
+class cScr_QuestArrow : public virtual cScr_HUDElement
+{
+public:
+	cScr_QuestArrow (const char* pszName, int iHostObjId);
+
+protected:
+	virtual bool Prepare ();
+	virtual void Redraw ();
+
+	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnDHNotify (sDHNotifyMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnQuestChange (sQuestMsg* pMsg, cMultiParm& mpReply);
+
+private:
+	script_int enabled; // bool
+
+	int objective;
+	void UpdateObjective ();
+	void SetEnabledFromObjective ();
+	void GetTextFromObjective (cScrStr& msgstr);
+
+	enum ImageType
+	{
+		IMAGE_NONE,
+		IMAGE_BITMAP,
+		IMAGE_ARROW,
+		IMAGE_CROSSHAIRS
+	} image;
+	int bitmap;
+	static const int SYMBOL_SIZE;
+	void UpdateImage ();
+
+	cAnsiStr text;
+	void UpdateText ();
+
+	ulong color;
+	void UpdateColor ();
+
+	void UpdateOpacity ();
 };
 #else // SCR_GENSCRIPTS
-GEN_FACTORY("KDCustomHUD","BaseScript",cScr_CustomHUD)
+GEN_FACTORY("KDQuestArrow","KDHUDElement",cScr_QuestArrow)
 #endif // SCR_GENSCRIPTS
 
 

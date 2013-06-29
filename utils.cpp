@@ -34,7 +34,6 @@
 #include <cctype>
 #include <stdexcept>
 
-
 static const char* g_pszAbbrevMsgArray[][2] = {
 	{"FIB",      "FrobInvBegin"},
 	{"FIE",      "FrobInvEnd"},
@@ -481,6 +480,16 @@ InheritsFrom (const char* _ancestor, object target)
 	return result;
 }
 
+/* DestroyObject */
+
+void
+DestroyObject (object destroy)
+{
+	SService<IObjectSrv> pOS (g_pScriptManager);
+	if (destroy)
+		pOS->Destroy (destroy);
+}
+
 /* CreateLink */
 
 link
@@ -508,6 +517,7 @@ CreateLink (const char* _flavor, object source, object destination,
 void
 DestroyLink (link destroy)
 {
+	if (!destroy) return;
 	SService<ILinkSrv> pLS (g_pScriptManager);
 	pLS->Destroy (destroy);
 }

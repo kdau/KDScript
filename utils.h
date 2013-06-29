@@ -131,13 +131,6 @@ bool ObjectExists (object target);
 cAnsiStr ObjectToStr (object target);
 
 /**
- * InheritsFrom
- *
- * Returns whether the object inherits from the named archetype or metaproperty.
- */
-bool InheritsFrom (const char* ancestor, object target);
-
-/**
  * FormatObjectName
  *
  * Returns the name of a named object or, if unnamed, its archetype's name
@@ -145,6 +138,20 @@ bool InheritsFrom (const char* ancestor, object target);
  * to DromEd's display form).
  */
 cAnsiStr FormatObjectName (object target);
+
+/**
+ * InheritsFrom
+ *
+ * Returns whether the object inherits from the named archetype or metaproperty.
+ */
+bool InheritsFrom (const char* ancestor, object target);
+
+/**
+ * DestroyObject
+ *
+ * Destroys an object.
+ */
+void DestroyObject (object destroy);
 
 /**
  * CreateLink
