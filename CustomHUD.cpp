@@ -29,7 +29,65 @@
 
 
 
-/* CustomHUD */
+/* CanvasPoint, CanvasSize, CanvasRect */
+
+CanvasPoint::CanvasPoint (int _x, int _y)
+	: x (_x), y (_y)
+{}
+
+bool
+CanvasPoint::operator == (const CanvasPoint& rhs) const
+{
+	return x == rhs.x && y == rhs.y;
+}
+
+bool
+CanvasPoint::operator != (const CanvasPoint& rhs) const
+{
+	return x != rhs.x || y != rhs.y;
+}
+
+CanvasPoint
+CanvasPoint::operator + (const CanvasPoint& rhs) const
+{
+	return CanvasPoint (x + rhs.x, y + rhs.y);
+}
+
+CanvasPoint
+CanvasPoint::operator - (const CanvasPoint& rhs) const
+{
+	return CanvasPoint (x - rhs.x, y - rhs.y);
+}
+
+CanvasPoint
+CanvasPoint::operator * (int rhs) const
+{
+	return CanvasPoint (x * rhs, y * rhs);
+}
+
+CanvasSize::CanvasSize (int _w, int _h)
+	: w (_w), h (_h)
+{}
+
+bool
+CanvasSize::operator == (const CanvasSize& rhs) const
+{
+	return w == rhs.w && h == rhs.h;
+}
+
+CanvasRect::CanvasRect (int _x, int _y, int _w, int _h)
+	: x (_x), y (_y), w (_w), h (_h)
+{}
+
+bool
+CanvasRect::operator == (const CanvasRect& rhs) const
+{
+	return x == rhs.x && y == rhs.y && w == rhs.w && h == rhs.h;
+}
+
+
+
+/* KDCustomHUD */
 
 cScr_CustomHUD::cScr_CustomHUD (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId)
@@ -94,42 +152,74 @@ void
 cScr_CustomHUD::OnUIEnterMode ()
 {
 	for (auto element : elements)
-		element->CanvasChanged ();
+		element->EnterGameMode ();
 }
 
 
 
-/* HUDElement */
+/* KDHUDElement */
 
+#define IS_OVERLAY() (handle > -1)
+
+#define CHECK_OVERLAY(retval) \
+	if (!IS_OVERLAY ()) \
+	{ \
+		DEBUG_PRINTF ("%s called for non-overlay element; ignoring.", \
+			__func__); \
+		return retval; \
+	}
+
+#define CHECK_DRAWING(retval) \
+	if (!drawing) \
+	{ \
+		DEBUG_PRINTF ("%s called outside of draw cycle; ignoring.", \
+			__func__); \
+		return retval; \
+	}
+
+// if not an overlay, add the element position to the drawing position
+#define OFFSET(position) \
+	(position + (IS_OVERLAY () ? ORIGIN : last_position) + drawing_offset)
 
 cScr_HUDElement::cScr_HUDElement (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId), pDOS (g_pScriptManager),
-	  handler (), handle (-1), draw (true), redraw (true), redrawing (false)
-{}
+	  handler (), handle (-1), draw (true), redraw (true), drawing (false),
+	  last_position (), last_size (1, 1), last_scale (1),
+	  last_opacity (255), drawing_offset ()
+{
+	DarkHookInitializeService (g_pScriptManager, g_pMalloc);
+}
 
 void
 cScr_HUDElement::DrawStage1 ()
 {
+	drawing = true;
 	draw = Prepare ();
+	if (draw && !IS_OVERLAY ())
+	{
+		redraw = false;
+		Redraw ();
+	}
+	drawing = false;
 }
 
 void
 cScr_HUDElement::DrawStage2 ()
 {
-	if (!draw) return;
+	if (!draw || !IS_OVERLAY ()) return;
 	if (redraw && pDOS->BeginTOverlayUpdate (handle))
 	{
 		redraw = false;
-		redrawing = true;
+		drawing = true;
 		Redraw ();
-		redrawing = false;
+		drawing = false;
 		pDOS->EndTOverlayUpdate ();
 	}
 	pDOS->DrawTOverlayItem (handle);
 }
 
 void
-cScr_HUDElement::CanvasChanged ()
+cScr_HUDElement::EnterGameMode ()
 {}
 
 long
@@ -140,12 +230,6 @@ cScr_HUDElement::OnBeginScript (sScrMsg*, cMultiParm&)
 	handler = handler_link ? handler_link : StrToObject ("CustomHUD");
 	if (!handler)
 		throw std::runtime_error ("could not locate handler object");
-
-	// obtain an overlay handle
-	handle = pDOS->CreateTOverlayItem (0, 0, 1, 1, 255, true); //FIXME Set actual size here?!
-	if (handle == -1)
-		throw std::runtime_error ("could not allocate overlay");
-
 	SimpleSend (ObjId (), handler, "RegisterElement", long (this));
 	return 0;
 }
@@ -153,14 +237,58 @@ cScr_HUDElement::OnBeginScript (sScrMsg*, cMultiParm&)
 long
 cScr_HUDElement::OnEndScript (sScrMsg*, cMultiParm&)
 {
-	if (handle > -1)
-		pDOS->DestroyTOverlayItem (handle);
-
 	if (handler)
 		SimpleSend (ObjId (), handler, "UnregisterElement", long (this));
 
+	if (IS_OVERLAY ())
+	{
+		// don't wait, as there won't be another message cycle
+		pDOS->DestroyTOverlayItem (handle);
+		handle = -1;
+	}
+
 	return 0;
 }
+
+long
+cScr_HUDElement::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
+{
+	if (!stricmp (pMsg->message, "DHNotify"))
+	{
+		auto dh = static_cast<sDHNotifyMsg*> (pMsg);
+		if (dh->typeDH != kDH_Property) return 1;
+		OnPropertyChanged (dh->sProp.pszPropName);
+		return 0;
+	}
+	if (!stricmp (pMsg->message, "DestroyOverlay") &&
+	    pMsg->data.type == kMT_Int)
+	{
+		// This may still cause an "invalid overlay" assertion.
+		pDOS->DestroyTOverlayItem ((int) pMsg->data);
+		return 0;
+	}
+	return cBaseScript::OnMessage (pMsg, mpReply);
+}
+
+void
+cScr_HUDElement::SubscribeProperty (const char* property)
+{
+	try
+	{
+		SService<IDarkHookScriptService> pDHS (g_pScriptManager);
+		pDHS->InstallPropHook (ObjId (), kDHNotifyDefault,
+			property, ObjId ());
+	}
+	catch (no_interface&)
+	{
+		DebugString ("The DarkHook service could not be located. "
+			"This custom HUD element may not update properly.");
+	}
+}
+
+void
+cScr_HUDElement::OnPropertyChanged (const char*)
+{}
 
 bool
 cScr_HUDElement::GetParamBool (const char* param, bool default_value)
@@ -193,9 +321,9 @@ cScr_HUDElement::GetParamInt (const char* param, int default_value)
 char*
 cScr_HUDElement::GetParamString (const char* param, const char* default_value)
 {
-	char* on_handler = GetObjectParamString (handler, param, default_value);
-	char* result = GetObjectParamString (ObjId (), param, on_handler);
-	if (on_handler) g_pMalloc->Free (on_handler);
+	char* handler_val = GetObjectParamString (handler, param, default_value);
+	char* result = GetObjectParamString (ObjId (), param, handler_val);
+	if (handler_val) g_pMalloc->Free (handler_val);
 	return result;
 }
 
@@ -242,71 +370,120 @@ cScr_HUDElement::ScheduleRedraw ()
 }
 
 void
+cScr_HUDElement::SetIsOverlay (bool is_overlay)
+{
+	if (is_overlay && !IS_OVERLAY ())
+	{
+		handle = pDOS->CreateTOverlayItem
+			(last_position.x, last_position.y, last_size.w,
+			last_size.h, last_opacity, true);
+		if (!IS_OVERLAY ())
+			throw std::runtime_error ("could not allocate overlay");
+	}
+	else if (!is_overlay && IS_OVERLAY ())
+	{
+		// schedule destruction of old overlay outside cycle
+		SimplePost (ObjId (), ObjId (), "DestroyOverlay", handle);
+		handle = -1;
+	}
+}
+
+void
 cScr_HUDElement::SetOpacity (int opacity)
 {
+	last_opacity = opacity;
+	CHECK_OVERLAY ();
 	pDOS->UpdateTOverlayAlpha (handle, opacity);
 }
 
-void
-cScr_HUDElement::GetCanvasSize (int& width, int& height)
+CanvasSize
+cScr_HUDElement::GetCanvasSize ()
 {
+	int width = 0, height = 0;
 	SService<IEngineSrv> pES (g_pScriptManager);
 	pES->GetCanvasSize (width, height);
+	return CanvasSize (width, height);
 }
 
 void
-cScr_HUDElement::SetPosition (int x, int y)
+cScr_HUDElement::SetPosition (CanvasPoint position)
 {
-	pDOS->UpdateTOverlayPosition (handle, x, y);
+	last_position = position;
+	if (IS_OVERLAY ())
+		pDOS->UpdateTOverlayPosition (handle, position.x, position.y);
+	// For non-overlay elements, last_position will be used when drawing.
 }
 
 void
-cScr_HUDElement::SetSize (int width, int height)
+cScr_HUDElement::SetSize (CanvasSize size)
 {
-	pDOS->UpdateTOverlaySize (handle, width, height);
-}
-
-#define CHECK_REDRAWING(retval) \
-	if (!redrawing) \
-	{ \
-		DEBUG_PRINTF ("%s called outside of redraw; ignoring.", __func__); \
-		return retval; \
+	last_size = size;
+	if (IS_OVERLAY ())
+	{
+		// This is not intended behavior and should be avoided.
+		SetIsOverlay (false); // destroy old handle
+		SetIsOverlay (true); // and get a new one at the new size
+		if (last_scale != 1) SetScale (last_scale); // restore scale
+		ScheduleRedraw ();
 	}
+	// For non-overlay elements, size is ignored.
+}
 
 void
-cScr_HUDElement::FillBackground (int color, int opacity)
+cScr_HUDElement::SetScale (int scale)
 {
-	CHECK_REDRAWING ();
-	pDOS->FillTOverlay (color, opacity);
+	last_scale = scale;
+	CHECK_OVERLAY ();
+	pDOS->UpdateTOverlaySize (handle,
+		last_size.w * scale, last_size.h * scale);
 }
 
 void
 cScr_HUDElement::SetDrawingColor (ulong color)
 {
-	CHECK_REDRAWING ();
+	CHECK_DRAWING ();
 	pDOS->SetTextColor (getred (color), getgreen (color), getblue (color));
 }
 
 void
-cScr_HUDElement::DrawLine (int x1, int y1, int x2, int y2)
+cScr_HUDElement::SetDrawingOffset (CanvasPoint offset)
 {
-	CHECK_REDRAWING ();
-	pDOS->DrawLine (x1, y1, x2, y2);
+	CHECK_DRAWING ();
+	drawing_offset = offset;
 }
 
 void
-cScr_HUDElement::GetTextSize (const char* text, int& width, int& height)
+cScr_HUDElement::FillBackground (int color, int opacity)
 {
-	if (!redrawing) width = height = 0;
-	CHECK_REDRAWING ();
-	pDOS->GetStringSize (text, width, height);
+	CHECK_OVERLAY ();
+	CHECK_DRAWING ();
+	pDOS->FillTOverlay (color, opacity);
 }
 
 void
-cScr_HUDElement::DrawText (const char* text, int x, int y)
+cScr_HUDElement::DrawLine (CanvasPoint from, CanvasPoint to)
 {
-	CHECK_REDRAWING ();
-	pDOS->DrawString (text, x, y);
+	CHECK_DRAWING ();
+	from = OFFSET (from);
+	to = OFFSET (to);
+	pDOS->DrawLine (from.x, from.y, to.x, to.y);
+}
+
+CanvasSize
+cScr_HUDElement::GetTextSize (const char* text)
+{
+	CanvasSize result;
+	CHECK_DRAWING (result);
+	pDOS->GetStringSize (text, result.w, result.h);
+	return result;
+}
+
+void
+cScr_HUDElement::DrawText (const char* text, CanvasPoint position)
+{
+	CHECK_DRAWING ();
+	position = OFFSET (position);
+	pDOS->DrawString (text, position.x, position.y);
 }
 
 int
@@ -318,29 +495,29 @@ cScr_HUDElement::LoadBitmap (const char* path)
 	return pDOS->GetBitmap (file, dir);
 }
 
-void
-cScr_HUDElement::GetBitmapSize (int bitmap, int& width, int& height)
+CanvasSize
+cScr_HUDElement::GetBitmapSize (int bitmap)
 {
+	CanvasSize result;
 	if (bitmap > -1)
-		pDOS->GetBitmapSize (bitmap, width, height);
-	else
-		width = height = 0;
+		pDOS->GetBitmapSize (bitmap, result.w, result.h);
+	return result;
 }
 
 void
-cScr_HUDElement::DrawBitmap (int bitmap, int x, int y, int src_x, int src_y,
-                        int src_width, int src_height)
+cScr_HUDElement::DrawBitmap (int bitmap, CanvasPoint position, CanvasRect clip)
 {
-	CHECK_REDRAWING ();
-	if (src_x == 0 && src_y == 0 && src_width == -1 && src_height == -1)
-		pDOS->DrawBitmap (bitmap, x, y);
+	CHECK_DRAWING ();
+	position = OFFSET (position);
+	if (clip == NOCLIP)
+		pDOS->DrawBitmap (bitmap, position.x, position.y);
 	else
 	{
-		int bw, bh; GetBitmapSize (bitmap, bw, bh);
-		if (src_width == -1) src_width = bw - src_x;
-		if (src_height == -1) src_height = bh - src_y;
-		pDOS->DrawSubBitmap (bitmap, x, y, src_x, src_y,
-			src_width, src_height);
+		CanvasSize bitmap_size = GetBitmapSize (bitmap);
+		if (clip.w == -1) clip.w = bitmap_size.w - clip.x;
+		if (clip.h == -1) clip.h = bitmap_size.h - clip.y;
+		pDOS->DrawSubBitmap (bitmap, position.x, position.y,
+			clip.x, clip.y, clip.w, clip.h);
 	}
 }
 
@@ -350,100 +527,220 @@ cScr_HUDElement::FreeBitmap (int bitmap)
 	if (bitmap > -1) pDOS->FlushBitmap (bitmap);
 }
 
-bool
-cScr_HUDElement::LocationToScreen (const cScrVec& location, int& x, int& y)
+CanvasPoint
+cScr_HUDElement::LocationToCanvas (const cScrVec& location)
 {
-	// no check performed; can be called from Prepare or Redraw
-	return pDOS->WorldToScreen (location, x, y);
+	CanvasPoint result;
+	CHECK_DRAWING (OFFSCREEN);
+	bool onscreen = pDOS->WorldToScreen (location, result.x, result.y);
+	return onscreen ? result : OFFSCREEN;
 }
 
-bool
-cScr_HUDElement::ObjectToScreen (object target,
-                                 int& x1, int& y1, int& x2, int& y2)
+CanvasRect
+cScr_HUDElement::ObjectToCanvas (object target)
 {
-	// no check performed; can be called from Prepare or Redraw
-	return pDOS->GetObjectScreenBounds (target, x1, y1, x2, y2);
+	CHECK_DRAWING (OFFSCREEN_R);
+	int x1, y1, x2, y2;
+	bool onscreen = pDOS->GetObjectScreenBounds (target, x1, y1, x2, y2);
+	return onscreen ? CanvasRect (x1, y1, x2 - x1, y2 - y1) : OFFSCREEN_R;
+}
+
+void
+cScr_HUDElement::DrawSymbol (Symbol symbol, CanvasSize size,
+	CanvasPoint position, Direction direction)
+{
+	CanvasPoint xqtr (size.w / 4, 0), yqtr (0, size.h / 4);
+	drawing_offset = drawing_offset + position;
+
+	switch (symbol)
+	{
+	case SYMBOL_ARROW:
+		DrawLine (yqtr*2, yqtr*2 + xqtr*4);
+		switch (direction)
+		{
+		case DIRN_LEFT:
+			DrawLine (yqtr*2, yqtr   + xqtr);
+			DrawLine (yqtr*2, yqtr*3 + xqtr);
+			break;
+		case DIRN_RIGHT:
+			DrawLine (yqtr*2 + xqtr*4, yqtr   + xqtr*3);
+			DrawLine (yqtr*2 + xqtr*4, yqtr*3 + xqtr*3);
+			break;
+		case DIRN_NONE:
+		default:
+			break; // no head on a directionless arrow
+		}
+		break;
+	case SYMBOL_RETICULE:
+		DrawLine (xqtr   + yqtr,   xqtr*3 + yqtr);
+		DrawLine (xqtr   + yqtr,   xqtr   + yqtr*3);
+		DrawLine (xqtr*3 + yqtr,   xqtr*3 + yqtr*3);
+		DrawLine (xqtr   + yqtr*3, xqtr*3 + yqtr*3);
+		// includes crosshairs
+	case SYMBOL_CROSSHAIRS:
+		DrawLine (xqtr*2, xqtr*2 + yqtr*4);
+		DrawLine (yqtr*2, xqtr*4 + yqtr*2);
+		break;
+	case SYMBOL_NONE:
+	default:
+		break;
+	}
+
+	drawing_offset = drawing_offset - position;
+}
+
+CanvasPoint
+cScr_HUDElement::GetSymbolCenter (Symbol symbol, CanvasSize size,
+	Direction direction)
+{
+	switch (symbol)
+	{
+	case SYMBOL_ARROW:
+		switch (direction)
+		{
+		case DIRN_LEFT:
+			return CanvasPoint (0, size.h / 2);
+		case DIRN_RIGHT:
+			return CanvasPoint (size.w, size.h / 2);
+		case DIRN_NONE:
+		default:
+			break; // fall through to below (= center)
+		}
+	case SYMBOL_RETICULE:
+	case SYMBOL_CROSSHAIRS:
+		return CanvasPoint (size.w / 2, size.h / 2);
+	case SYMBOL_NONE:
+	default:
+		return OFFSCREEN;
+	}
+}
+
+cScr_HUDElement::Symbol
+cScr_HUDElement::InterpretSymbol (const char* symbol)
+{
+	if (!symbol || !stricmp (symbol, "@none"))
+		return SYMBOL_NONE;
+
+	else if (!stricmp (symbol, "@arrow"))
+		return SYMBOL_ARROW;
+
+	else if (!stricmp (symbol, "@crosshairs"))
+		return SYMBOL_CROSSHAIRS;
+
+	else if (!stricmp (symbol, "@reticule"))
+		return SYMBOL_RETICULE;
+
+	else if (symbol[0] == '@')
+		DebugPrintf ("Warning: invalid symbol name `%s'.", symbol);
+
+	return SYMBOL_NONE;
 }
 
 
 
-/* QuestArrow */
+
+/* KDQuestArrow */
+
+const CanvasSize
+cScr_QuestArrow::SYMBOL_SIZE = { 32, 32 };
+
+const int
+cScr_QuestArrow::PADDING = 8;
 
 cScr_QuestArrow::cScr_QuestArrow (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cScr_HUDElement (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (QuestArrow, enabled, iHostObjId),
-	  objective (-1), image (IMAGE_NONE), bitmap (-1), text (), color (0)
-{
-	DarkHookInitializeService (g_pScriptManager, g_pMalloc);
-}
+	  SCRIPT_VAROBJ (QuestArrow, enabled, iHostObjId), objective (-1),
+	  symbol (SYMBOL_NONE), symbol_dirn (DIRN_NONE), bitmap (-1),
+	  image_pos (), text (), text_pos (), color (0)
+{}
 
-// No override of CanvasChanged. If the canvas size did change and the text
-// needs to be moved relative to the image, the next Prepare call do it.
+// No override of EnterGameMode. If the canvas size did change and the text
+// needs to be moved relative to the image, the next Prepare call will do it.
 
 bool
 cScr_QuestArrow::Prepare ()
 {
 	if (!enabled) return false;
 
+	// get canvas, image, and text size and calculate element size
+	CanvasSize canvas = GetCanvasSize (),
+		image_size = (bitmap > -1)
+			? GetBitmapSize (bitmap) : SYMBOL_SIZE,
+		text_size = GetTextSize (text),
+		elem_size;
+	elem_size.w = image_size.w + PADDING + text_size.w;
+	elem_size.h = std::max (image_size.h, text_size.h);
+
+	// get object's position in canvas coordinates
 	SService<IObjectSrv> pOS (g_pScriptManager);
-	cScrVec op; pOS->Position (op, ObjId ());
-	int ox, oy; bool onscreen = LocationToScreen (op, ox, oy);
-	if (!onscreen) return false;
+	cScrVec obj_centroid; pOS->Position (obj_centroid, ObjId ());
+	CanvasPoint obj_pos = LocationToCanvas (obj_centroid);
+	if (obj_pos == OFFSCREEN) // centroid is offscreen, try center of bounds
+	{
+		CanvasRect obj_rect = ObjectToCanvas (ObjId ());
+		if (obj_rect == OFFSCREEN_R) return false; // fully offscreen
+		obj_pos.x = obj_rect.x + obj_rect.w / 2;
+		obj_pos.y = obj_rect.y + obj_rect.h / 2;
+	}
 
-	int cw, ch; GetCanvasSize (cw, ch);
+	// choose alignment of image and text
+	symbol_dirn = (obj_pos.x > canvas.w / 2)
+		? DIRN_RIGHT // text on left, image on right
+		: DIRN_LEFT; // text on right, image on left
 
-	int iw, ih;
-	if (image == IMAGE_BITMAP)
-		GetBitmapSize (bitmap, iw, ih);
-	else
-		iw = ih = SYMBOL_SIZE;
+	// calculate absolute position of image
+	CanvasPoint image_center, image_apos;
+	image_center = (bitmap > -1)
+		? CanvasPoint (image_size.w / 2, image_size.h / 2)
+		: GetSymbolCenter (symbol, SYMBOL_SIZE, symbol_dirn);
+	image_apos.x = obj_pos.x - image_center.x;
+	image_apos.y = obj_pos.y - image_center.y;
 
-	//FIXME Consider text size for both position and size. (How?)
-	//FIXME Schedule redraw if text must move.
+	// calculate absolute position of text
+	CanvasPoint text_apos;
+	if (symbol_dirn == DIRN_RIGHT) // text on left
+		text_apos.x = image_apos.x - PADDING - text_size.w;
+	else // text on right
+		text_apos.x = image_apos.x + image_size.w + PADDING;
+	text_apos.y = obj_pos.y - text_size.h / 2;
 
-	int ex = ox - iw / 2, ey = oy - ih / 2,
-		ew = iw, eh = ih;
-	SetPosition (ex, ey);
-	if (NeedsRedraw ()) SetSize (ew, eh); //FIXME Not working.
+	// calculate element position
+	CanvasPoint elem_pos;
+	elem_pos.x = std::min (image_apos.x, text_apos.x);
+	elem_pos.y = std::min (image_apos.y, text_apos.y);
+
+	// update relative position of image, if needed
+	if (image_pos != image_apos - elem_pos)
+	{
+		image_pos = image_apos - elem_pos;
+		ScheduleRedraw ();
+	}
+
+	// update relative position of text, if needed
+	if (text_pos != text_apos - elem_pos)
+	{
+		text_pos = text_apos - elem_pos;
+		ScheduleRedraw ();
+	}
+
+	SetPosition (elem_pos);
+	if (NeedsRedraw ()) SetSize (elem_size);
 
 	return true;
 }
-
-const int
-cScr_QuestArrow::SYMBOL_SIZE = 48;
 
 void
 cScr_QuestArrow::Redraw ()
 {
 	SetDrawingColor (color);
-	int qtr = SYMBOL_SIZE / 4;
 
-	//FIXME Draw at actual position.
-	switch (image)
-	{
-	case IMAGE_ARROW:
-		DrawLine (0, 0, 0, qtr);
-		DrawLine (0, 0, qtr, 0);
-		DrawLine (0, 0, 4*qtr, 4*qtr);
-		break;
-	case IMAGE_CROSSHAIRS:
-		DrawLine (2*qtr, 0, 2*qtr, 4*qtr);
-		DrawLine (0, 2*qtr, 4*qtr, 2*qtr);
-		DrawLine (qtr, qtr, 3*qtr, qtr);
-		DrawLine (qtr, qtr, qtr, 3*qtr);
-		DrawLine (3*qtr, qtr, 3*qtr, 3*qtr);
-		DrawLine (qtr, 3*qtr, 3*qtr, 3*qtr);
-		break;
-	case IMAGE_BITMAP:
-		DrawBitmap (bitmap, 0, 0);
-		break;
-	case IMAGE_NONE:
-	default:
-		break;
-	}
+	if (bitmap > -1)
+		DrawBitmap (bitmap, image_pos);
+	else if (symbol != SYMBOL_NONE)
+		DrawSymbol (symbol, SYMBOL_SIZE, image_pos, symbol_dirn);
 
-	//FIXME Draw the text.
+	DrawText (text, text_pos);
 }
 
 long
@@ -453,26 +750,12 @@ cScr_QuestArrow::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 
 	enabled.Init (GetParamBool ("quest_arrow", true));
 	UpdateObjective ();
-
 	UpdateImage ();
 	UpdateText ();
 	UpdateColor ();
 
-	UpdateOpacity ();
-
-	try
-	{
-		SService<IDarkHookScriptService> pDHS (g_pScriptManager);
-		pDHS->InstallPropHook (ObjId (), kDHNotifyDefault,
-			"DesignNote", ObjId ());
-		pDHS->InstallPropHook (ObjId (), kDHNotifyDefault,
-			"GameName", ObjId ()); // if quest_arrow_text == "@name"
-	}
-	catch (no_interface&)
-	{
-		DebugString ("The DarkHook service could not be located. "
-			"The quest arrow may not update properly.");
-	}
+	SubscribeProperty ("DesignNote");
+	SubscribeProperty ("GameName"); // for quest_arrow_text == "@name"
 
 	return result;
 }
@@ -485,7 +768,7 @@ cScr_QuestArrow::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 		enabled = true;
 		return 0;
 	}
-	else
+
 	if (!stricmp (pMsg->message, "QuestArrowOff") ||
 	    !stricmp (pMsg->message, "Slain") ||
 	    (!stricmp (pMsg->message, "AIModeChange") &&
@@ -494,31 +777,22 @@ cScr_QuestArrow::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 		enabled = false;
 		return 0;
 	}
-	else
-	if (!stricmp (pMsg->message, "DHNotify"))
-		return OnDHNotify (static_cast<sDHNotifyMsg*> (pMsg), mpReply);
 
 	return cScr_HUDElement::OnMessage (pMsg, mpReply);
 }
 
-long
-cScr_QuestArrow::OnDHNotify (sDHNotifyMsg* pMsg, cMultiParm&)
+void
+cScr_QuestArrow::OnPropertyChanged (const char* property)
 {
-	if (pMsg->typeDH != kDH_Property) return 1;
-	bool params = !strcmp (pMsg->sProp.pszPropName, "DesignNote");
-
-	if (params)
+	if (!strcmp (property, "DesignNote"))
 	{
 		UpdateObjective ();
 		UpdateImage ();
-		UpdateColor ();
-		UpdateOpacity ();
-	}
-
-	if (params || !strcmp (pMsg->sProp.pszPropName, "GameName"))
 		UpdateText ();
-
-	return 0;
+		UpdateColor ();
+	}
+	else if (!strcmp (property, "GameName"))
+		UpdateText ();
 }
 
 long
@@ -603,101 +877,228 @@ cScr_QuestArrow::GetTextFromObjective (cScrStr& msgstr)
 void
 cScr_QuestArrow::UpdateImage ()
 {
-	if (bitmap > -1)
+	if (bitmap > -1) // even if it hasn't actually changed
 	{
 		FreeBitmap (bitmap);
 		bitmap = -1;
+		ScheduleRedraw ();
 	}
 
-	char* _image = GetParamString ("quest_arrow_image", "@crosshairs");
+	char* image = GetParamString ("quest_arrow_image", "@arrow");
+	Symbol _symbol = SYMBOL_NONE;
 
-	if (!_image || !stricmp (_image, "@none"))
-		image = IMAGE_NONE;
-
-	else if (!stricmp (_image, "@arrow"))
-		image = IMAGE_ARROW;
-
-	else if (!stricmp (_image, "@crosshairs"))
-		image = IMAGE_CROSSHAIRS;
-
-	else if (_image[0] == '@')
-	{
-		DebugPrintf ("Warning: invalid quest_arrow_image value of `%s'.", _image);
-		image = IMAGE_NONE;
-	}
-
+	if (image[0] == '@')
+		_symbol = InterpretSymbol (image);
 	else
 	{
-		bitmap = LoadBitmap (_image);
-		if (bitmap == -1)
+		bitmap = LoadBitmap (image);
+		if (bitmap < 0)
 		{
-			DebugPrintf ("Warning: could not load quest_arrow_image at `%s'.", _image);
-			image = IMAGE_NONE;
+			DebugPrintf ("Warning: could not load quest_arrow_image"
+				" at `%s'.", image);
+			_symbol = SYMBOL_ARROW;
 		}
-		else
-			image = IMAGE_CROSSHAIRS;
 	}
 
-	if (_image) g_pMalloc->Free (_image);
-	ScheduleRedraw ();
+	if (image) g_pMalloc->Free (image);
+	if (symbol != _symbol)
+	{
+		symbol = _symbol;
+		ScheduleRedraw ();
+	}
 }
 
 void
 cScr_QuestArrow::UpdateText ()
 {
-	char* _text = GetParamString ("quest_arrow_text", "@name");
+	char* __text = GetParamString ("quest_arrow_text", "@name");
 	SService<IDataSrv> pDS (g_pScriptManager);
-	cScrStr msgstr;
+	cScrStr _text;
 
-	if (!_text || !stricmp (_text, "") || !stricmp (_text, "@none"))
-		text.Empty ();
+	if (!__text || !stricmp (__text, "") || !stricmp (__text, "@none"))
+		{}
 
-	else if (!stricmp (_text, "@name"))
-	{
-		pDS->GetObjString (msgstr, ObjId (), "objnames");
-		text = msgstr;
-	}
+	else if (!stricmp (__text, "@name"))
+		pDS->GetObjString (_text, ObjId (), "objnames");
 
-	else if (!stricmp (_text, "@desc"))
-	{
-		pDS->GetObjString (msgstr, ObjId (), "objdescs");
-		text = msgstr;
-	}
+	else if (!stricmp (__text, "@desc"))
+		pDS->GetObjString (_text, ObjId (), "objdescs");
 
-	else if (!stricmp (_text, "@goal"))
-	{
-		GetTextFromObjective (msgstr);
-		text = msgstr;
-	}
+	else if (!stricmp (__text, "@goal"))
+		GetTextFromObjective (_text);
 
-	else if (_text[0] == '@')
-	{
-		DebugPrintf ("Warning: invalid quest_arrow_text value of `%s'.", _text);
-		text.Empty ();
-	}
+	else if (__text[0] == '@')
+		DebugPrintf ("Warning: invalid quest_arrow_text value of `%s'.",
+			__text);
 
 	else
-	{
-		pDS->GetString (msgstr, "hud", _text, "", "strings");
-		text = msgstr;
-	}
+		pDS->GetString (_text, "hud", __text, "", "strings");
 
-	if (_text) g_pMalloc->Free (_text);
-	ScheduleRedraw ();
+	if (__text) g_pMalloc->Free (__text);
+	if (!!strcmp (text, _text))
+	{
+		text = _text;
+		ScheduleRedraw ();
+	}
 }
 
 void
 cScr_QuestArrow::UpdateColor ()
 {
-	color = GetParamColor ("quest_arrow_color", makecolor (255, 255, 255));
-	ScheduleRedraw ();
+	ulong _color = GetParamColor ("quest_arrow_color",
+		makecolor (255, 255, 255));
+	if (color != _color)
+	{
+		color = _color;
+		ScheduleRedraw ();
+	}
+}
+
+
+
+/* KDToolSight */
+
+const CanvasSize
+cScr_ToolSight::SYMBOL_SIZE = { 24, 24 };
+
+cScr_ToolSight::cScr_ToolSight (const char* pszName, int iHostObjId)
+	: cBaseScript (pszName, iHostObjId),
+	  cScr_HUDElement (pszName, iHostObjId),
+	  SCRIPT_VAROBJ (ToolSight, enabled, iHostObjId),
+	  symbol (SYMBOL_NONE), bitmap (-1), color (0)
+{}
+
+bool
+cScr_ToolSight::Prepare ()
+{
+	if (!enabled) return false;
+
+	// get canvas, image, and text size and calculate element size
+	CanvasSize canvas = GetCanvasSize (),
+		elem_size = (bitmap > -1)
+			? GetBitmapSize (bitmap) : SYMBOL_SIZE;
+
+	// calculate center of canvas and position of element
+	CanvasPoint canvas_center (canvas.w / 2, canvas.h / 2),
+		elem_pos (canvas_center.x - elem_size.w / 2,
+			canvas_center.y - elem_size.h / 2);
+
+	SetPosition (elem_pos);
+	if (NeedsRedraw ()) SetSize (elem_size);
+
+	return true;
 }
 
 void
-cScr_QuestArrow::UpdateOpacity ()
+cScr_ToolSight::Redraw ()
 {
-	int opacity = GetParamInt ("quest_arrow_opacity", 255);
-	if (opacity == -1) opacity = 127; //FIXME Support distance-based opacity. Update when needed.
-	SetOpacity (opacity);
+	SetDrawingColor (color);
+	if (bitmap > -1)
+		DrawBitmap (bitmap);
+	else if (symbol != SYMBOL_NONE)
+		DrawSymbol (symbol, SYMBOL_SIZE);
+}
+
+long
+cScr_ToolSight::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
+{
+	long result = cScr_HUDElement::OnBeginScript (pMsg, mpReply);
+	enabled.Init (false);
+	UpdateImage ();
+	UpdateColor ();
+	SubscribeProperty ("DesignNote");
+	return result;
+}
+
+void
+cScr_ToolSight::OnPropertyChanged (const char* property)
+{
+	if (!strcmp (property, "DesignNote"))
+	{
+		UpdateImage ();
+		UpdateColor ();
+	}
+}
+
+long
+cScr_ToolSight::OnInvSelect (sScrMsg* pMsg, cMultiParm& mpReply)
+{
+	enabled = true;
+	return cScr_HUDElement::OnInvSelect (pMsg, mpReply);
+}
+
+long
+cScr_ToolSight::OnInvFocus (sScrMsg* pMsg, cMultiParm& mpReply)
+{
+	enabled = true;
+	return cScr_HUDElement::OnInvFocus (pMsg, mpReply);
+}
+
+long
+cScr_ToolSight::OnInvDeSelect (sScrMsg* pMsg, cMultiParm& mpReply)
+{
+	enabled = false;
+	return cScr_HUDElement::OnInvDeSelect (pMsg, mpReply);
+}
+
+long
+cScr_ToolSight::OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply)
+{
+	enabled = false;
+	return cScr_HUDElement::OnInvDeFocus (pMsg, mpReply);
+}
+
+void
+cScr_ToolSight::UpdateImage ()
+{
+	if (bitmap > -1) // even if it hasn't actually changed
+	{
+		FreeBitmap (bitmap);
+		bitmap = -1;
+		ScheduleRedraw ();
+	}
+
+	char* image = GetParamString ("tool_sight_image", "@crosshairs");
+	Symbol _symbol = SYMBOL_NONE;
+
+	if (image[0] == '@')
+	{
+		_symbol = InterpretSymbol (image);
+		if (_symbol == SYMBOL_ARROW)
+		{
+			DebugString ("Warning: a tool sight cannot have an "
+				"arrow symbol.");
+			_symbol = SYMBOL_CROSSHAIRS;
+		}
+	}
+	else
+	{
+		bitmap = LoadBitmap (image);
+		if (bitmap < 0)
+		{
+			DebugPrintf ("Warning: could not load tool_sight_image"
+				" at `%s'.", image);
+			_symbol = SYMBOL_CROSSHAIRS;
+		}
+	}
+
+	if (image) g_pMalloc->Free (image);
+	if (symbol != _symbol)
+	{
+		symbol = _symbol;
+		ScheduleRedraw ();
+	}
+}
+
+void
+cScr_ToolSight::UpdateColor ()
+{
+	ulong _color = GetParamColor ("tool_sight_color",
+		makecolor (128, 128, 128));
+	if (color != _color)
+	{
+		color = _color;
+		ScheduleRedraw ();
+	}
 }
 

@@ -60,8 +60,7 @@ cScr_TransitionTrap::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
 		Increment ();
 		return 0;
 	}
-	else
-		return cBaseTrap::OnTimer (pMsg, mpReply);
+	return cBaseTrap::OnTimer (pMsg, mpReply);
 }
 
 void
@@ -117,16 +116,20 @@ cScr_GetInfo::cScr_GetInfo (const char* pszName, int iHostObjId)
 long
 cScr_GetInfo::OnBeginScript (sScrMsg*, cMultiParm&)
 {
-	SetTimedMessage ("UpdateVariables", 10, kSTM_OneShot);
+	// not everything is available yet, so wait for next message cycle
+	SimplePost (ObjId (), ObjId (), "UpdateVariables");
 	return 0;
 }
 
 long
-cScr_GetInfo::OnSim (sSimMsg* pMsg, cMultiParm&)
+cScr_GetInfo::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	if (pMsg->fStarting)
+	if (!strcmp (pMsg->message, "UpdateVariables"))
+	{
 		UpdateVariables ();
-	return 0;
+		return 0;
+	}
+	return cBaseScript::OnMessage (pMsg, mpReply);
 }
 
 long
@@ -135,18 +138,6 @@ cScr_GetInfo::OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg, cMultiParm&)
 	if (pMsg->fResuming)
 		UpdateVariables ();
 	return 0;
-}
-
-long
-cScr_GetInfo::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
-{
-	if (!strcmp (pMsg->name, "UpdateVariables"))
-	{
-		UpdateVariables ();
-		return 0;
-	}
-	else
-		return cBaseScript::OnTimer (pMsg, mpReply);
 }
 
 long
@@ -278,8 +269,7 @@ cScr_SyncGlobalFog::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 			(float) pMsg->data3);
 		return 0;
 	}
-	else
-		return cBaseScript::OnMessage (pMsg, mpReply);
+	return cBaseScript::OnMessage (pMsg, mpReply);
 }
 
 void

@@ -185,7 +185,6 @@ ulong GetObjectParamColor (object target, const char* param, ulong Default = 0);
  * Subclasses can further limit the set (for example, based on data) by
  * overriding the Matches function (and calling AdvanceToMatch in their ctors).
  */
-#if !SCR_GENSCRIPTS
 class LinkIter
 {
 public:
@@ -209,7 +208,6 @@ protected:
 private:
 	linkset links;
 };
-#endif // !SCR_GENSCRIPTS
 
 
 
@@ -220,7 +218,6 @@ private:
  * link data string. If the string is "Self" or "Player", iterates over only the
  * source object or the object named Player, respectively.
  */
-#if !SCR_GENSCRIPTS
 class ScriptParamsIter : public LinkIter
 {
 public:
@@ -240,5 +237,4 @@ private:
 	cAnsiStr data;
 	object only;
 };
-#endif // !SCR_GENSCRIPTS
 

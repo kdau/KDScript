@@ -92,10 +92,9 @@ public:
 
 protected:
 	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg,
 		cMultiParm& mpReply);
-	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 
 private:

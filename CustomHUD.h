@@ -30,7 +30,38 @@
 #include <darkhook.h>
 #include "BaseScript.h"
 #include "scriptvars.h"
-#endif // SCR_GENSCRIPTS
+#endif // !SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
+struct CanvasPoint
+{
+	int x, y;
+	CanvasPoint (int x = 0, int y = 0);
+	bool operator == (const CanvasPoint& rhs) const;
+	bool operator != (const CanvasPoint& rhs) const;
+	CanvasPoint operator + (const CanvasPoint& rhs) const;
+	CanvasPoint operator - (const CanvasPoint& rhs) const;
+	CanvasPoint operator * (int rhs) const;
+};
+struct CanvasSize
+{
+	int w, h;
+	CanvasSize (int w = 0, int h = 0);
+	bool operator == (const CanvasSize& rhs) const;
+};
+struct CanvasRect
+{
+	int x, y, w, h;
+	CanvasRect (int x = 0, int y = 0, int w = 0, int h = 0);
+	bool operator == (const CanvasRect& rhs) const;
+};
+static const CanvasPoint ORIGIN = { 0, 0 };
+static const CanvasPoint OFFSCREEN = { -1, -1 };
+static const CanvasRect NOCLIP = { 0, 0, -1, -1 };
+static const CanvasRect OFFSCREEN_R = { -1, -1, -1, -1 };
+#endif // !SCR_GENSCRIPTS
 
 
 
@@ -69,17 +100,22 @@ public:
 
 	void DrawStage1 ();
 	void DrawStage2 ();
-	virtual void CanvasChanged ();
+	virtual void EnterGameMode ();
 
 protected:
 	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+
+	void SubscribeProperty (const char* property);
+	virtual void OnPropertyChanged (const char* property);
 
 	bool GetParamBool (const char* param, bool default_value);
 	ulong GetParamColor (const char* param, ulong default_value);
 	float GetParamFloat (const char* param, float default_value);
 	int GetParamInt (const char* param, int default_value);
 	char* GetParamString (const char* param, const char* default_value);
+
 	void SetParamBool (const char* param, bool value);
 	// no support for setting a color parameter
 	void SetParamFloat (const char* param, float value);
@@ -91,33 +127,60 @@ protected:
 	bool NeedsRedraw ();
 	void ScheduleRedraw ();
 
+	void SetIsOverlay (bool is_overlay);
 	void SetOpacity (int opacity);
 
-	void GetCanvasSize (int& width, int& height);
-	void SetPosition (int x, int y);
-	void SetSize (int width, int height);
+	CanvasSize GetCanvasSize ();
+	void SetPosition (CanvasPoint position);
+	void SetSize (CanvasSize size);
+	void SetScale (int scale);
+
+	void SetDrawingColor (ulong color);
+	void SetDrawingOffset (CanvasPoint offset = ORIGIN);
 
 	void FillBackground (int color, int opacity);
-	void SetDrawingColor (ulong color);
-	void DrawLine (int x1, int y1, int x2, int y2);
+	void DrawLine (CanvasPoint from, CanvasPoint to);
 
-	void GetTextSize (const char* text, int& width, int& height);
-	void DrawText (const char* text, int x, int y);
+	CanvasSize GetTextSize (const char* text);
+	void DrawText (const char* text, CanvasPoint position = ORIGIN);
 
 	int LoadBitmap (const char* path);
-	void GetBitmapSize (int bitmap, int& width, int& height);
-	void DrawBitmap (int bitmap, int x, int y, int src_x = 0, int src_y = 0,
-		int src_width = -1, int src_height = -1);
+	CanvasSize GetBitmapSize (int bitmap);
+	void DrawBitmap (int bitmap, CanvasPoint position = ORIGIN,
+		CanvasRect clip = NOCLIP);
 	void FreeBitmap (int bitmap);
 
-	bool LocationToScreen (const cScrVec& location, int& x, int& y);
-	bool ObjectToScreen (object target, int& x1, int& y1, int& x2, int& y2);
+	CanvasPoint LocationToCanvas (const cScrVec& location);
+	CanvasRect ObjectToCanvas (object target);
+
+	enum Symbol
+	{
+		SYMBOL_NONE,
+		SYMBOL_ARROW,
+		SYMBOL_CROSSHAIRS,
+		SYMBOL_RETICULE
+	};
+	enum Direction
+	{
+		DIRN_NONE,
+		DIRN_LEFT,
+		DIRN_RIGHT,
+	};
+	void DrawSymbol (Symbol symbol, CanvasSize size,
+		CanvasPoint position = ORIGIN, Direction direction = DIRN_NONE);
+	CanvasPoint GetSymbolCenter (Symbol symbol, CanvasSize size,
+		Direction direction = DIRN_NONE);
+	Symbol InterpretSymbol (const char* symbol);
 
 private:
 	SService<IDarkOverlaySrv> pDOS;
 	object handler;
 	int handle;
-	bool draw, redraw, redrawing;
+	bool draw, redraw, drawing;
+	CanvasPoint last_position;
+	CanvasSize last_size;
+	int last_scale, last_opacity;
+	CanvasPoint drawing_offset;
 };
 #endif // !SCR_GENSCRIPTS
 
@@ -135,11 +198,14 @@ protected:
 
 	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnDHNotify (sDHNotifyMsg* pMsg, cMultiParm& mpReply);
+	virtual void OnPropertyChanged (const char* property);
 	virtual long OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnQuestChange (sQuestMsg* pMsg, cMultiParm& mpReply);
 
 private:
+	static const CanvasSize SYMBOL_SIZE;
+	static const int PADDING;
+
 	script_int enabled; // bool
 
 	int objective;
@@ -147,27 +213,56 @@ private:
 	void SetEnabledFromObjective ();
 	void GetTextFromObjective (cScrStr& msgstr);
 
-	enum ImageType
-	{
-		IMAGE_NONE,
-		IMAGE_BITMAP,
-		IMAGE_ARROW,
-		IMAGE_CROSSHAIRS
-	} image;
+	Symbol symbol;
+	Direction symbol_dirn;
 	int bitmap;
-	static const int SYMBOL_SIZE;
+	CanvasPoint image_pos;
 	void UpdateImage ();
 
 	cAnsiStr text;
+	CanvasPoint text_pos;
 	void UpdateText ();
 
 	ulong color;
 	void UpdateColor ();
-
-	void UpdateOpacity ();
 };
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("KDQuestArrow","KDHUDElement",cScr_QuestArrow)
+#endif // SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
+class cScr_ToolSight : public virtual cScr_HUDElement
+{
+public:
+	cScr_ToolSight (const char* pszName, int iHostObjId);
+
+protected:
+	virtual bool Prepare ();
+	virtual void Redraw ();
+
+	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual void OnPropertyChanged (const char* property);
+	virtual long OnInvSelect (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnInvFocus (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnInvDeSelect (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply);
+
+private:
+	static const CanvasSize SYMBOL_SIZE;
+
+	script_int enabled; // bool
+
+	Symbol symbol;
+	int bitmap;
+	void UpdateImage ();
+
+	ulong color;
+	void UpdateColor ();
+};
+#else // SCR_GENSCRIPTS
+GEN_FACTORY("KDToolSight","KDHUDElement",cScr_ToolSight)
 #endif // SCR_GENSCRIPTS
 
 
