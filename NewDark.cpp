@@ -45,10 +45,10 @@ cScr_TransitionTrap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 	if (OnPrepare (bState))
 	{
 		Begin ();
-		return 0;
+		return S_OK;
 	}
 	else
-		return 1;
+		return S_FALSE;
 }
 
 long
@@ -58,7 +58,7 @@ cScr_TransitionTrap::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
 	    pMsg->data.type == kMT_String && !strcmp (pMsg->data, Name ()))
 	{
 		Increment ();
-		return 0;
+		return S_OK;
 	}
 	return cBaseTrap::OnTimer (pMsg, mpReply);
 }
@@ -118,7 +118,7 @@ cScr_GetInfo::OnBeginScript (sScrMsg*, cMultiParm&)
 {
 	// not everything is available yet, so wait for next message cycle
 	SimplePost (ObjId (), ObjId (), "UpdateVariables");
-	return 0;
+	return S_OK;
 }
 
 long
@@ -127,7 +127,7 @@ cScr_GetInfo::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	if (!strcmp (pMsg->message, "UpdateVariables"))
 	{
 		UpdateVariables ();
-		return 0;
+		return S_OK;
 	}
 	return cBaseScript::OnMessage (pMsg, mpReply);
 }
@@ -137,14 +137,14 @@ cScr_GetInfo::OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg, cMultiParm&)
 {
 	if (pMsg->fResuming)
 		UpdateVariables ();
-	return 0;
+	return S_OK;
 }
 
 long
 cScr_GetInfo::OnEndScript (sScrMsg*, cMultiParm&)
 {
 	DeleteVariables ();
-	return 0;
+	return S_OK;
 }
 
 void
@@ -228,15 +228,15 @@ cScr_SyncGlobalFog::cScr_SyncGlobalFog (const char* pszName, int iHostObjId)
 long
 cScr_SyncGlobalFog::OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm&)
 {
-	if (pMsg->ObjType != sRoomMsg::kPlayer) return 1; // we're not the player yet
+	if (pMsg->ObjType != sRoomMsg::kPlayer) return S_FALSE; // we're not the player yet
 
 	SService<IPropertySrv> pPS (g_pScriptManager);
 	cMultiParm _zone; pPS->Get (_zone, pMsg->ToObjId, "Weather", "fog");
-	if (_zone.type != kMT_Int) return 1;
+	if (_zone.type != kMT_Int) return S_FALSE;
 
 	int new_zone = int (_zone) - 1; // disabled = -1, global = 1, zone_1 =2, etc.
 	if (last_room_zone.Valid () && last_room_zone == new_zone)
-		return 1; // no change
+		return S_FALSE; // no change
 
 	int _r, _g, _b; float _d;
 	if (new_zone == -1) // disabled
@@ -250,11 +250,11 @@ cScr_SyncGlobalFog::OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm&)
 		pES->GetFogZone (new_zone, _r, _g, _b, _d);
 	}
 	else
-		return 1;
+		return S_FALSE;
 
 	last_room_zone = new_zone;
 	Sync (_r, _g, _b, _d);
-	return 0;
+	return S_OK;
 }
 
 long
@@ -267,7 +267,7 @@ cScr_SyncGlobalFog::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 		ulong color = (int) pMsg->data2;
 		Sync (GetRValue (color), GetGValue (color), GetBValue (color),
 			(float) pMsg->data3);
-		return 0;
+		return S_OK;
 	}
 	return cBaseScript::OnMessage (pMsg, mpReply);
 }
@@ -338,7 +338,7 @@ cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 	char* texture = GetObjectParamString (ObjId (),
 		bState ? "env_map_on" : "env_map_off", NULL);
 
-	if (zone < 0 || zone > 63 || !texture) return 1;
+	if (zone < 0 || zone > 63 || !texture) return S_FALSE;
 
 	DEBUG_PRINTF ("setting texture for enviroment zone %d to `%s'",
 		zone, texture);
@@ -347,7 +347,7 @@ cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 	pES->SetEnvMapZone (zone, texture);
 	g_pMalloc->Free (texture);
 
-	return 0;
+	return S_OK;
 }
 
 
@@ -448,14 +448,14 @@ cScr_TrapNextMission::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 	int next_mission = GetObjectParamInt (ObjId (),
 		bState ? "next_mission_on" : "next_mission_off", 0);
 
-	if (next_mission < 1) return 1;
+	if (next_mission < 1) return S_FALSE;
 
 	DEBUG_PRINTF ("setting next mission to %d", next_mission);
 
 	SService<IDarkGameSrv> pDGS (g_pScriptManager);
 	pDGS->SetNextMission (next_mission);
 
-	return 0;
+	return S_OK;
 }
 
 

@@ -23,6 +23,7 @@
 #include "CustomHUD.h"
 #include <sec_api/stdlib_s.h>
 #include <lg/objstd.h>
+#include <darkhook.h>
 #include <ScriptLib.h>
 #include "ScriptModule.h"
 #include "utils.h"
@@ -101,7 +102,7 @@ cScr_CustomHUD::OnBeginScript (sScrMsg*, cMultiParm&)
 
 	SService<IDarkOverlaySrv> pDOS (g_pScriptManager);
 	pDOS->SetHandler (this);
-	return 0;
+	return S_OK;
 }
 
 long
@@ -112,7 +113,7 @@ cScr_CustomHUD::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	{
 		elements.push_back
 			(reinterpret_cast<cScr_HUDElement*> (long (pMsg->data)));
-		return 0;
+		return S_OK;
 	}
 	else
 	if (!stricmp (pMsg->message, "UnregisterElement") &&
@@ -120,7 +121,7 @@ cScr_CustomHUD::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	{
 		elements.remove
 			(reinterpret_cast<cScr_HUDElement*> (long (pMsg->data)));
-		return 0;
+		return S_OK;
 	}
 
 	return cBaseScript::OnMessage (pMsg, mpReply);
@@ -131,7 +132,7 @@ cScr_CustomHUD::OnEndScript (sScrMsg*, cMultiParm&)
 {
 	SService<IDarkOverlaySrv> pDOS (g_pScriptManager);
 	pDOS->SetHandler (NULL);
-	return 0;
+	return S_OK;
 }
 
 void
@@ -231,7 +232,7 @@ cScr_HUDElement::OnBeginScript (sScrMsg*, cMultiParm&)
 	if (!handler)
 		throw std::runtime_error ("could not locate handler object");
 	SimpleSend (ObjId (), handler, "RegisterElement", long (this));
-	return 0;
+	return S_OK;
 }
 
 long
@@ -247,7 +248,7 @@ cScr_HUDElement::OnEndScript (sScrMsg*, cMultiParm&)
 		handle = -1;
 	}
 
-	return 0;
+	return S_OK;
 }
 
 long
@@ -256,33 +257,34 @@ cScr_HUDElement::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	if (!stricmp (pMsg->message, "DHNotify"))
 	{
 		auto dh = static_cast<sDHNotifyMsg*> (pMsg);
-		if (dh->typeDH != kDH_Property) return 1;
+		if (dh->typeDH != kDH_Property) return S_FALSE;
 		OnPropertyChanged (dh->sProp.pszPropName);
-		return 0;
+		return S_OK;
 	}
 	if (!stricmp (pMsg->message, "DestroyOverlay") &&
 	    pMsg->data.type == kMT_Int)
 	{
 		// This may still cause an "invalid overlay" assertion.
 		pDOS->DestroyTOverlayItem ((int) pMsg->data);
-		return 0;
+		return S_OK;
 	}
 	return cBaseScript::OnMessage (pMsg, mpReply);
 }
 
-void
+bool
 cScr_HUDElement::SubscribeProperty (const char* property)
 {
 	try
 	{
 		SService<IDarkHookScriptService> pDHS (g_pScriptManager);
-		pDHS->InstallPropHook (ObjId (), kDHNotifyDefault,
+		return pDHS->InstallPropHook (ObjId (), kDHNotifyDefault,
 			property, ObjId ());
 	}
 	catch (no_interface&)
 	{
 		DebugString ("The DarkHook service could not be located. "
 			"This custom HUD element may not update properly.");
+		return false;
 	}
 }
 
@@ -766,7 +768,7 @@ cScr_QuestArrow::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	if (!stricmp (pMsg->message, "QuestArrowOn"))
 	{
 		enabled = true;
-		return 0;
+		return S_OK;
 	}
 
 	if (!stricmp (pMsg->message, "QuestArrowOff") ||
@@ -775,7 +777,7 @@ cScr_QuestArrow::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	        static_cast<sAIModeChangeMsg*> (pMsg)->mode == kAIM_Dead))
 	{
 		enabled = false;
-		return 0;
+		return S_OK;
 	}
 
 	return cScr_HUDElement::OnMessage (pMsg, mpReply);
@@ -945,8 +947,7 @@ cScr_QuestArrow::UpdateText ()
 void
 cScr_QuestArrow::UpdateColor ()
 {
-	ulong _color = GetParamColor ("quest_arrow_color",
-		makecolor (255, 255, 255));
+	ulong _color = GetParamColor ("quest_arrow_color", 0xffffff);
 	if (color != _color)
 	{
 		color = _color;
@@ -1093,8 +1094,7 @@ cScr_ToolSight::UpdateImage ()
 void
 cScr_ToolSight::UpdateColor ()
 {
-	ulong _color = GetParamColor ("tool_sight_color",
-		makecolor (128, 128, 128));
+	ulong _color = GetParamColor ("tool_sight_color", 0x808080);
 	if (color != _color)
 	{
 		color = _color;

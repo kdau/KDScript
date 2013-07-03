@@ -27,7 +27,6 @@
 #include <list>
 #include <lg/interface.h>
 #include <lg/scrservices.h>
-#include <darkhook.h>
 #include "BaseScript.h"
 #include "scriptvars.h"
 #endif // !SCR_GENSCRIPTS
@@ -107,7 +106,7 @@ protected:
 	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 
-	void SubscribeProperty (const char* property);
+	bool SubscribeProperty (const char* property);
 	virtual void OnPropertyChanged (const char* property);
 
 	bool GetParamBool (const char* param, bool default_value);

@@ -25,6 +25,7 @@
 
 #if !SCR_GENSCRIPTS
 #include "BaseScript.h"
+#include "scriptvars.h"
 #endif // SCR_GENSCRIPTS
 
 
@@ -44,6 +45,60 @@ private:
 };
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("KDShortText","BaseScript",cScr_ShortText)
+#endif // SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
+class cScr_Subtitled : public virtual cBaseScript
+{
+public:
+	cScr_Subtitled (const char* pszName, int iHostObjId);
+
+protected:
+	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+	void Subtitle (object host, object schema);
+	void EndSubtitle (object host, object schema);
+
+private:
+	script_int last_host, last_schema; // object
+};
+#else // SCR_GENSCRIPTS
+GEN_FACTORY("KDSubtitled","BaseScript",cScr_Subtitled)
+#endif // SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
+class cScr_SubtitledAI : public cScr_Subtitled
+{
+public:
+	cScr_SubtitledAI (const char* pszName, int iHostObjId);
+
+protected:
+	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+};
+#else // SCR_GENSCRIPTS
+GEN_FACTORY("KDSubtitledAI","KDSubtitled",cScr_SubtitledAI)
+#endif // SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
+class cScr_SubtitledVO : public cScr_Subtitled
+{
+public:
+	cScr_SubtitledVO (const char* pszName, int iHostObjId);
+
+protected:
+	virtual long OnTurnOn (sScrMsg* pMsg, cMultiParm& mpReply);
+
+private:
+	script_int played; // bool
+};
+#else // SCR_GENSCRIPTS
+GEN_FACTORY("KDSubtitledVO","KDSubtitled",cScr_SubtitledVO)
 #endif // SCR_GENSCRIPTS
 
 
