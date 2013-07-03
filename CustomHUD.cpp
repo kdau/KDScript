@@ -36,6 +36,10 @@ CanvasPoint::CanvasPoint (int _x, int _y)
 	: x (_x), y (_y)
 {}
 
+CanvasPoint::CanvasPoint (const CanvasSize& area)
+	: x (area.w), y (area.h)
+{}
+
 bool
 CanvasPoint::operator == (const CanvasPoint& rhs) const
 {
@@ -66,6 +70,12 @@ CanvasPoint::operator * (int rhs) const
 	return CanvasPoint (x * rhs, y * rhs);
 }
 
+CanvasPoint
+CanvasPoint::operator / (int rhs) const
+{
+	return CanvasPoint (x / rhs, y / rhs);
+}
+
 CanvasSize::CanvasSize (int _w, int _h)
 	: w (_w), h (_h)
 {}
@@ -76,6 +86,12 @@ CanvasSize::operator == (const CanvasSize& rhs) const
 	return w == rhs.w && h == rhs.h;
 }
 
+bool
+CanvasSize::operator != (const CanvasSize& rhs) const
+{
+	return w != rhs.w || h != rhs.h;
+}
+
 CanvasRect::CanvasRect (int _x, int _y, int _w, int _h)
 	: x (_x), y (_y), w (_w), h (_h)
 {}
@@ -84,6 +100,24 @@ bool
 CanvasRect::operator == (const CanvasRect& rhs) const
 {
 	return x == rhs.x && y == rhs.y && w == rhs.w && h == rhs.h;
+}
+
+bool
+CanvasRect::operator != (const CanvasRect& rhs) const
+{
+	return x != rhs.x || y != rhs.y || w != rhs.w || h != rhs.h;
+}
+
+CanvasRect
+CanvasRect::operator + (const CanvasPoint& rhs) const
+{
+	return CanvasRect (x + rhs.x, y + rhs.y, w, h);
+}
+
+CanvasRect
+CanvasRect::operator - (const CanvasPoint& rhs) const
+{
+	return CanvasRect (x - rhs.x, y - rhs.y, w, h);
 }
 
 
@@ -158,9 +192,9 @@ cScr_CustomHUD::OnUIEnterMode ()
 
 
 
-/* KDHUDElement */
+/* HUDElement */
 
-#define IS_OVERLAY() (handle > -1)
+#define IS_OVERLAY() (overlay > -1)
 
 #define CHECK_OVERLAY(retval) \
 	if (!IS_OVERLAY ()) \
@@ -182,17 +216,20 @@ cScr_CustomHUD::OnUIEnterMode ()
 #define OFFSET(position) \
 	(position + (IS_OVERLAY () ? ORIGIN : last_position) + drawing_offset)
 
-cScr_HUDElement::cScr_HUDElement (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId), pDOS (g_pScriptManager),
-	  handler (), handle (-1), draw (true), redraw (true), drawing (false),
+HUDElement::HUDElement (object _host)
+	: pDOS (g_pScriptManager), host (_host), handler (), overlay (-1),
+	  draw (true), redraw (true), drawing (false),
 	  last_position (), last_size (1, 1), last_scale (1),
 	  last_opacity (255), drawing_offset ()
+{}
+
+HUDElement::~HUDElement ()
 {
-	DarkHookInitializeService (g_pScriptManager, g_pMalloc);
+	Deinitialize ();
 }
 
 void
-cScr_HUDElement::DrawStage1 ()
+HUDElement::DrawStage1 ()
 {
 	drawing = true;
 	draw = Prepare ();
@@ -205,10 +242,10 @@ cScr_HUDElement::DrawStage1 ()
 }
 
 void
-cScr_HUDElement::DrawStage2 ()
+HUDElement::DrawStage2 ()
 {
 	if (!draw || !IS_OVERLAY ()) return;
-	if (redraw && pDOS->BeginTOverlayUpdate (handle))
+	if (redraw && pDOS->BeginTOverlayUpdate (overlay))
 	{
 		redraw = false;
 		drawing = true;
@@ -216,190 +253,167 @@ cScr_HUDElement::DrawStage2 ()
 		drawing = false;
 		pDOS->EndTOverlayUpdate ();
 	}
-	pDOS->DrawTOverlayItem (handle);
+	pDOS->DrawTOverlayItem (overlay);
 }
 
 void
-cScr_HUDElement::EnterGameMode ()
+HUDElement::EnterGameMode ()
 {}
 
-long
-cScr_HUDElement::OnBeginScript (sScrMsg*, cMultiParm&)
+bool
+HUDElement::Initialize ()
 {
 	// locate the handler object
-	ScriptParamsIter handler_link (ObjId (), "CustomHUD");
+	ScriptParamsIter handler_link (host, "CustomHUD");
 	handler = handler_link ? handler_link : StrToObject ("CustomHUD");
+
 	if (!handler)
-		throw std::runtime_error ("could not locate handler object");
-	SimpleSend (ObjId (), handler, "RegisterElement", long (this));
-	return S_OK;
-}
-
-long
-cScr_HUDElement::OnEndScript (sScrMsg*, cMultiParm&)
-{
-	if (handler)
-		SimpleSend (ObjId (), handler, "UnregisterElement", long (this));
-
-	if (IS_OVERLAY ())
 	{
-		// don't wait, as there won't be another message cycle
-		pDOS->DestroyTOverlayItem (handle);
-		handle = -1;
-	}
-
-	return S_OK;
-}
-
-long
-cScr_HUDElement::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	if (!stricmp (pMsg->message, "DHNotify"))
-	{
-		auto dh = static_cast<sDHNotifyMsg*> (pMsg);
-		if (dh->typeDH != kDH_Property) return S_FALSE;
-		OnPropertyChanged (dh->sProp.pszPropName);
-		return S_OK;
-	}
-	if (!stricmp (pMsg->message, "DestroyOverlay") &&
-	    pMsg->data.type == kMT_Int)
-	{
-		// This may still cause an "invalid overlay" assertion.
-		pDOS->DestroyTOverlayItem ((int) pMsg->data);
-		return S_OK;
-	}
-	return cBaseScript::OnMessage (pMsg, mpReply);
-}
-
-bool
-cScr_HUDElement::SubscribeProperty (const char* property)
-{
-	try
-	{
-		SService<IDarkHookScriptService> pDHS (g_pScriptManager);
-		return pDHS->InstallPropHook (ObjId (), kDHNotifyDefault,
-			property, ObjId ());
-	}
-	catch (no_interface&)
-	{
-		DebugString ("The DarkHook service could not be located. "
-			"This custom HUD element may not update properly.");
+		DebugPrintf ("Warning: could not locate handler object. "
+			"This HUD element cannot be drawn.");
 		return false;
 	}
+
+	// register with handler
+	SimpleSend (host, handler, "RegisterElement", long (this));
+	return true;
 }
 
 void
-cScr_HUDElement::OnPropertyChanged (const char*)
-{}
+HUDElement::Deinitialize ()
+{
+	// unregister from handler
+	if (handler)
+	{
+		SimpleSend (host, handler, "UnregisterElement", long (this));
+		handler = 0;
+	}
+
+	// destroy any overlay
+	if (IS_OVERLAY ())
+	{
+		pDOS->DestroyTOverlayItem (overlay);
+		overlay = -1;
+	}
+}
+
+object
+HUDElement::GetHost ()
+{
+	return host;
+}
 
 bool
-cScr_HUDElement::GetParamBool (const char* param, bool default_value)
+HUDElement::GetParamBool (const char* param, bool default_value)
 {
-	return GetObjectParamBool (ObjId (), param,
+	return GetObjectParamBool (host, param,
 		GetObjectParamBool (handler, param, default_value));
 }
 
 ulong
-cScr_HUDElement::GetParamColor (const char* param, ulong default_value)
+HUDElement::GetParamColor (const char* param, ulong default_value)
 {
-	return GetObjectParamColor (ObjId (), param,
+	return GetObjectParamColor (host, param,
 		GetObjectParamColor (handler, param, default_value));
 }
 
 float
-cScr_HUDElement::GetParamFloat (const char* param, float default_value)
+HUDElement::GetParamFloat (const char* param, float default_value)
 {
-	return GetObjectParamFloat (ObjId (), param,
+	return GetObjectParamFloat (host, param,
 		GetObjectParamFloat (handler, param, default_value));
 }
 
 int
-cScr_HUDElement::GetParamInt (const char* param, int default_value)
+HUDElement::GetParamInt (const char* param, int default_value)
 {
-	return GetObjectParamInt (ObjId (), param,
+	return GetObjectParamInt (host, param,
 		GetObjectParamInt (handler, param, default_value));
 }
 
 char*
-cScr_HUDElement::GetParamString (const char* param, const char* default_value)
+HUDElement::GetParamString (const char* param, const char* default_value)
 {
 	char* handler_val = GetObjectParamString (handler, param, default_value);
-	char* result = GetObjectParamString (ObjId (), param, handler_val);
+	char* result = GetObjectParamString (host, param, handler_val);
 	if (handler_val) g_pMalloc->Free (handler_val);
 	return result;
 }
 
 void
-cScr_HUDElement::SetParamBool (const char* param, bool value)
+HUDElement::SetParamBool (const char* param, bool value)
 {
-	SetObjectParamBool (ObjId (), param, value);
+	SetObjectParamBool (host, param, value);
 }
 
 void
-cScr_HUDElement::SetParamFloat (const char* param, float value)
+HUDElement::SetParamFloat (const char* param, float value)
 {
-	SetObjectParamFloat (ObjId (), param, value);
+	SetObjectParamFloat (host, param, value);
 }
 
 void
-cScr_HUDElement::SetParamInt (const char* param, int value)
+HUDElement::SetParamInt (const char* param, int value)
 {
-	SetObjectParamInt (ObjId (), param, value);
+	SetObjectParamInt (host, param, value);
 }
 
 void
-cScr_HUDElement::SetParamString (const char* param, const char* value)
+HUDElement::SetParamString (const char* param, const char* value)
 {
-	SetObjectParamString (ObjId (), param, value);
+	SetObjectParamString (host, param, value);
 }
 
 bool
-cScr_HUDElement::Prepare ()
+HUDElement::Prepare ()
 {
 	return true;
 }
 
 bool
-cScr_HUDElement::NeedsRedraw ()
+HUDElement::NeedsRedraw ()
 {
 	return redraw;
 }
 
 void
-cScr_HUDElement::ScheduleRedraw ()
+HUDElement::ScheduleRedraw ()
 {
 	redraw = true;
 }
 
-void
-cScr_HUDElement::SetIsOverlay (bool is_overlay)
+bool
+HUDElement::SetIsOverlay (bool is_overlay)
 {
 	if (is_overlay && !IS_OVERLAY ())
 	{
-		handle = pDOS->CreateTOverlayItem
+		overlay = pDOS->CreateTOverlayItem
 			(last_position.x, last_position.y, last_size.w,
 			last_size.h, last_opacity, true);
 		if (!IS_OVERLAY ())
-			throw std::runtime_error ("could not allocate overlay");
+		{
+			DebugPrintf ("Warning: could not create HUD overlay.");
+			return false;
+		}
 	}
 	else if (!is_overlay && IS_OVERLAY ())
 	{
-		// schedule destruction of old overlay outside cycle
-		SimplePost (ObjId (), ObjId (), "DestroyOverlay", handle);
-		handle = -1;
+		pDOS->DestroyTOverlayItem (overlay);
+		overlay = -1;
 	}
+	return true;
 }
 
 void
-cScr_HUDElement::SetOpacity (int opacity)
+HUDElement::SetOpacity (int opacity)
 {
 	last_opacity = opacity;
 	CHECK_OVERLAY ();
-	pDOS->UpdateTOverlayAlpha (handle, opacity);
+	pDOS->UpdateTOverlayAlpha (overlay, opacity);
 }
 
 CanvasSize
-cScr_HUDElement::GetCanvasSize ()
+HUDElement::GetCanvasSize ()
 {
 	int width = 0, height = 0;
 	SService<IEngineSrv> pES (g_pScriptManager);
@@ -408,22 +422,28 @@ cScr_HUDElement::GetCanvasSize ()
 }
 
 void
-cScr_HUDElement::SetPosition (CanvasPoint position)
+HUDElement::SetPosition (CanvasPoint position)
 {
 	last_position = position;
 	if (IS_OVERLAY ())
-		pDOS->UpdateTOverlayPosition (handle, position.x, position.y);
+		pDOS->UpdateTOverlayPosition (overlay, position.x, position.y);
 	// For non-overlay elements, last_position will be used when drawing.
 }
 
+CanvasSize
+HUDElement::GetSize ()
+{
+	return last_size;
+}
+
 void
-cScr_HUDElement::SetSize (CanvasSize size)
+HUDElement::SetSize (CanvasSize size)
 {
 	last_size = size;
 	if (IS_OVERLAY ())
 	{
 		// This is not intended behavior and should be avoided.
-		SetIsOverlay (false); // destroy old handle
+		SetIsOverlay (false); // destroy old overlay
 		SetIsOverlay (true); // and get a new one at the new size
 		if (last_scale != 1) SetScale (last_scale); // restore scale
 		ScheduleRedraw ();
@@ -432,30 +452,30 @@ cScr_HUDElement::SetSize (CanvasSize size)
 }
 
 void
-cScr_HUDElement::SetScale (int scale)
+HUDElement::SetScale (int scale)
 {
 	last_scale = scale;
 	CHECK_OVERLAY ();
-	pDOS->UpdateTOverlaySize (handle,
+	pDOS->UpdateTOverlaySize (overlay,
 		last_size.w * scale, last_size.h * scale);
 }
 
 void
-cScr_HUDElement::SetDrawingColor (ulong color)
+HUDElement::SetDrawingColor (ulong color)
 {
 	CHECK_DRAWING ();
 	pDOS->SetTextColor (getred (color), getgreen (color), getblue (color));
 }
 
 void
-cScr_HUDElement::SetDrawingOffset (CanvasPoint offset)
+HUDElement::SetDrawingOffset (CanvasPoint offset)
 {
 	CHECK_DRAWING ();
 	drawing_offset = offset;
 }
 
 void
-cScr_HUDElement::FillBackground (int color, int opacity)
+HUDElement::FillBackground (int color, int opacity)
 {
 	CHECK_OVERLAY ();
 	CHECK_DRAWING ();
@@ -463,7 +483,26 @@ cScr_HUDElement::FillBackground (int color, int opacity)
 }
 
 void
-cScr_HUDElement::DrawLine (CanvasPoint from, CanvasPoint to)
+HUDElement::FillArea (CanvasRect area)
+{
+	CHECK_DRAWING ();
+
+	if (area == NOCLIP)
+	{
+		area.x = last_position.x;
+		area.y = last_position.y;
+		area.w = last_size.w;
+		area.h = last_size.h;
+	}
+	else
+		area = OFFSET (area);
+
+	for (int y = area.y; y < area.y + area.h; ++y)
+		pDOS->DrawLine (area.x, y, area.x + area.w, y);
+}
+
+void
+HUDElement::DrawLine (CanvasPoint from, CanvasPoint to)
 {
 	CHECK_DRAWING ();
 	from = OFFSET (from);
@@ -472,7 +511,7 @@ cScr_HUDElement::DrawLine (CanvasPoint from, CanvasPoint to)
 }
 
 CanvasSize
-cScr_HUDElement::GetTextSize (const char* text)
+HUDElement::GetTextSize (const char* text)
 {
 	CanvasSize result;
 	CHECK_DRAWING (result);
@@ -481,7 +520,7 @@ cScr_HUDElement::GetTextSize (const char* text)
 }
 
 void
-cScr_HUDElement::DrawText (const char* text, CanvasPoint position)
+HUDElement::DrawText (const char* text, CanvasPoint position)
 {
 	CHECK_DRAWING ();
 	position = OFFSET (position);
@@ -489,7 +528,7 @@ cScr_HUDElement::DrawText (const char* text, CanvasPoint position)
 }
 
 int
-cScr_HUDElement::LoadBitmap (const char* path)
+HUDElement::LoadBitmap (const char* path)
 {
 	char dir[256], fname[256], ext[256], file[256];
 	_splitpath_s (path, NULL, 0, dir, 256, fname, 256, ext, 256);
@@ -498,7 +537,7 @@ cScr_HUDElement::LoadBitmap (const char* path)
 }
 
 CanvasSize
-cScr_HUDElement::GetBitmapSize (int bitmap)
+HUDElement::GetBitmapSize (int bitmap)
 {
 	CanvasSize result;
 	if (bitmap > -1)
@@ -507,7 +546,7 @@ cScr_HUDElement::GetBitmapSize (int bitmap)
 }
 
 void
-cScr_HUDElement::DrawBitmap (int bitmap, CanvasPoint position, CanvasRect clip)
+HUDElement::DrawBitmap (int bitmap, CanvasPoint position, CanvasRect clip)
 {
 	CHECK_DRAWING ();
 	position = OFFSET (position);
@@ -524,13 +563,13 @@ cScr_HUDElement::DrawBitmap (int bitmap, CanvasPoint position, CanvasRect clip)
 }
 
 void
-cScr_HUDElement::FreeBitmap (int bitmap)
+HUDElement::FreeBitmap (int bitmap)
 {
 	if (bitmap > -1) pDOS->FlushBitmap (bitmap);
 }
 
 CanvasPoint
-cScr_HUDElement::LocationToCanvas (const cScrVec& location)
+HUDElement::LocationToCanvas (const cScrVec& location)
 {
 	CanvasPoint result;
 	CHECK_DRAWING (OFFSCREEN);
@@ -539,7 +578,7 @@ cScr_HUDElement::LocationToCanvas (const cScrVec& location)
 }
 
 CanvasRect
-cScr_HUDElement::ObjectToCanvas (object target)
+HUDElement::ObjectToCanvas (object target)
 {
 	CHECK_DRAWING (OFFSCREEN_R);
 	int x1, y1, x2, y2;
@@ -547,8 +586,26 @@ cScr_HUDElement::ObjectToCanvas (object target)
 	return onscreen ? CanvasRect (x1, y1, x2 - x1, y2 - y1) : OFFSCREEN_R;
 }
 
+CanvasPoint
+HUDElement::ObjectCentroidToCanvas (object target)
+{
+	SService<IObjectSrv> pOS (g_pScriptManager);
+	cScrVec centroid; pOS->Position (centroid, target);
+	CanvasPoint result = LocationToCanvas (centroid);
+	if (result == OFFSCREEN) // centroid is out, try bounds
+	{
+		CanvasRect bounds = ObjectToCanvas (target);
+		if (bounds != OFFSCREEN_R) // use center of bounds instead
+		{
+			result.x = bounds.x + bounds.w / 2;
+			result.y = bounds.y + bounds.h / 2;
+		}
+	}
+	return result;
+}
+
 void
-cScr_HUDElement::DrawSymbol (Symbol symbol, CanvasSize size,
+HUDElement::DrawSymbol (Symbol symbol, CanvasSize size,
 	CanvasPoint position, Direction direction)
 {
 	CanvasPoint xqtr (size.w / 4, 0), yqtr (0, size.h / 4);
@@ -592,7 +649,7 @@ cScr_HUDElement::DrawSymbol (Symbol symbol, CanvasSize size,
 }
 
 CanvasPoint
-cScr_HUDElement::GetSymbolCenter (Symbol symbol, CanvasSize size,
+HUDElement::GetSymbolCenter (Symbol symbol, CanvasSize size,
 	Direction direction)
 {
 	switch (symbol)
@@ -617,8 +674,8 @@ cScr_HUDElement::GetSymbolCenter (Symbol symbol, CanvasSize size,
 	}
 }
 
-cScr_HUDElement::Symbol
-cScr_HUDElement::InterpretSymbol (const char* symbol)
+HUDElement::Symbol
+HUDElement::InterpretSymbol (const char* symbol)
 {
 	if (!symbol || !stricmp (symbol, "@none"))
 		return SYMBOL_NONE;
@@ -638,6 +695,66 @@ cScr_HUDElement::InterpretSymbol (const char* symbol)
 	return SYMBOL_NONE;
 }
 
+
+
+/* KDHUDElement */
+
+cScr_HUDElement::cScr_HUDElement (const char* pszName, int iHostObjId)
+	: cBaseScript (pszName, iHostObjId), HUDElement (iHostObjId)
+{
+	DarkHookInitializeService (g_pScriptManager, g_pMalloc);
+}
+
+long
+cScr_HUDElement::OnBeginScript (sScrMsg*, cMultiParm&)
+{
+	return Initialize () ? S_OK : S_FALSE;
+}
+
+long
+cScr_HUDElement::OnEndScript (sScrMsg*, cMultiParm&)
+{
+	Deinitialize ();
+	return S_OK;
+}
+
+long
+cScr_HUDElement::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
+{
+	if (!stricmp (pMsg->message, "DHNotify"))
+	{
+		auto dh = static_cast<sDHNotifyMsg*> (pMsg);
+		if (dh->typeDH != kDH_Property) return S_FALSE;
+		OnPropertyChanged (dh->sProp.pszPropName);
+		return S_OK;
+	}
+	return cBaseScript::OnMessage (pMsg, mpReply);
+}
+
+bool
+cScr_HUDElement::SubscribeProperty (const char* property)
+{
+	try
+	{
+		SService<IDarkHookScriptService> pDHS (g_pScriptManager);
+		return pDHS->InstallPropHook (ObjId (), kDHNotifyDefault,
+			property, ObjId ());
+	}
+	catch (no_interface&)
+	{
+		DebugString ("The DarkHook service could not be located. "
+			"This custom HUD element may not update properly.");
+		return false;
+	}
+}
+
+void
+cScr_HUDElement::OnPropertyChanged (const char*)
+{}
+
+void
+cScr_HUDElement::Redraw ()
+{}
 
 
 
@@ -675,16 +792,8 @@ cScr_QuestArrow::Prepare ()
 	elem_size.h = std::max (image_size.h, text_size.h);
 
 	// get object's position in canvas coordinates
-	SService<IObjectSrv> pOS (g_pScriptManager);
-	cScrVec obj_centroid; pOS->Position (obj_centroid, ObjId ());
-	CanvasPoint obj_pos = LocationToCanvas (obj_centroid);
-	if (obj_pos == OFFSCREEN) // centroid is offscreen, try center of bounds
-	{
-		CanvasRect obj_rect = ObjectToCanvas (ObjId ());
-		if (obj_rect == OFFSCREEN_R) return false; // fully offscreen
-		obj_pos.x = obj_rect.x + obj_rect.w / 2;
-		obj_pos.y = obj_rect.y + obj_rect.h / 2;
-	}
+	CanvasPoint obj_pos = ObjectCentroidToCanvas (ObjId ());
+	if (obj_pos == OFFSCREEN) return false;
 
 	// choose alignment of image and text
 	symbol_dirn = (obj_pos.x > canvas.w / 2)

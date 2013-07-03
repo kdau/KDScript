@@ -26,6 +26,7 @@
 #if !SCR_GENSCRIPTS
 #include "BaseScript.h"
 #include "scriptvars.h"
+#include "CustomHUD.h"
 #endif // SCR_GENSCRIPTS
 
 
@@ -50,18 +51,44 @@ GEN_FACTORY("KDShortText","BaseScript",cScr_ShortText)
 
 
 #if !SCR_GENSCRIPTS
+class HUDSubtitle : public HUDElement
+{
+public:
+	HUDSubtitle (object host, const char* text, ulong color);
+	virtual ~HUDSubtitle ();
+
+protected:
+	virtual bool Prepare ();
+	virtual void Redraw ();
+
+private:
+	static const int BORDER, PADDING;
+
+	cAnsiStr text;
+	ulong color;
+};
+#endif // !SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
 class cScr_Subtitled : public virtual cBaseScript
 {
 public:
 	cScr_Subtitled (const char* pszName, int iHostObjId);
+	virtual ~cScr_Subtitled ();
 
 protected:
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
+
 	void Subtitle (object host, object schema);
-	void EndSubtitle (object host, object schema);
+	void EndSubtitle (object schema);
 
 private:
-	script_int last_host, last_schema; // object
+	script_int last_schema; // object
+	HUDSubtitle* element;
 };
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("KDSubtitled","BaseScript",cScr_Subtitled)
