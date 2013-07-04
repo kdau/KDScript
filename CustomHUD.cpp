@@ -136,6 +136,7 @@ cScr_CustomHUD::OnBeginScript (sScrMsg*, cMultiParm&)
 
 	SService<IDarkOverlaySrv> pDOS (g_pScriptManager);
 	pDOS->SetHandler (this);
+
 	return S_OK;
 }
 
