@@ -21,6 +21,7 @@
  *****************************************************************************/
 
 #include "CustomHUD.h"
+#include <cmath>
 #include <sec_api/stdlib_s.h>
 #include <lg/objstd.h>
 #include <darkhook.h>
@@ -332,11 +333,20 @@ HUDElement::GetParamInt (const char* param, int default_value)
 		GetObjectParamInt (handler, param, default_value));
 }
 
-char*
+object
+HUDElement::GetParamObject (const char* param, object default_value)
+{
+	return GetObjectParamObject (host, param,
+		GetObjectParamObject (handler, param, default_value));
+}
+
+cAnsiStr
 HUDElement::GetParamString (const char* param, const char* default_value)
 {
 	char* handler_val = GetObjectParamString (handler, param, default_value);
-	char* result = GetObjectParamString (host, param, handler_val);
+	char* host_val = GetObjectParamString (host, param, handler_val);
+	cAnsiStr result;
+	if (host_val) { result = host_val; g_pMalloc->Free (host_val); }
 	if (handler_val) g_pMalloc->Free (handler_val);
 	return result;
 }
@@ -500,6 +510,29 @@ HUDElement::FillArea (CanvasRect area)
 
 	for (int y = area.y; y < area.y + area.h; ++y)
 		pDOS->DrawLine (area.x, y, area.x + area.w, y);
+}
+
+void
+HUDElement::DrawBox (CanvasRect area)
+{
+	CHECK_DRAWING ();
+
+	if (area == NOCLIP)
+	{
+		area.x = last_position.x;
+		area.y = last_position.y;
+		area.w = last_size.w;
+		area.h = last_size.h;
+	}
+	else
+		area = OFFSET (area);
+
+	pDOS->DrawLine (area.x, area.y, area.x + area.w, area.y);
+	pDOS->DrawLine (area.x, area.y, area.x, area.y + area.h);
+	pDOS->DrawLine (area.x + area.w, area.y,
+		area.x + area.w, area.y + area.h);
+	pDOS->DrawLine (area.x, area.y + area.h,
+		area.x + area.w, area.y + area.h);
 }
 
 void
@@ -770,9 +803,9 @@ cScr_QuestArrow::PADDING = 8;
 cScr_QuestArrow::cScr_QuestArrow (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cScr_HUDElement (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (QuestArrow, enabled, iHostObjId), objective (-1),
-	  symbol (SYMBOL_NONE), symbol_dirn (DIRN_NONE), bitmap (-1),
-	  image_pos (), text (), text_pos (), color (0)
+	  SCRIPT_VAROBJ (QuestArrow, enabled, iHostObjId), obscured (false),
+	  objective (-1), symbol (SYMBOL_NONE), symbol_dirn (DIRN_NONE),
+	  bitmap (-1), image_pos (), text (), text_pos (), color (0)
 {}
 
 // No override of EnterGameMode. If the canvas size did change and the text
@@ -782,6 +815,14 @@ bool
 cScr_QuestArrow::Prepare ()
 {
 	if (!enabled) return false;
+
+	// confirm object is actually visible, if required
+	if (!obscured)
+	{
+		SService<IObjectSrv> pOS (g_pScriptManager);
+		true_bool rendered; pOS->RenderedThisFrame (rendered, ObjId ());
+		if (!rendered) return false;
+	}
 
 	// get canvas, image, and text size and calculate element size
 	CanvasSize canvas = GetCanvasSize (),
@@ -861,10 +902,7 @@ cScr_QuestArrow::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 	long result = cScr_HUDElement::OnBeginScript (pMsg, mpReply);
 
 	enabled.Init (GetParamBool ("quest_arrow", true));
-	UpdateObjective ();
-	UpdateImage ();
-	UpdateText ();
-	UpdateColor ();
+	OnPropertyChanged ("DesignNote"); // update all cached params
 
 	SubscribeProperty ("DesignNote");
 	SubscribeProperty ("GameName"); // for quest_arrow_text == "@name"
@@ -898,6 +936,7 @@ cScr_QuestArrow::OnPropertyChanged (const char* property)
 {
 	if (!strcmp (property, "DesignNote"))
 	{
+		obscured = GetParamBool ("quest_arrow_obscured", false);
 		UpdateObjective ();
 		UpdateImage ();
 		UpdateText ();
@@ -996,10 +1035,10 @@ cScr_QuestArrow::UpdateImage ()
 		ScheduleRedraw ();
 	}
 
-	char* image = GetParamString ("quest_arrow_image", "@arrow");
+	cAnsiStr image = GetParamString ("quest_arrow_image", "@arrow");
 	Symbol _symbol = SYMBOL_NONE;
 
-	if (image[0] == '@')
+	if (image.GetAt (0) == '@')
 		_symbol = InterpretSymbol (image);
 	else
 	{
@@ -1007,12 +1046,11 @@ cScr_QuestArrow::UpdateImage ()
 		if (bitmap < 0)
 		{
 			DebugPrintf ("Warning: could not load quest_arrow_image"
-				" at `%s'.", image);
+				" at `%s'.", (const char*) image);
 			_symbol = SYMBOL_ARROW;
 		}
 	}
 
-	if (image) g_pMalloc->Free (image);
 	if (symbol != _symbol)
 	{
 		symbol = _symbol;
@@ -1023,30 +1061,29 @@ cScr_QuestArrow::UpdateImage ()
 void
 cScr_QuestArrow::UpdateText ()
 {
-	char* __text = GetParamString ("quest_arrow_text", "@name");
+	cAnsiStr __text = GetParamString ("quest_arrow_text", "@name");
 	SService<IDataSrv> pDS (g_pScriptManager);
 	cScrStr _text;
 
-	if (!__text || !stricmp (__text, "") || !stricmp (__text, "@none"))
+	if (__text.IsEmpty () || !stricmp (__text, "@none"))
 		{}
 
 	else if (!stricmp (__text, "@name"))
 		pDS->GetObjString (_text, ObjId (), "objnames");
 
-	else if (!stricmp (__text, "@desc"))
+	else if (!stricmp (__text, "@description"))
 		pDS->GetObjString (_text, ObjId (), "objdescs");
 
-	else if (!stricmp (__text, "@goal"))
+	else if (!stricmp (__text, "@objective"))
 		GetTextFromObjective (_text);
 
-	else if (__text[0] == '@')
+	else if (__text.GetAt (0) == '@')
 		DebugPrintf ("Warning: invalid quest_arrow_text value of `%s'.",
-			__text);
+			(const char*) __text);
 
 	else
 		pDS->GetString (_text, "hud", __text, "", "strings");
 
-	if (__text) g_pMalloc->Free (__text);
 	if (!!strcmp (text, _text))
 	{
 		text = _text;
@@ -1169,10 +1206,10 @@ cScr_ToolSight::UpdateImage ()
 		ScheduleRedraw ();
 	}
 
-	char* image = GetParamString ("tool_sight_image", "@crosshairs");
+	cAnsiStr image = GetParamString ("tool_sight_image", "@crosshairs");
 	Symbol _symbol = SYMBOL_NONE;
 
-	if (image[0] == '@')
+	if (image.GetAt (0) == '@')
 	{
 		_symbol = InterpretSymbol (image);
 		if (_symbol == SYMBOL_ARROW)
@@ -1188,12 +1225,11 @@ cScr_ToolSight::UpdateImage ()
 		if (bitmap < 0)
 		{
 			DebugPrintf ("Warning: could not load tool_sight_image"
-				" at `%s'.", image);
+				" at `%s'.", (const char*) image);
 			_symbol = SYMBOL_CROSSHAIRS;
 		}
 	}
 
-	if (image) g_pMalloc->Free (image);
 	if (symbol != _symbol)
 	{
 		symbol = _symbol;

@@ -537,6 +537,21 @@ GetObjectParamColor (object target, const char* param, ulong Default)
 	return result;
 }
 
+/* AverageColors */
+
+ulong
+AverageColors (ulong color1, ulong color2, float weight)
+{
+	weight = std::max (0.0f, std::min (1.0f, weight));
+	unsigned char r1 = getred (color1), r2 = getred (color2),
+		b1 = getblue (color1), b2 = getblue (color2),
+		g1 = getgreen (color1), g2 = getgreen (color2),
+		r = r1 + weight * (r2 - r1),
+		b = b1 + weight * (b2 - b1),
+		g = g1 + weight * (g2 - g1);
+	return makecolor (r, g, b);
+}
+
 
 
 /* LinkIter */

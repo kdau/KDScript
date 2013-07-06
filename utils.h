@@ -176,6 +176,14 @@ void DestroyLink (link destroy);
  */
 ulong GetObjectParamColor (object target, const char* param, ulong Default = 0);
 
+/**
+ * AverageColors
+ *
+ * Calculates the weighted average of two COLORREF colors. The weight ranges
+ * from 0.0 (color1) to 1.0 (color2). The averaging is done in RGB space.
+ */
+ulong AverageColors (ulong color1, ulong color2, float weight = 0.5);
+
 
 
 /**

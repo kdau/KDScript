@@ -118,12 +118,14 @@ protected:
 	ulong GetParamColor (const char* param, ulong default_value);
 	float GetParamFloat (const char* param, float default_value);
 	int GetParamInt (const char* param, int default_value);
-	char* GetParamString (const char* param, const char* default_value);
+	object GetParamObject (const char* param, object default_value);
+	cAnsiStr GetParamString (const char* param, const char* default_value);
 
 	void SetParamBool (const char* param, bool value);
 	// no support for setting a color parameter
 	void SetParamFloat (const char* param, float value);
 	void SetParamInt (const char* param, int value);
+	// no support for setting an object parameter
 	void SetParamString (const char* param, const char* value);
 
 	virtual bool Prepare ();
@@ -145,6 +147,7 @@ protected:
 
 	void FillBackground (int color, int opacity);
 	void FillArea (CanvasRect area = NOCLIP);
+	void DrawBox (CanvasRect area = NOCLIP);
 	void DrawLine (CanvasPoint from, CanvasPoint to);
 
 	CanvasSize GetTextSize (const char* text);
@@ -236,6 +239,7 @@ private:
 	static const int PADDING;
 
 	script_int enabled; // bool
+	bool obscured;
 
 	int objective;
 	void UpdateObjective ();

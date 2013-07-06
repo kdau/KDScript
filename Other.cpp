@@ -117,6 +117,7 @@ cScr_Carried::Drop ()
 		// clone self and add reference link to AI
 		pOS->Create (drop, ObjId ());
 		CreateLink ("CulpableFor", ai, drop);
+		DebugPrintf ("replacing self with clone %d", int (drop));
 	}
 
 	// become physical if not already, ensuring model is appropriate
@@ -264,7 +265,7 @@ cScr_Carrier::CreateAttachment (object archetype, int joint)
 			NULL, &joint, sizeof (joint)) != 0)
 		return; // don't attach a second object to the same joint
 
-	DEBUG_PRINTF ("attaching %s to joint %d",
+	DebugPrintf ("attaching %s to joint %d",
 		(const char*) FormatObjectName (archetype), joint);
 
 	object attachment;
@@ -380,18 +381,13 @@ HUDSubtitle::Prepare ()
 void
 HUDSubtitle::Redraw ()
 {
-	CanvasSize elem_size = GetSize ();
-
 	// draw background
 	SetDrawingColor (0x000000);
 	FillArea ();
 
 	// draw border
 	SetDrawingColor (color);
-	DrawLine (ORIGIN, CanvasPoint (0, elem_size.h));
-	DrawLine (ORIGIN, CanvasPoint (elem_size.w, 0));
-	DrawLine (CanvasPoint (0, elem_size.h), CanvasPoint (elem_size));
-	DrawLine (CanvasPoint (elem_size.w, 0), CanvasPoint (elem_size));
+	DrawBox ();
 
 	// draw text
 	DrawText (text, CanvasPoint (BORDER+PADDING, BORDER+PADDING));

@@ -69,8 +69,8 @@ protected:
 	virtual bool OnIncrement () = 0;
 
 	float GetProgress ();
-	float Interpolate (float start, float end)
-		{ return start + GetProgress () * (end - start); }
+	float Interpolate (float start, float end);
+	ulong InterpolateColor (ulong start, ulong end);
 
 	virtual int GetIncrementDelta () const { return 50; }
 
@@ -117,14 +117,13 @@ protected:
 	virtual long OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 
-	void Sync (int red, int green, int blue, float dist);
+	void Sync (ulong color, float dist, bool sync_color = true);
 	virtual bool OnPrepare (bool) { return false; } // not really a trap
 	virtual bool OnIncrement ();
 
 private:
-	script_int last_room_zone,
-		start_red, start_green, start_blue,
-		end_red, end_green, end_blue;
+	script_int last_room_zone;
+	script_int start_color, end_color; // ulong
 	script_float start_dist, end_dist;
 };
 #else // SCR_GENSCRIPTS
@@ -159,9 +158,8 @@ protected:
 	virtual bool OnIncrement ();
 
 private:
-	script_int zone,
-		start_red, start_green, start_blue,
-		end_red, end_green, end_blue;
+	script_int zone;
+	script_int start_color, end_color; // ulong
 	script_float start_dist, end_dist;
 };
 #else // SCR_GENSCRIPTS

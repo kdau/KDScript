@@ -24,9 +24,6 @@
 #include <ScriptLib.h>
 #include "utils.h"
 
-#include <windows.h>
-#undef GetClassName // ugh, Windows...
-
 
 
 /* KDTransitionTrap */
@@ -86,6 +83,18 @@ cScr_TransitionTrap::GetProgress ()
 		return 1.0;
 	else
 		return (total - float (time_remaining)) / total;
+}
+
+float
+cScr_TransitionTrap::Interpolate (float start, float end)
+{
+	return start + GetProgress () * (end - start);
+}
+
+ulong
+cScr_TransitionTrap::InterpolateColor (ulong start, ulong end)
+{
+	return AverageColors (start, end, GetProgress ());
 }
 
 void
@@ -150,8 +159,6 @@ cScr_GetInfo::OnEndScript (sScrMsg*, cMultiParm&)
 void
 cScr_GetInfo::UpdateVariables ()
 {
-	DEBUG_STRING ("updating info_* quest variables");
-
 	SService<IDarkGameSrv> pDGS (g_pScriptManager);
 	SService<IEngineSrv> pES (g_pScriptManager);
 	SService<IQuestSrv> pQS (g_pScriptManager);
@@ -190,7 +197,6 @@ cScr_GetInfo::UpdateVariables ()
 void
 cScr_GetInfo::DeleteVariables ()
 {
-	DEBUG_STRING ("deleting info_* quest variables");
 	SService<IQuestSrv> pQS (g_pScriptManager);
 	pQS->Delete ("info_directx_version");
 	pQS->Delete ("info_display_height");
@@ -215,12 +221,8 @@ cScr_SyncGlobalFog::cScr_SyncGlobalFog (const char* pszName, int iHostObjId)
 	  cBaseTrap (pszName, iHostObjId),
 	  cScr_TransitionTrap (pszName, iHostObjId),
 	  SCRIPT_VAROBJ (SyncGlobalFog, last_room_zone, iHostObjId),
-	  SCRIPT_VAROBJ (SyncGlobalFog, start_red, iHostObjId),
-	  SCRIPT_VAROBJ (SyncGlobalFog, start_green, iHostObjId),
-	  SCRIPT_VAROBJ (SyncGlobalFog, start_blue, iHostObjId),
-	  SCRIPT_VAROBJ (SyncGlobalFog, end_red, iHostObjId),
-	  SCRIPT_VAROBJ (SyncGlobalFog, end_green, iHostObjId),
-	  SCRIPT_VAROBJ (SyncGlobalFog, end_blue, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, start_color, iHostObjId),
+	  SCRIPT_VAROBJ (SyncGlobalFog, end_color, iHostObjId),
 	  SCRIPT_VAROBJ (SyncGlobalFog, start_dist, iHostObjId),
 	  SCRIPT_VAROBJ (SyncGlobalFog, end_dist, iHostObjId)
 {}
@@ -228,32 +230,39 @@ cScr_SyncGlobalFog::cScr_SyncGlobalFog (const char* pszName, int iHostObjId)
 long
 cScr_SyncGlobalFog::OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm&)
 {
-	if (pMsg->ObjType != sRoomMsg::kPlayer) return S_FALSE; // we're not the player yet
+	if (pMsg->ObjType != sRoomMsg::kPlayer)
+		return S_FALSE; // we're not the player yet
 
 	SService<IPropertySrv> pPS (g_pScriptManager);
-	cMultiParm _zone; pPS->Get (_zone, pMsg->ToObjId, "Weather", "fog");
-	if (_zone.type != kMT_Int) return S_FALSE;
+	cMultiParm _new_zone;
+	pPS->Get (_new_zone, pMsg->ToObjId, "Weather", "fog");
+	if (_new_zone.type != kMT_Int) return S_FALSE;
+	// disabled = -1, global = 1, zone_1 =2, etc.
+	int new_zone = int (_new_zone) - 1;
 
-	int new_zone = int (_zone) - 1; // disabled = -1, global = 1, zone_1 =2, etc.
 	if (last_room_zone.Valid () && last_room_zone == new_zone)
 		return S_FALSE; // no change
 
-	int _r, _g, _b; float _d;
+	ulong color; float dist; bool sync_color;
 	if (new_zone == -1) // disabled
 	{
-		_r = _g = _b = -1; // don't change color
-		_d = 0.0;
+		color = 0;
+		dist = 0.0;
+		sync_color = false;
 	}
 	else if (new_zone >= 1 && new_zone <= 8)
 	{
+		int red, green, blue;
 		SService<IEngineSrv> pES (g_pScriptManager);
-		pES->GetFogZone (new_zone, _r, _g, _b, _d);
+		pES->GetFogZone (new_zone, red, green, blue, dist);
+		color = makecolor (red, green, blue);
+		sync_color = true;
 	}
 	else
 		return S_FALSE;
 
 	last_room_zone = new_zone;
-	Sync (_r, _g, _b, _d);
+	Sync (color, dist, sync_color);
 	return S_OK;
 }
 
@@ -264,43 +273,31 @@ cScr_SyncGlobalFog::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	    pMsg->data.type == kMT_Int && last_room_zone == int (pMsg->data) &&
 	    pMsg->data2.type == kMT_Int && pMsg->data3.type == kMT_Float)
 	{
-		ulong color = (int) pMsg->data2;
-		Sync (GetRValue (color), GetGValue (color), GetBValue (color),
-			(float) pMsg->data3);
+		Sync ((int) pMsg->data2, (float) pMsg->data3);
 		return S_OK;
 	}
 	return cBaseScript::OnMessage (pMsg, mpReply);
 }
 
 void
-cScr_SyncGlobalFog::Sync (int red, int green, int blue, float dist)
+cScr_SyncGlobalFog::Sync (ulong color, float dist, bool sync_color)
 {
-	bool sync_color = GetObjectParamBool (ObjId (), "sync_fog_color", true),
-		sync_dist = GetObjectParamBool (ObjId (), "sync_fog_dist", true);
-	if (red < 0 || green < 0 || blue < 0) sync_color = false;
-	if (dist < 0.0) sync_dist = false;
+	sync_color &= GetObjectParamBool (ObjId (), "sync_fog_color", true);
+	bool sync_dist = (dist >= 0.0) &&
+		GetObjectParamBool (ObjId (), "sync_fog_dist", true);
 
 	SService<IEngineSrv> pES (g_pScriptManager);
-	int _sr, _sg, _sb; float _sd;
-	pES->GetFog (_sr, _sg, _sb, _sd);
+	int start_red, start_green, start_blue; float _start_dist;
+	pES->GetFog (start_red, start_green, start_blue, _start_dist);
+	start_color = makecolor (start_red, start_green, start_blue);
+	start_dist = _start_dist;
 
-	start_red = _sr;
-	start_green = _sg;
-	start_blue = _sb;
-	start_dist = _sd;
-
-	int _er, _eg, _eb;
-	end_red = _er = sync_color ? red : start_red;
-	end_green = _eg = sync_color ? green : start_green;
-	end_blue = _eb = sync_color ? blue : start_blue;
+	end_color = sync_color ? color : start_color;
 
 	float _ed, mult = GetObjectParamFloat (ObjId (), "fog_dist_mult", 1.0),
 		add = GetObjectParamFloat (ObjId (), "fog_dist_add", 0.0);
 	end_dist = _ed = (sync_dist || start_dist == 0.0 || dist == 0.0)
 		? (dist == 0.0 ? dist : dist * mult + add) : start_dist;
-
-	DEBUG_PRINTF ("synchronizing global fog to zone %d: RGB %d,%d,%d at distance %f",
-		(int) last_room_zone, _er, _eg, _eb, _ed);
 
 	Begin ();
 }
@@ -308,16 +305,14 @@ cScr_SyncGlobalFog::Sync (int red, int green, int blue, float dist)
 bool
 cScr_SyncGlobalFog::OnIncrement ()
 {
-	int red = Interpolate (start_red, end_red),
-		green = Interpolate (start_green, end_green),
-		blue = Interpolate (start_blue, end_blue);
+	ulong color = InterpolateColor (start_color, end_color);
 
 	float fake_end_dist = (end_dist == 0.0 && GetProgress () < 1.0)
 		? 100000.0 : end_dist;
 	float dist = Interpolate (start_dist, fake_end_dist);
 
 	SService<IEngineSrv> pES (g_pScriptManager);
-	pES->SetFog (red, green, blue, dist);
+	pES->SetFog (getred (color), getgreen (color), getblue (color), dist);
 
 	return true;
 }
@@ -340,9 +335,6 @@ cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 
 	if (zone < 0 || zone > 63 || !texture) return S_FALSE;
 
-	DEBUG_PRINTF ("setting texture for enviroment zone %d to `%s'",
-		zone, texture);
-
 	SService<IEngineSrv> pES (g_pScriptManager);
 	pES->SetEnvMapZone (zone, texture);
 	g_pMalloc->Free (texture);
@@ -359,12 +351,8 @@ cScr_TrapFog::cScr_TrapFog (const char* pszName, int iHostObjId)
 	  cBaseTrap (pszName, iHostObjId),
 	  cScr_TransitionTrap (pszName, iHostObjId),
 	  SCRIPT_VAROBJ (TrapFog, zone, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, start_red, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, start_green, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, start_blue, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, end_red, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, end_green, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, end_blue, iHostObjId),
+	  SCRIPT_VAROBJ (TrapFog, start_color, iHostObjId),
+	  SCRIPT_VAROBJ (TrapFog, end_color, iHostObjId),
 	  SCRIPT_VAROBJ (TrapFog, start_dist, iHostObjId),
 	  SCRIPT_VAROBJ (TrapFog, end_dist, iHostObjId)
 {}
@@ -383,32 +371,24 @@ cScr_TrapFog::OnPrepare (bool state)
 
 	zone = _zone;
 
-	int _sr, _sg, _sb; float _sd;
+	int start_red, start_green, start_blue; float _start_dist;
 	SService<IEngineSrv> pES (g_pScriptManager);
 	if (zone == 0)
-		pES->GetFog (_sr, _sg, _sb, _sd);
+		pES->GetFog (start_red, start_green, start_blue, _start_dist);
 	else
-		pES->GetFogZone (zone, _sr, _sg, _sb, _sd);
-	start_red = _sr;
-	start_green = _sg;
-	start_blue = _sb;
-	start_dist = _sd;
+		pES->GetFogZone (zone, start_red, start_green, start_blue,
+			_start_dist);
+	start_color = makecolor (start_red, start_green, start_blue);
+	start_dist = _start_dist;
 
-	end_red = _end_color ? GetRValue (_end_color) : _sr;
-	end_green = _end_color ? GetGValue (_end_color) : _sg;
-	end_blue = _end_color ? GetBValue (_end_color) : _sb;
-	end_dist = (_end_dist >= 0.0) ? _end_dist : _sd;
-
-	DEBUG_PRINTF ("setting fog for zone %d to RGB %d,%d,%d at distance %f",
-		(int) zone, (int) end_red, (int) end_green, (int) end_blue,
-		(float) end_dist);
+	end_color = _end_color ? _end_color : start_color;
+	end_dist = (_end_dist >= 0.0) ? _end_dist : _start_dist;
 
 	// notify KDSyncGlobalFog if present
 	object player = StrToObject ("Player");
 	if (player)
 		SimpleSend (ObjId (), player, "FogZoneChanging", (int) zone,
-			RGB ((int) end_red, (int) end_green, (int) end_blue),
-			(float) end_dist);
+			(int) end_color, (float) end_dist);
 
 	return true;
 }
@@ -416,9 +396,7 @@ cScr_TrapFog::OnPrepare (bool state)
 bool
 cScr_TrapFog::OnIncrement ()
 {
-	int red = Interpolate (start_red, end_red),
-		green = Interpolate (start_green, end_green),
-		blue = Interpolate (start_blue, end_blue);
+	ulong color = InterpolateColor (start_color, end_color);
 
 	float fake_end_dist = (end_dist == 0.0 && GetProgress () < 1.0)
 		? 100000.0 : end_dist;
@@ -426,9 +404,11 @@ cScr_TrapFog::OnIncrement ()
 
 	SService<IEngineSrv> pES (g_pScriptManager);
 	if (zone == 0)
-		pES->SetFog (red, green, blue, dist);
+		pES->SetFog (getred (color), getgreen (color), getblue (color),
+			dist);
 	else
-		pES->SetFogZone (zone, red, green, blue, dist);
+		pES->SetFogZone (zone, getred (color), getgreen (color),
+			getblue (color), dist);
 
 	return true;
 }
@@ -449,8 +429,6 @@ cScr_TrapNextMission::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 		bState ? "next_mission_on" : "next_mission_off", 0);
 
 	if (next_mission < 1) return S_FALSE;
-
-	DEBUG_PRINTF ("setting next mission to %d", next_mission);
 
 	SService<IDarkGameSrv> pDGS (g_pScriptManager);
 	pDGS->SetNextMission (next_mission);
@@ -550,20 +528,12 @@ cScr_TrapWeather::OnPrepare (bool state)
 	start_speed = current.precip_speed;
 
 	if (_freq >= 0.0)
-	{
-		DEBUG_PRINTF ("setting precipitation frequency to %f drops/sec",
-			_freq);
 		end_freq = _freq;
-	}
 	else
 		end_freq = start_freq;
 
 	if (_speed >= 0.0)
-	{
-		DEBUG_PRINTF ("setting precipitation speed to %f ft/sec",
-			_speed);
 		end_speed = _speed;
-	}
 	else
 		end_speed = start_speed;
 
