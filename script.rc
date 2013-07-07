@@ -22,8 +22,8 @@
 
 #define PACKAGE_NAME		"KDScript"
 #define AUTHOR_NAME		"Kevin Daughtridge"
-#define VERSION_NUMBER		0,1,0,0 //XBETA
-#define VERSION_STRING		"0.1.0 EXPERIMENTAL" //XBETA
+#define VERSION_NUMBER		0,1,0,1
+#define VERSION_STRING		"0.1.0.1 alpha"
 
 #include "version.rc"
 

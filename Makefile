@@ -55,7 +55,6 @@ ARFLAGS = rc
 LDFLAGS = -mwindows -mdll -Wl,--enable-auto-image-base -static-libgcc -static-libstdc++
 DLLFLAGS = --add-underscore
 
-DEBUG = DEBUG #XBETA
 ifdef DEBUG
 DEFINES := $(DEFINES) -DDEBUG
 CXXFLAGS := $(CXXFLAGS) -g -O0
@@ -116,7 +115,7 @@ exports.o: ScriptModule.o
 	$(DLLTOOL) $(DLLFLAGS) --dllname $(MODULE_NAME).osm --output-exp $@ $^
 
 $(MODULE_NAME).osm: $(BASE_OBJS) $(KDSCRIPT_OBJS) $(MODULE_OBJS)
-	$(LD) $(LDFLAGS) -Wl,--image-base=0x11200000 $(LIBDIRS) -o $@ script.def $^ $(LIBS)
+	$(LD) $(LDFLAGS) -Wl,--image-base=0x14700000 $(LIBDIRS) -o $@ script.def $^ $(LIBS)
 
 all: $(MODULE_NAME).osm
 
