@@ -25,6 +25,7 @@
 
 #if !SCR_GENSCRIPTS
 #include <list>
+#include <vector>
 #include <lg/interface.h>
 #include <lg/scrservices.h>
 #include "BaseScript.h"
@@ -154,6 +155,7 @@ protected:
 	void DrawText (const char* text, CanvasPoint position = ORIGIN);
 
 	int LoadBitmap (const char* path);
+	void LoadBitmaps (const char* path, std::vector<int>& bitmaps);
 	CanvasSize GetBitmapSize (int bitmap);
 	void DrawBitmap (int bitmap, CanvasPoint position = ORIGIN,
 		CanvasRect clip = NOCLIP);
@@ -168,7 +170,8 @@ protected:
 		SYMBOL_NONE,
 		SYMBOL_ARROW,
 		SYMBOL_CROSSHAIRS,
-		SYMBOL_RETICULE
+		SYMBOL_RETICULE,
+		SYMBOL_SQUARE
 	};
 	enum Direction
 	{
@@ -180,7 +183,7 @@ protected:
 		CanvasPoint position = ORIGIN, Direction direction = DIRN_NONE);
 	CanvasPoint GetSymbolCenter (Symbol symbol, CanvasSize size,
 		Direction direction = DIRN_NONE);
-	Symbol InterpretSymbol (const char* symbol);
+	Symbol InterpretSymbol (const char* symbol, bool directional = false);
 
 private:
 	SService<IDarkOverlaySrv> pDOS;
@@ -229,6 +232,7 @@ protected:
 	virtual void Redraw ();
 
 	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual void OnPropertyChanged (const char* property);
 	virtual long OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply);
@@ -266,6 +270,87 @@ GEN_FACTORY("KDQuestArrow","KDHUDElement",cScr_QuestArrow)
 
 
 #if !SCR_GENSCRIPTS
+class cScr_StatMeter : public cScr_HUDElement
+{
+public:
+	cScr_StatMeter (const char* pszName, int iHostObjId);
+
+protected:
+	virtual bool Prepare ();
+	virtual void Redraw ();
+
+	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual void OnPropertyChanged (const char* property);
+
+private:
+	void UpdateImage ();
+	void FreeBitmaps ();
+
+	static const int MARGIN;
+
+	script_int enabled; // bool
+
+	enum Style
+	{
+		STYLE_PROGRESS,
+		STYLE_UNITS,
+		STYLE_GEM
+	} style;
+
+	enum Position
+	{
+		POS_CENTER,
+		POS_NORTH,
+		POS_NE,
+		POS_EAST,
+		POS_SE,
+		POS_SOUTH,
+		POS_SW,
+		POS_WEST,
+		POS_NW
+	} position;
+
+	enum Orient
+	{
+		ORIENT_HORIZ,
+		ORIENT_VERT
+	} orient;
+
+	Symbol symbol;
+	std::vector<int> bitmaps;
+
+	CanvasSize size;
+	int spacing;
+
+	cAnsiStr qvar, prop_name, prop_field;
+	enum Component { COMP_NONE, COMP_X, COMP_Y, COMP_Z } prop_comp;
+
+	object prop_object;
+	bool post_sim_fix;
+
+	float min, max; int low, high;
+
+	ulong color_bg, color_low, color_med, color_high;
+
+	float value, value_pct;
+	int value_int;
+	enum ValueTier
+	{
+		VALUE_LOW,
+		VALUE_MED,
+		VALUE_HIGH
+	} value_tier;
+};
+#else // SCR_GENSCRIPTS
+GEN_FACTORY("KDStatMeter","KDHUDElement",cScr_StatMeter)
+#endif // SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
 class cScr_ToolSight : public cScr_HUDElement
 {
 public:
@@ -276,6 +361,7 @@ protected:
 	virtual void Redraw ();
 
 	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual void OnPropertyChanged (const char* property);
 	virtual long OnInvSelect (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnInvFocus (sScrMsg* pMsg, cMultiParm& mpReply);

@@ -95,12 +95,32 @@ void
 cScr_Carried::Drop ()
 {
 	SService<IObjectSrv> pOS (g_pScriptManager);
+	SService<IQuestSrv> pQS (g_pScriptManager);
+
 	object drop = ObjId ();
 
 	for (LinkIter container (0, ObjId (), "Contains");
 	     container; ++container)
+	{
+		switch (*(const int*) container.GetData ())
+		{
+		case kContainTypeAlternate:
+		case kContainTypeHand:
+		case kContainTypeBelt:
+			// decrease pickable pocket count
+			pQS->Set ("DrSPocketCnt",
+				pQS->Get ("DrSPocketCnt") - 1,
+				kQuestDataMission);
+			break;
+		case kContainTypeGeneric:
+		default:
+			// generic contents don't count as pickable pockets
+			break;
+		}
+
 		// unlink from Contains carrier
 		DestroyLink (container);
+	}
 
 	for (LinkIter creature (0, ObjId (), "CreatureAttachment");
 	     creature; ++creature)
@@ -128,7 +148,7 @@ cScr_Carried::Drop ()
 		pPS->Add (drop, "PhysType");
 		pPS->Set (drop, "PhysType", "Type", kPMT_OBB);
 
-		// schedule return to correctly sizes sphere
+		// schedule to switch to correctly sized sphere
 		SimplePost (drop, drop, "FixPhysics");
 	}
 
