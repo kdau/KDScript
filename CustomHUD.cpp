@@ -564,8 +564,8 @@ HUDElement::DrawText (const char* text, CanvasPoint position)
 int
 HUDElement::LoadBitmap (const char* path)
 {
-	char dir[256], fname[256], ext[256], file[256];
-	_splitpath_s (path, NULL, 0, dir, 256, fname, 256, ext, 256);
+	char dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT], file[256];
+	_splitpath (path, NULL, dir, fname, ext);
 	snprintf (file, 256, "%s%s", fname, ext);
 	return pDOS->GetBitmap (file, dir);
 }
@@ -573,8 +573,8 @@ HUDElement::LoadBitmap (const char* path)
 void
 HUDElement::LoadBitmaps (const char* path, std::vector<int>& bitmaps)
 {
-	char dir[256], fname[256], ext[256], file[256];
-	_splitpath_s (path, NULL, 0, dir, 256, fname, 256, ext, 256);
+	char dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT], file[256];
+	_splitpath (path, NULL, dir, fname, ext);
 
 	for (int frame = 0; frame < 128; ++frame)
 	{

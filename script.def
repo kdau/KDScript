@@ -1,3 +1,3 @@
-LIBRARY custom.osm
+LIBRARY KDScript.osm
 EXPORTS
 	_ScriptModuleInit@20 =ScriptModuleInit@20

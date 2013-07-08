@@ -109,6 +109,8 @@ IMalloc* cMemoryAllocator::AttachMalloc(IMalloc* allocator, const char* module)
 	strcpy(m_module, "cMemoryAllocator [");
 	strcat(m_module, module);
 	strcat(m_module, "]");
+#else
+	(void) module;
 #endif
 	assert(m_alloc != NULL);
 	return this;

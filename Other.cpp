@@ -431,13 +431,14 @@ cScr_Subtitled::~cScr_Subtitled ()
 long
 cScr_Subtitled::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	if (!stricmp (pMsg->message, "Subtitle") &&
-	    pMsg->data.type == kMT_Int) // schema
+	if (!stricmp (pMsg->message, "Subtitle"))
 	{
 		object host = (pMsg->data2.type == kMT_Int)
 			? int (pMsg->data2) : pMsg->from;
-		Subtitle (host, int (pMsg->data));
-		return S_OK;
+		object schema = (pMsg->data.type == kMT_Int)
+			? int (pMsg->data) : (pMsg->data.type == kMT_String)
+			? StrToObject ((const char*) pMsg->data) : 0;
+		return Subtitle (host, schema) ? S_OK : S_FALSE;
 	}
 	return cBaseScript::OnMessage (pMsg, mpReply);
 }
@@ -461,7 +462,7 @@ cScr_Subtitled::OnEndScript (sScrMsg*, cMultiParm&)
 	return S_OK;
 }
 
-void
+bool
 cScr_Subtitled::Subtitle (object host, object schema)
 {
 	// confirm host and schema objects are valid
@@ -470,14 +471,14 @@ cScr_Subtitled::Subtitle (object host, object schema)
 	{
 		DebugPrintf ("Warning: can't subtitle invalid host/schema pair "
 			"%d/%d.", int (host), int (schema));
-		return;
+		return false;
 	}
 
 	// get subtitle text
 	SService<IDataSrv> pDS (g_pScriptManager);
 	cScrStr text;
 	pDS->GetString (text, "subtitles", ObjectToStr (schema), "", "strings");
-	if (text.IsEmpty ()) return;
+	if (text.IsEmpty ()) return false;
 
 	// end any previous subtitle on this object
 	EndSubtitle (0);
@@ -513,6 +514,8 @@ cScr_Subtitled::Subtitle (object host, object schema)
 		element = NULL;
 		ShowString (text, duration, color);
 	}
+
+	return true;
 }
 
 void

@@ -1,8 +1,8 @@
 /******************************************************************************
  *  utils.cpp
  *
- *  Copyright (C) 2012 Kevin Daughtridge <kevin@kdau.com>
- *  Adapted from Public Scripts
+ *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
+ *  Adapted in part from Public Scripts
  *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
  *
  *  This program is free software; you can redistribute it and/or modify

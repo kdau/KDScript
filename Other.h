@@ -131,7 +131,7 @@ protected:
 	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 
-	void Subtitle (object host, object schema);
+	bool Subtitle (object host, object schema);
 	void EndSubtitle (object schema);
 
 private:

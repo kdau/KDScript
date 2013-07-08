@@ -41,7 +41,7 @@ STDMETHODIMP_(const char*) cScript::GetClassName(void)
 	return Name();
 }
 
-STDMETHODIMP cScript::ReceiveMessage(sScrMsg* pMsg, sMultiParm*, eScrTraceAction)
+STDMETHODIMP cScript::ReceiveMessage(sScrMsg*, sMultiParm*, eScrTraceAction)
 {
 	long iRet = 0;
 	/*
