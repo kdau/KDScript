@@ -1175,8 +1175,8 @@ cScr_StatMeter::Prepare ()
 	if (!enabled) return false;
 
 	if (post_sim_fix)
-		// re-resolve any target object that may not have been present yet
-		prop_object = GetParamObject ("stat_source_object", ObjId ());
+		// re-resolve any target object that may have been absent
+		UpdateObject ();
 
 	// get the current value
 	if (!qvar.IsEmpty ())
@@ -1212,12 +1212,11 @@ cScr_StatMeter::Prepare ()
 	else
 		return false;
 
-	// calculate derived versions of the value
+	// clamp value and calculate derived versions
+	value = std::min (max, std::max (min, value));
 	value_pct = (max != min) ? (value - min) / (max - min) : 0.0;
 	value_int = std::lround (value);
-	if (value_pct < 0.0 || value_pct > 1.0)
-		return false;
-	else if (value_pct * 100.0 <= low)
+	if (value_pct * 100.0 <= low)
 		value_tier = VALUE_LOW;
 	else if (value_pct * 100.0 >= high)
 		value_tier = VALUE_HIGH;
@@ -1471,6 +1470,9 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 
 	prop_name = GetParamString ("stat_source_property", NULL);
 	prop_field = GetParamString ("stat_source_field", NULL);
+	if (!qvar.IsEmpty () && !prop_name.IsEmpty ())
+		DebugPrintf ("Warning: qvar and property specified; will use "
+			"quest variable and ignore property.");
 
 	cAnsiStr _prop_comp = GetParamString ("stat_source_component", NULL);
 	if (!stricmp (_prop_comp, "x")) prop_comp = COMP_X;
@@ -1484,13 +1486,7 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 		prop_comp = COMP_NONE;
 	}
 
-	prop_object = GetParamObject ("stat_source_object", ObjId ());
-
-	min = GetParamFloat ("stat_range_min", 0.0);
-	max = GetParamFloat ("stat_range_max", 1.0);
-	if (min >= max)
-		DebugPrintf ("Warning: minimum value %f is greater than or "
-			"equal to maximum value %f", min, max);
+	UpdateObject ();
 
 	low = GetParamInt ("stat_range_low", 25);
 	if (low < 0 || low > 100)
@@ -1556,6 +1552,37 @@ cScr_StatMeter::FreeBitmaps ()
 		FreeBitmap (bitmaps.back ());
 		bitmaps.pop_back ();
 	}
+}
+
+void
+cScr_StatMeter::UpdateObject ()
+{
+	prop_object = GetParamObject ("stat_source_object", ObjId ());
+
+	if (qvar.IsEmpty () && !stricmp (prop_name, "AI_Visibility") &&
+	    !stricmp (prop_field, "Level"))
+	{
+		min = 0.0;
+		max = 100.0;
+	}
+	else if (qvar.IsEmpty () && !stricmp (prop_name, "HitPoints"))
+	{
+		min = 0.0;
+		SService<IPropertySrv> pPS (g_pScriptManager);
+		cMultiParm max_hp;
+		pPS->Get (max_hp, prop_object, "MAX_HP", NULL);
+		max = (max_hp.type == kMT_Int) ? int (max_hp) : 22.0;
+	}
+	else
+	{
+		min = 0.0;
+		max = 1.0;
+	}
+	min = GetParamFloat ("stat_range_min", min);
+	max = GetParamFloat ("stat_range_max", max);
+	if (min > max)
+		DebugPrintf ("Warning: minimum value %f is greater than "
+			"maximum value %f", min, max);
 }
 
 

@@ -289,6 +289,8 @@ private:
 	void UpdateImage ();
 	void FreeBitmaps ();
 
+	void UpdateObject ();
+
 	static const int MARGIN;
 
 	script_int enabled; // bool
