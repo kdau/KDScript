@@ -1053,6 +1053,7 @@ cScr_QuestArrow::SetEnabledFromObjective ()
 	enabled = incomplete && visible;
 }
 
+#if (_DARKGAME == 2)
 void
 cScr_QuestArrow::GetTextFromObjective (cScrStr& msgstr)
 {
@@ -1071,6 +1072,7 @@ cScr_QuestArrow::GetTextFromObjective (cScrStr& msgstr)
 	SService<IDataSrv> pDS (g_pScriptManager);
 	pDS->GetString (msgstr, "goals", msgid, "", path);
 }
+#endif // _DARKGAME == 2
 
 void
 cScr_QuestArrow::UpdateImage ()
@@ -1122,7 +1124,12 @@ cScr_QuestArrow::UpdateText ()
 		pDS->GetObjString (_text, ObjId (), "objdescs");
 
 	else if (!stricmp (__text, "@objective"))
+#if (_DARKGAME == 2)
 		GetTextFromObjective (_text);
+#else
+		DebugPrintf ("Warning: quest_arrow_text cannot be `@objective' "
+			"in this game. No text will be shown.");
+#endif // _DARKGAME == 2
 
 	else if (__text.GetAt (0) == '@')
 		DebugPrintf ("Warning: invalid quest_arrow_text value of `%s'.",

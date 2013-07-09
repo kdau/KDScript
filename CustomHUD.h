@@ -248,7 +248,9 @@ private:
 	int objective;
 	void UpdateObjective ();
 	void SetEnabledFromObjective ();
+#if (_DARKGAME == 2)
 	void GetTextFromObjective (cScrStr& msgstr);
+#endif
 
 	Symbol symbol;
 	Direction symbol_dirn;

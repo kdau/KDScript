@@ -20,9 +20,13 @@
 ##
 ###############################################################################
 
+bindir = ./bin-all
+bin1dir = ./bin-t1
+bin2dir = ./bin-t2
+
 .PHONY: default all clean
 .PRECIOUS: %.o
-.INTERMEDIATE: exports.o
+.INTERMEDIATE: $(bindir)/exports.o
 default: all
 
 MODULE_NAME = KDScript
@@ -39,8 +43,9 @@ LD = $(PREFIX)g++
 DLLTOOL = $(PREFIX)dlltool
 RC = $(PREFIX)windres
 
-DEFINES = -DWINVER=0x0400 -D_WIN32_WINNT=0x0400 -DWIN32_LEAN_AND_MEAN \
-	-D_DARKGAME=2 -D_NEWDARK
+DEFINES = -DWINVER=0x0400 -D_WIN32_WINNT=0x0400 -DWIN32_LEAN_AND_MEAN -D_NEWDARK
+DEFINES1 = -D_DARKGAME=1
+DEFINES2 = -D_DARKGAME=2
 CXXDEFINES = -DMODULE_NAME=\"$(MODULE_NAME)\"
 RCDEFINES = -DMODULE_NAME=\\\"$(MODULE_NAME)\\\"
 
@@ -59,66 +64,109 @@ ifdef DEBUG
 DEFINES := $(DEFINES) -DDEBUG
 CXXFLAGS := $(CXXFLAGS) -g -O0
 LDFLAGS := $(LDFLAGS) -g
-LIBS := -lScript2-d $(LIBS) -llg-d
+LIBS := $(LIBS) -llg-d
+LIBS1 := $(LIBS1) -lScript1-d
+LIBS2 := $(LIBS2) -lScript2-d
 else
 DEFINES := $(DEFINES) -DNDEBUG
 CXXFLAGS := $(CXXFLAGS) -O2
 # LDFLAGS := $(LDFLAGS)
-LIBS := -lScript2 $(LIBS) -llg
+LIBS := $(LIBS) -llg
+LIBS1 := $(LIBS1) -lScript1
+LIBS2 := $(LIBS2) -lScript2
 endif
 
-BASE_OBJS = \
-	BaseScript.o \
-	BaseTrap.o \
-	CommonScripts.o \
-	MsgHandlerArray.o \
-	utils.o
 BASE_HEADERS = \
 	BaseScript.h \
 	BaseTrap.h
-BaseScript.o: BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
-BaseTrap.o: BaseTrap.h BaseScript.h Script.h
-CommonScripts.o: CommonScripts.h
+BASE_OBJS = \
+	$(bindir)/MsgHandlerArray.o
+BASE_OBJS1 = \
+	$(bin1dir)/BaseScript.o \
+	$(bin1dir)/BaseTrap.o \
+	$(bin1dir)/utils.o
+BASE_OBJS2 = \
+	$(bin2dir)/BaseScript.o \
+	$(bin2dir)/BaseTrap.o \
+	$(bin2dir)/utils.o
+$(bin1dir)/BaseScript.o: BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
+$(bin2dir)/BaseScript.o: BaseScript.h Script.h ScriptModule.h MsgHandlerArray.h
+$(bin1dir)/BaseTrap.o: BaseTrap.h BaseScript.h Script.h
+$(bin2dir)/BaseTrap.o: BaseTrap.h BaseScript.h Script.h
 
-KDSCRIPT_OBJS = \
-	CustomHUD.o \
-	NewDark.o \
-	Other.o
 KDSCRIPT_HEADERS = \
 	CustomHUD.h \
 	NewDark.h \
 	Other.h
-CustomHUD.o: CustomHUD.h BaseScript.h Script.h scriptvars.h utils.h
-NewDark.o: NewDark.h BaseScript.h Script.h BaseTrap.h scriptvars.h utils.h
-Other.o: Other.h BaseScript.h Script.h utils.h
+KDSCRIPT_OBJS1 = \
+	$(bin1dir)/CustomHUD.o \
+	$(bin1dir)/NewDark.o \
+	$(bin1dir)/Other.o
+KDSCRIPT_OBJS2 = \
+	$(bin2dir)/CustomHUD.o \
+	$(bin2dir)/NewDark.o \
+	$(bin2dir)/Other.o
+$(bin1dir)/CustomHUD.o: CustomHUD.h BaseScript.h Script.h scriptvars.h utils.h
+$(bin2dir)/CustomHUD.o: CustomHUD.h BaseScript.h Script.h scriptvars.h utils.h
+$(bin1dir)/NewDark.o: NewDark.h BaseScript.h Script.h BaseTrap.h scriptvars.h utils.h
+$(bin2dir)/NewDark.o: NewDark.h BaseScript.h Script.h BaseTrap.h scriptvars.h utils.h
+$(bin1dir)/Other.o: Other.h BaseScript.h Script.h utils.h
+$(bin2dir)/Other.o: Other.h BaseScript.h Script.h utils.h
 
 MODULE_OBJS = \
-	Allocator.o \
-	Script.o \
-	ScriptDef.o \
-	ScriptModule.o \
-	exports.o \
-	script_res.o
-Allocator.o: Allocator.h
-Script.o: Script.h
-ScriptDef.o: $(BASE_HEADERS) $(KDSCRIPT_HEADERS) ScriptModule.h genscripts.h
-ScriptModule.o: ScriptModule.h Allocator.h
-script_res.o: script.rc version.rc
+	$(bindir)/Allocator.o \
+	$(bindir)/Script.o \
+	$(bindir)/ScriptModule.o \
+	$(bindir)/exports.o
+MODULE_OBJS1 = \
+	$(bin1dir)/ScriptDef.o \
+	$(bin1dir)/script_res.o
+MODULE_OBJS2 = \
+	$(bin2dir)/ScriptDef.o \
+	$(bin2dir)/script_res.o
+$(bindir)/Allocator.o: Allocator.h
+$(bindir)/Script.o: Script.h
+$(bindir)/ScriptModule.o: ScriptModule.h Allocator.h
+$(bin1dir)/ScriptDef.o: $(BASE_HEADERS) $(KDSCRIPT_HEADERS) ScriptModule.h genscripts.h
+$(bin2dir)/ScriptDef.o: $(BASE_HEADERS) $(KDSCRIPT_HEADERS) ScriptModule.h genscripts.h
+$(bin1dir)/script_res.o: script.rc version.rc
+$(bin2dir)/script_res.o: script.rc version.rc
 
-%.o: %.cpp
+$(bindir):
+	mkdir -p $@
+
+$(bin1dir):
+	mkdir -p $@
+
+$(bin2dir):
+	mkdir -p $@
+
+$(bindir)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(DEFINES) $(CXXDEFINES) $(INCLUDES) -o $@ -c $<
 
-%_res.o: %.rc
-	$(RC) $(DEFINES) $(RCDEFINES) -o $@ -i $<
+$(bin1dir)/%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(DEFINES1) $(CXXDEFINES) $(INCLUDES) -o $@ -c $<
 
-exports.o: ScriptModule.o
+$(bin2dir)/%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(DEFINES2) $(CXXDEFINES) $(INCLUDES) -o $@ -c $<
+
+$(bindir)/exports.o: $(bindir)/ScriptModule.o
 	$(DLLTOOL) $(DLLFLAGS) --dllname $(MODULE_NAME).osm --output-exp $@ $^
 
-$(MODULE_NAME).osm: $(BASE_OBJS) $(KDSCRIPT_OBJS) $(MODULE_OBJS)
-	$(LD) $(LDFLAGS) -Wl,--image-base=0x14700000 $(LIBDIRS) -o $@ script.def $^ $(LIBS)
+$(bin1dir)/%_res.o: %.rc
+	$(RC) $(DEFINES) $(DEFINES1) $(RCDEFINES) -o $@ -i $<
 
-all: $(MODULE_NAME).osm
+$(bin2dir)/%_res.o: %.rc
+	$(RC) $(DEFINES) $(DEFINES2) $(RCDEFINES) -o $@ -i $<
+
+$(MODULE_NAME)-t1.osm: $(BASE_OBJS) $(BASE_OBJS1) $(KDSCRIPT_OBJS1) $(MODULE_OBJS) $(MODULE_OBJS1)
+	$(LD) $(LDFLAGS) -Wl,--image-base=0x14700000 $(LIBDIRS) -o $@ script.def $^ $(LIBS1) $(LIBS)
+
+$(MODULE_NAME)-t2.osm: $(BASE_OBJS) $(BASE_OBJS2) $(KDSCRIPT_OBJS2) $(MODULE_OBJS) $(MODULE_OBJS2)
+	$(LD) $(LDFLAGS) -Wl,--image-base=0x14700000 $(LIBDIRS) -o $@ script.def $^ $(LIBS2) $(LIBS)
+
+all: $(bindir) $(bin1dir) $(bin2dir) $(MODULE_NAME)-t1.osm $(MODULE_NAME)-t2.osm
 
 clean:
-	$(RM) $(MODULE_NAME).osm *.o
+	$(RM) $(MODULE_NAME)-t1.osm $(MODULE_NAME)-t2.osm $(bindir)/*.o $(bin1dir)/*.o $(bin2dir)/*.o
 

@@ -184,7 +184,9 @@ cScr_GetInfo::UpdateVariables ()
 	if (pES->ConfigGetInt ("render_weather", value))
 		pQS->Set ("info_has_weather", value, kQuestDataMission);
 
+#if (_DARKGAME == 2)
 	pQS->Set ("info_mission", pDGS->GetCurrentMission (), kQuestDataMission);
+#endif
 
 	pQS->Set ("info_mode", pVS->IsEditor (), kQuestDataMission);
 
@@ -437,10 +439,15 @@ cScr_TrapNextMission::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 
 	if (next_mission < 1) return S_FALSE;
 
+#if (_DARKGAME == 2)
 	SService<IDarkGameSrv> pDGS (g_pScriptManager);
 	pDGS->SetNextMission (next_mission);
-
 	return S_OK;
+#else
+	DebugPrintf ("Error: the KDTrapNextMission script is not available "
+		"for this game.");
+	return S_FALSE;
+#endif
 }
 
 
