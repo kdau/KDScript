@@ -335,6 +335,13 @@ cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 
 	if (zone < 0 || zone > 63 || !texture) return S_FALSE;
 
+	if (!CheckEngineVersion (1, 20))
+	{
+		DebugPrintf ("KDTrapEnvMap cannot be used with this version of "
+			"the Dark Engine. Upgrade to version 1.20 or higher.");
+		return S_FALSE;
+	}
+
 	SService<IEngineSrv> pES (g_pScriptManager);
 	pES->SetEnvMapZone (zone, texture);
 	g_pMalloc->Free (texture);

@@ -184,6 +184,15 @@ ulong GetObjectParamColor (object target, const char* param, ulong Default = 0);
  */
 ulong AverageColors (ulong color1, ulong color2, float weight = 0.5);
 
+/**
+ * CheckEngineVersion
+ *
+ * Returns whether the running Dark Engine version is greater than or equal to
+ * the minimum specified. Always returns false for engine versions prior to
+ * 1.19 (pre-NewDark).
+ */
+bool CheckEngineVersion (int min_major, int min_minor);
+
 
 
 /**

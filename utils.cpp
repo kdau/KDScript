@@ -552,6 +552,21 @@ AverageColors (ulong color1, ulong color2, float weight)
 	return makecolor (r, g, b);
 }
 
+/* CheckEngineVersion */
+
+bool
+CheckEngineVersion (int min_major, int min_minor)
+{
+	SService<IVersionSrv> pVS (g_pScriptManager);
+	if (!pVS) return false;
+
+	int major = 0, minor = 0;
+	pVS->GetVersion (major, minor);
+
+	return (major == min_major)
+		? (minor >= min_minor) : (major > min_major);
+}
+
 
 
 /* LinkIter */
