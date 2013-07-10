@@ -152,7 +152,8 @@ protected:
 	void DrawLine (CanvasPoint from, CanvasPoint to);
 
 	CanvasSize GetTextSize (const char* text);
-	void DrawText (const char* text, CanvasPoint position = ORIGIN);
+	void DrawText (const char* text, CanvasPoint position = ORIGIN,
+		bool shadowed = false);
 
 	int LoadBitmap (const char* path);
 	void LoadBitmaps (const char* path, std::vector<int>& bitmaps);
@@ -180,7 +181,8 @@ protected:
 		DIRN_RIGHT,
 	};
 	void DrawSymbol (Symbol symbol, CanvasSize size,
-		CanvasPoint position = ORIGIN, Direction direction = DIRN_NONE);
+		CanvasPoint position = ORIGIN, Direction direction = DIRN_NONE,
+		bool shadowed = false);
 	CanvasPoint GetSymbolCenter (Symbol symbol, CanvasSize size,
 		Direction direction = DIRN_NONE);
 	Symbol InterpretSymbol (const char* symbol, bool directional = false);
@@ -193,6 +195,7 @@ private:
 	CanvasPoint last_position;
 	CanvasSize last_size;
 	int last_scale, last_opacity;
+	ulong last_color;
 	CanvasPoint drawing_offset;
 };
 #endif // !SCR_GENSCRIPTS

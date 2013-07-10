@@ -222,7 +222,7 @@ HUDElement::HUDElement (object _host)
 	: pDOS (g_pScriptManager), host (_host), handler (), overlay (-1),
 	  draw (true), redraw (true), drawing (false),
 	  last_position (), last_size (1, 1), last_scale (1),
-	  last_opacity (255), drawing_offset ()
+	  last_opacity (255), last_color (0xffffff), drawing_offset ()
 {}
 
 HUDElement::~HUDElement ()
@@ -474,6 +474,7 @@ HUDElement::SetScale (int scale)
 void
 HUDElement::SetDrawingColor (ulong color)
 {
+	last_color = color;
 	CHECK_DRAWING ();
 	pDOS->SetTextColor (getred (color), getgreen (color), getblue (color));
 }
@@ -554,10 +555,16 @@ HUDElement::GetTextSize (const char* text)
 }
 
 void
-HUDElement::DrawText (const char* text, CanvasPoint position)
+HUDElement::DrawText (const char* text, CanvasPoint position, bool shadowed)
 {
 	CHECK_DRAWING ();
 	position = OFFSET (position);
+	if (shadowed)
+	{
+		pDOS->SetTextColor (0, 0, 0);
+		pDOS->DrawString (text, position.x + 1, position.y + 1);
+		SetDrawingColor (last_color);
+	}
 	pDOS->DrawString (text, position.x, position.y);
 }
 
@@ -661,8 +668,16 @@ HUDElement::ObjectCentroidToCanvas (object target)
 
 void
 HUDElement::DrawSymbol (Symbol symbol, CanvasSize size,
-	CanvasPoint position, Direction direction)
+	CanvasPoint position, Direction direction, bool shadowed)
 {
+	if (shadowed)
+	{
+		pDOS->SetTextColor (0, 0, 0);
+		CanvasPoint shadow_pos (position.x + 1, position.y + 1);
+		DrawSymbol (symbol, size, shadow_pos, direction, false);
+		SetDrawingColor (last_color);
+	}
+
 	CanvasPoint xqtr (size.w / 4, 0), yqtr (0, size.h / 4);
 	drawing_offset = drawing_offset + position;
 
@@ -927,9 +942,9 @@ cScr_QuestArrow::Redraw ()
 	if (bitmap > -1)
 		DrawBitmap (bitmap, image_pos);
 	else if (symbol != SYMBOL_NONE)
-		DrawSymbol (symbol, SYMBOL_SIZE, image_pos, symbol_dirn);
+		DrawSymbol (symbol, SYMBOL_SIZE, image_pos, symbol_dirn, true);
 
-	DrawText (text, text_pos);
+	DrawText (text, text_pos, true);
 }
 
 long
