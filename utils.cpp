@@ -603,13 +603,13 @@ LinkIter::operator link () const
 object
 LinkIter::Source () const
 {
-	return links.AnyLinksLeft () ? links.Get ().source : object ();
+	return links.AnyLinksLeft () ? links.Get ().source : None;
 }
 
 object
 LinkIter::Destination () const
 {
-	return links.AnyLinksLeft () ? links.Get ().dest : object ();
+	return links.AnyLinksLeft () ? links.Get ().dest : None;
 }
 
 const void*

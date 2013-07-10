@@ -27,6 +27,7 @@
 #include "BaseScript.h"
 #include "scriptvars.h"
 #include "CustomHUD.h"
+#include "utils.h"
 #endif // SCR_GENSCRIPTS
 
 
@@ -84,7 +85,9 @@ protected:
 	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 
 	bool Subtitle (object host, object schema);
-	void EndSubtitle (object schema);
+	void EndSubtitle (object schema = None);
+
+	static const float EARSHOT;
 
 private:
 	script_int last_schema; // object

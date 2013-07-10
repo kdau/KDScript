@@ -30,12 +30,14 @@
 #include <lg/scrservices.h>
 #include "BaseScript.h"
 #include "scriptvars.h"
+#include "utils.h"
 #endif // !SCR_GENSCRIPTS
 
 
 
 #if !SCR_GENSCRIPTS
 struct CanvasSize;
+
 struct CanvasPoint
 {
 	int x, y;
@@ -48,6 +50,9 @@ struct CanvasPoint
 	CanvasPoint operator * (int rhs) const;
 	CanvasPoint operator / (int rhs) const;
 };
+extern const CanvasPoint ORIGIN;
+extern const CanvasPoint OFFSCREEN;
+
 struct CanvasSize
 {
 	int w, h;
@@ -55,6 +60,7 @@ struct CanvasSize
 	bool operator == (const CanvasSize& rhs) const;
 	bool operator != (const CanvasSize& rhs) const;
 };
+
 struct CanvasRect
 {
 	int x, y, w, h;
@@ -64,10 +70,9 @@ struct CanvasRect
 	CanvasRect operator + (const CanvasPoint& rhs) const;
 	CanvasRect operator - (const CanvasPoint& rhs) const;
 };
-static const CanvasPoint ORIGIN = { 0, 0 };
-static const CanvasPoint OFFSCREEN = { -1, -1 };
-static const CanvasRect NOCLIP = { 0, 0, -1, -1 };
-static const CanvasRect OFFSCREEN_R = { -1, -1, -1, -1 };
+extern const CanvasRect NOCLIP;
+extern const CanvasRect OFFSCREEN_R;
+
 #endif // !SCR_GENSCRIPTS
 
 
@@ -134,7 +139,9 @@ protected:
 	bool NeedsRedraw ();
 	void ScheduleRedraw ();
 
-	bool SetIsOverlay (bool is_overlay);
+	bool IsOverlay ();
+	bool CreateOverlay ();
+	void DestroyOverlay ();
 	void SetOpacity (int opacity);
 
 	CanvasSize GetCanvasSize ();
@@ -155,6 +162,8 @@ protected:
 	void DrawText (const char* text, CanvasPoint position = ORIGIN,
 		bool shadowed = false);
 
+	enum { INVALID_BITMAP = -1 };
+	bool IsValidBitmap (int bitmap);
 	int LoadBitmap (const char* path);
 	void LoadBitmaps (const char* path, std::vector<int>& bitmaps);
 	CanvasSize GetBitmapSize (int bitmap);
@@ -248,6 +257,7 @@ private:
 	script_int enabled; // bool
 	bool obscured;
 
+	enum { OBJECTIVE_NONE = -1 };
 	int objective;
 	void UpdateObjective ();
 	void SetEnabledFromObjective ();

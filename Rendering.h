@@ -27,6 +27,7 @@
 #include "BaseScript.h"
 #include "BaseTrap.h"
 #include "scriptvars.h"
+#include "utils.h"
 #endif // SCR_GENSCRIPTS
 
 
@@ -91,6 +92,13 @@ public:
 	cScr_TrapEnvMap (const char* pszName, int iHostObjId);
 
 protected:
+	enum
+	{
+		GLOBAL_ZONE = 0,
+		MIN_ZONE = 0,
+		MAX_ZONE = 63
+	};
+
 	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
 };
 #else // SCR_GENSCRIPTS
@@ -100,7 +108,38 @@ GEN_FACTORY("KDTrapEnvMap","BaseTrap",cScr_TrapEnvMap)
 
 
 #if !SCR_GENSCRIPTS
-class cScr_TrapFog : public cScr_TransitionTrap
+class DarkFog
+{
+public:
+	enum Zone
+	{
+		FOG_DISABLED = -1,
+		GLOBAL_ZONE = 0,
+		ZONE_1,
+		ZONE_2,
+		ZONE_3,
+		ZONE_4,
+		ZONE_5,
+		ZONE_6,
+		ZONE_7,
+		ZONE_8,
+		MIN_ZONE = 1,
+		MAX_ZONE = 8
+	};
+
+	static ulong GetColor (int zone);
+	static float GetDistance (int zone);
+	static void Set (int zone, ulong color, float distance);
+
+protected:
+	static float FakeDistance (float distance, bool final);
+};
+#endif // !SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
+class cScr_TrapFog : public cScr_TransitionTrap, public DarkFog
 {
 public:
 	cScr_TrapFog (const char* pszName, int iHostObjId);
@@ -110,7 +149,7 @@ protected:
 	virtual bool OnIncrement ();
 
 private:
-	script_int zone;
+	script_int zone; // Zone
 	script_int start_color, end_color; // ulong
 	script_float start_dist, end_dist;
 };
@@ -121,7 +160,7 @@ GEN_FACTORY("KDTrapFog","KDTransitionTrap",cScr_TrapFog)
 
 
 #if !SCR_GENSCRIPTS
-class cScr_SyncGlobalFog : public cScr_TransitionTrap
+class cScr_SyncGlobalFog : public cScr_TransitionTrap, public DarkFog
 {
 public:
 	cScr_SyncGlobalFog (const char* pszName, int iHostObjId);
@@ -130,12 +169,12 @@ protected:
 	virtual long OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 
-	void Sync (ulong color, float dist, bool sync_color = true);
+	void Sync (ulong color, float distance, bool sync_color = true);
 	virtual bool OnPrepare (bool) { return false; } // not really a trap
 	virtual bool OnIncrement ();
 
 private:
-	script_int last_room_zone;
+	script_int last_room_zone; // Zone
 	script_int start_color, end_color; // ulong
 	script_float start_dist, end_dist;
 };
@@ -149,8 +188,8 @@ GEN_FACTORY("KDSyncGlobalFog","KDTransitionTrap",cScr_SyncGlobalFog)
 struct DarkWeather
 {
 	DarkWeather ();
-	void SetFromMission ();
-	void ApplyToMission () const;
+	void GetFromMission ();
+	void SetInMission () const;
 
 	enum PrecipType
 	{
@@ -172,7 +211,11 @@ struct DarkWeather
 	cAnsiStr texture;
 	cScrVec wind;
 };
+#endif // !SCR_GENSCRIPTS
 
+
+
+#if !SCR_GENSCRIPTS
 class cScr_TrapWeather : public cScr_TransitionTrap
 {
 public:

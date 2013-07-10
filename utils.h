@@ -19,6 +19,10 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  *****************************************************************************/
+
+#ifndef UTILS_H
+#define UTILS_H
+
 #include <lg/types.h>
 #include <lg/defs.h>
 
@@ -115,6 +119,14 @@ cAnsiStr GetBookText(object iObj);
  * End the comparison after reading ??len?? bytes (including spaces) from ??str1??.
  */
 int strnalnumcmp(const char* str1, const char* str2, size_t len);
+
+/**
+ * None, Any
+ *
+ * Convenience macros for the null object (object number 0).
+ */
+#define None (object ())
+#define Any (object ())
 
 /**
  * ObjectExists
@@ -239,7 +251,7 @@ class ScriptParamsIter : public LinkIter
 {
 public:
 	ScriptParamsIter (object source, const char* data,
-		object destination = object ());
+		object destination = Any);
 	virtual ~ScriptParamsIter () noexcept;
 
 	virtual operator bool () const;
@@ -254,4 +266,8 @@ private:
 	cAnsiStr data;
 	object only;
 };
+
+
+
+#endif // UTILS_H
 

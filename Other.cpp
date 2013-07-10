@@ -23,7 +23,6 @@
 #include "Other.h"
 #include <lg/objects.h>
 #include <ScriptLib.h>
-#include "utils.h"
 
 
 
@@ -70,9 +69,9 @@ cScr_Carried::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	if (!stricmp (pMsg->message, "CarrierAlerted") &&
 	    pMsg->data.type == kMT_Int) // new alert level
 	{
-		int min_alert = GetObjectParamInt (ObjId (), "drop_on_alert", 0),
-			new_alert = int (pMsg->data);
-		if (min_alert > 0 && min_alert <= new_alert)
+		int new_alert = int (pMsg->data), min_alert =
+			GetObjectParamInt (ObjId (), "drop_on_alert", kNoAlert);
+		if (min_alert > kNoAlert && min_alert <= new_alert)
 		{
 			Drop ();
 			return S_OK;
@@ -126,7 +125,7 @@ cScr_Carried::Drop ()
 	}
 #endif
 
-	for (LinkIter container (0, ObjId (), "Contains");
+	for (LinkIter container (Any, ObjId (), "Contains");
 	     container; ++container)
 	{
 		switch (*(const int*) container.GetData ())
@@ -149,12 +148,12 @@ cScr_Carried::Drop ()
 		DestroyLink (container);
 	}
 
-	for (LinkIter creature (0, ObjId (), "CreatureAttachment");
+	for (LinkIter creature (Any, ObjId (), "CreatureAttachment");
 	     creature; ++creature)
 		// unlink from CreatureAttachment carrier
 		DestroyLink (creature);
 
-	LinkIter dattach (ObjId (), 0, "DetailAttachement");
+	LinkIter dattach (ObjId (), Any, "DetailAttachement");
 	if (dattach)
 	{
 		// unlink from DetailAttachement carrier, destroying this object
@@ -179,7 +178,7 @@ cScr_Carried::Drop ()
 	}
 
 	// teleport object to own position to avoid winding up at origin (?!)
-	pOS->Teleport (drop, position, facing, 0);
+	pOS->Teleport (drop, position, facing, None);
 
 	// give object a push to cause it to drop
 	pPhS->SetVelocity (drop, {0.0, 0.0, -0.1});
@@ -239,7 +238,7 @@ cScr_Carrier::OnAIModeChange (sAIModeChangeMsg* pMsg, cMultiParm&)
 long
 cScr_Carrier::OnAlertness (sAIAlertnessMsg* pMsg, cMultiParm&)
 {
-	if (pMsg->level > 0)
+	if (pMsg->level > kNoAlert)
 		NotifyCarried ("CarrierAlerted", pMsg->level);
 	return S_OK;
 }
@@ -248,19 +247,19 @@ void
 cScr_Carrier::NotifyCarried (const char* message, const cMultiParm& data)
 {
 	// notify Contains objects
-	for (LinkIter contained (ObjId (), 0, "Contains");
-	     contained; ++contained)
-		SimpleSend (ObjId (), contained.Destination (),
+	for (LinkIter contents (ObjId (), Any, "Contains");
+	     contents; ++contents)
+		SimpleSend (ObjId (), contents.Destination (),
 			message, data);
 
 	// notify CreatureAttachment objects
-	for (LinkIter attachment (ObjId (), 0, "CreatureAttachment");
+	for (LinkIter attachment (ObjId (), Any, "CreatureAttachment");
 	     attachment; ++attachment)
 		SimpleSend (ObjId (), attachment.Destination (),
 			message, data);
 
 	// notify ~DetailAttachement objects
-	for (LinkIter attachment (0, ObjId (), "DetailAttachement");
+	for (LinkIter attachment (Any, ObjId (), "DetailAttachement");
 	     attachment; ++attachment)
 		SimpleSend (ObjId (), attachment.Source (),
 			message, data);
@@ -278,7 +277,7 @@ cScr_Carrier::CreateAttachments ()
 	if (!tree) return;
 
 	for (; ! tree->Done (); tree->Next ())
-		for (LinkIter archetypes (tree->Object (), 0,
+		for (LinkIter archetypes (tree->Object (), Any,
 			"CreatureAttachment"); archetypes; ++archetypes)
 		{
 			cMultiParm joint;
@@ -293,8 +292,8 @@ cScr_Carrier::CreateAttachment (object archetype, int joint)
 	SService<IObjectSrv> pOS (g_pScriptManager);
 	SService<ILinkToolsSrv> pLTS (g_pScriptManager);
 
-	if (GetOneLinkByData ("CreatureAttachment", ObjId (), 0,
-			NULL, &joint, sizeof (joint)) != 0)
+	if (GetOneLinkByDataDest ("CreatureAttachment", ObjId (),
+			&joint, sizeof (joint)) != None)
 		return; // don't attach a second object to the same joint
 
 	DebugPrintf ("attaching %s to joint %d",

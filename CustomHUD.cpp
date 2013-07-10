@@ -27,11 +27,22 @@
 #include <darkhook.h>
 #include <ScriptLib.h>
 #include "ScriptModule.h"
-#include "utils.h"
 
 
 
 /* CanvasPoint, CanvasSize, CanvasRect */
+
+const CanvasPoint
+ORIGIN = { 0, 0 };
+
+const CanvasPoint
+OFFSCREEN = { -1, -1 };
+
+const CanvasRect
+NOCLIP = { 0, 0, -1, -1 };
+
+const CanvasRect
+OFFSCREEN_R = { -1, -1, -1, -1 };
 
 CanvasPoint::CanvasPoint (int _x, int _y)
 	: x (_x), y (_y)
@@ -196,10 +207,10 @@ cScr_CustomHUD::OnUIEnterMode ()
 
 /* HUDElement */
 
-#define IS_OVERLAY() (overlay > -1)
+#define INVALID_OVERLAY -1
 
 #define CHECK_OVERLAY(retval) \
-	if (!IS_OVERLAY ()) \
+	if (!IsOverlay ()) \
 	{ \
 		DEBUG_PRINTF ("%s called for non-overlay element; ignoring.", \
 			__func__); \
@@ -216,10 +227,11 @@ cScr_CustomHUD::OnUIEnterMode ()
 
 // if not an overlay, add the element position to the drawing position
 #define OFFSET(position) \
-	(position + (IS_OVERLAY () ? ORIGIN : last_position) + drawing_offset)
+	(position + (IsOverlay () ? ORIGIN : last_position) + drawing_offset)
 
 HUDElement::HUDElement (object _host)
-	: pDOS (g_pScriptManager), host (_host), handler (), overlay (-1),
+	: pDOS (g_pScriptManager), host (_host), handler (),
+	  overlay (INVALID_OVERLAY),
 	  draw (true), redraw (true), drawing (false),
 	  last_position (), last_size (1, 1), last_scale (1),
 	  last_opacity (255), last_color (0xffffff), drawing_offset ()
@@ -235,7 +247,7 @@ HUDElement::DrawStage1 ()
 {
 	drawing = true;
 	draw = Prepare ();
-	if (draw && !IS_OVERLAY ())
+	if (draw && !IsOverlay ())
 	{
 		redraw = false;
 		Redraw ();
@@ -246,7 +258,7 @@ HUDElement::DrawStage1 ()
 void
 HUDElement::DrawStage2 ()
 {
-	if (!draw || !IS_OVERLAY ()) return;
+	if (!draw || !IsOverlay ()) return;
 	if (redraw && pDOS->BeginTOverlayUpdate (overlay))
 	{
 		redraw = false;
@@ -288,15 +300,11 @@ HUDElement::Deinitialize ()
 	if (handler)
 	{
 		SimpleSend (host, handler, "UnregisterElement", long (this));
-		handler = 0;
+		handler = None;
 	}
 
 	// destroy any overlay
-	if (IS_OVERLAY ())
-	{
-		pDOS->DestroyTOverlayItem (overlay);
-		overlay = -1;
-	}
+	DestroyOverlay ();
 }
 
 object
@@ -394,25 +402,35 @@ HUDElement::ScheduleRedraw ()
 }
 
 bool
-HUDElement::SetIsOverlay (bool is_overlay)
+HUDElement::IsOverlay ()
 {
-	if (is_overlay && !IS_OVERLAY ())
+	return overlay > INVALID_OVERLAY;
+}
+
+bool
+HUDElement::CreateOverlay ()
+{
+	if (!IsOverlay ())
 	{
 		overlay = pDOS->CreateTOverlayItem
 			(last_position.x, last_position.y, last_size.w,
 			last_size.h, last_opacity, true);
-		if (!IS_OVERLAY ())
-		{
+		if (!IsOverlay ())
 			DebugPrintf ("Warning: could not create HUD overlay.");
-			return false;
-		}
+		return IsOverlay ();
 	}
-	else if (!is_overlay && IS_OVERLAY ())
+	else
+		return true;
+}
+
+void
+HUDElement::DestroyOverlay ()
+{
+	if (IsOverlay ())
 	{
 		pDOS->DestroyTOverlayItem (overlay);
-		overlay = -1;
+		overlay = INVALID_OVERLAY;
 	}
-	return true;
 }
 
 void
@@ -436,7 +454,7 @@ void
 HUDElement::SetPosition (CanvasPoint position)
 {
 	last_position = position;
-	if (IS_OVERLAY ())
+	if (IsOverlay ())
 		pDOS->UpdateTOverlayPosition (overlay, position.x, position.y);
 	// For non-overlay elements, last_position will be used when drawing.
 }
@@ -451,11 +469,11 @@ void
 HUDElement::SetSize (CanvasSize size)
 {
 	last_size = size;
-	if (IS_OVERLAY ())
+	if (IsOverlay ())
 	{
 		// This is not intended behavior and should be avoided.
-		SetIsOverlay (false); // destroy old overlay
-		SetIsOverlay (true); // and get a new one at the new size
+		DestroyOverlay ();
+		CreateOverlay (); // get a new one at the new size
 		if (last_scale != 1) SetScale (last_scale); // restore scale
 		ScheduleRedraw ();
 	}
@@ -571,38 +589,44 @@ HUDElement::DrawText (const char* text, CanvasPoint position, bool shadowed)
 int
 HUDElement::LoadBitmap (const char* path)
 {
-	char dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT], file[256];
+	char dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT], file[_MAX_FNAME];
 	_splitpath (path, NULL, dir, fname, ext);
-	snprintf (file, 256, "%s%s", fname, ext);
+	snprintf (file, _MAX_FNAME, "%s%s", fname, ext);
 	return pDOS->GetBitmap (file, dir);
 }
 
 void
 HUDElement::LoadBitmaps (const char* path, std::vector<int>& bitmaps)
 {
-	char dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT], file[256];
+	char dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT], file[_MAX_FNAME];
 	_splitpath (path, NULL, dir, fname, ext);
 
 	for (int frame = 0; frame < 128; ++frame)
 	{
 		if (frame == 0)
-			snprintf (file, 256, "%s%s", fname, ext);
+			snprintf (file, _MAX_FNAME, "%s%s", fname, ext);
 		else
-			snprintf (file, 256, "%s_%d%s", fname, frame, ext);
+			snprintf (file, _MAX_FNAME, "%s_%d%s", fname, frame, ext);
 
 		int bitmap = pDOS->GetBitmap (file, dir);
-		if (bitmap > -1)
+		if (IsValidBitmap (bitmap))
 			bitmaps.push_back (bitmap);
 		else
 			break;
 	}
 }
 
+bool
+HUDElement::IsValidBitmap (int bitmap)
+{
+	return bitmap > INVALID_BITMAP;
+}
+
 CanvasSize
 HUDElement::GetBitmapSize (int bitmap)
 {
 	CanvasSize result;
-	if (bitmap > -1)
+	if (IsValidBitmap (bitmap))
 		pDOS->GetBitmapSize (bitmap, result.w, result.h);
 	return result;
 }
@@ -611,14 +635,20 @@ void
 HUDElement::DrawBitmap (int bitmap, CanvasPoint position, CanvasRect clip)
 {
 	CHECK_DRAWING ();
+	if (!IsValidBitmap (bitmap))
+	{
+		DebugPrintf ("Warning: DrawBitmap called for invalid bitmap.");
+		return;
+	}
+
 	position = OFFSET (position);
 	if (clip == NOCLIP)
 		pDOS->DrawBitmap (bitmap, position.x, position.y);
 	else
 	{
 		CanvasSize bitmap_size = GetBitmapSize (bitmap);
-		if (clip.w == -1) clip.w = bitmap_size.w - clip.x;
-		if (clip.h == -1) clip.h = bitmap_size.h - clip.y;
+		if (clip.w == NOCLIP.w) clip.w = bitmap_size.w - clip.x;
+		if (clip.h == NOCLIP.h) clip.h = bitmap_size.h - clip.y;
 		pDOS->DrawSubBitmap (bitmap, position.x, position.y,
 			clip.x, clip.y, clip.w, clip.h);
 	}
@@ -627,7 +657,8 @@ HUDElement::DrawBitmap (int bitmap, CanvasPoint position, CanvasRect clip)
 void
 HUDElement::FreeBitmap (int bitmap)
 {
-	if (bitmap > -1) pDOS->FlushBitmap (bitmap);
+	if (IsValidBitmap (bitmap))
+		pDOS->FlushBitmap (bitmap);
 }
 
 CanvasPoint
@@ -854,10 +885,11 @@ cScr_QuestArrow::PADDING = 8;
 cScr_QuestArrow::cScr_QuestArrow (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cScr_HUDElement (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (QuestArrow, enabled, iHostObjId), obscured (false),
-	  objective (-1), symbol (SYMBOL_NONE), symbol_dirn (DIRN_NONE),
-	  bitmap (-1), image_pos (), text (), text_pos (), color (0),
-	  shadow (true)
+	  SCRIPT_VAROBJ (QuestArrow, enabled, iHostObjId),
+	  obscured (false), objective (OBJECTIVE_NONE),
+	  symbol (SYMBOL_NONE), symbol_dirn (DIRN_NONE),
+	  bitmap (INVALID_BITMAP), image_pos (), text (), text_pos (),
+	  color (0), shadow (true)
 {}
 
 // No override of EnterGameMode. If the canvas size did change and the text
@@ -878,7 +910,7 @@ cScr_QuestArrow::Prepare ()
 
 	// get canvas, image, and text size and calculate element size
 	CanvasSize canvas = GetCanvasSize (),
-		image_size = (bitmap > -1)
+		image_size = IsValidBitmap (bitmap)
 			? GetBitmapSize (bitmap) : SYMBOL_SIZE,
 		text_size = GetTextSize (text),
 		elem_size;
@@ -896,7 +928,7 @@ cScr_QuestArrow::Prepare ()
 
 	// calculate absolute position of image
 	CanvasPoint image_center, image_apos;
-	image_center = (bitmap > -1)
+	image_center = IsValidBitmap (bitmap)
 		? CanvasPoint (image_size.w / 2, image_size.h / 2)
 		: GetSymbolCenter (symbol, SYMBOL_SIZE, symbol_dirn);
 	image_apos.x = obj_pos.x - image_center.x;
@@ -940,7 +972,7 @@ cScr_QuestArrow::Redraw ()
 {
 	SetDrawingColor (color);
 
-	if (bitmap > -1)
+	if (IsValidBitmap (bitmap))
 		DrawBitmap (bitmap, image_pos);
 	else if (symbol != SYMBOL_NONE)
 		DrawSymbol (symbol, SYMBOL_SIZE, image_pos, symbol_dirn, shadow);
@@ -965,10 +997,10 @@ cScr_QuestArrow::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 long
 cScr_QuestArrow::OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	if (bitmap > -1)
+	if (IsValidBitmap (bitmap))
 	{
 		FreeBitmap (bitmap);
-		bitmap = -1;
+		bitmap = INVALID_BITMAP;
 	}
 	return cScr_HUDElement::OnEndScript (pMsg, mpReply);
 }
@@ -1012,7 +1044,7 @@ cScr_QuestArrow::OnPropertyChanged (const char* property)
 long
 cScr_QuestArrow::OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply)
 {
-	if (pMsg->event == 2 && // link added
+	if (pMsg->event == kContainAdd &&
 	    InheritsFrom ("Avatar", pMsg->container))
 		enabled = false;
 	return cScr_HUDElement::OnContained (pMsg, mpReply);
@@ -1032,7 +1064,7 @@ cScr_QuestArrow::UpdateObjective ()
 	char qvar[256];
 
 	// unsubscribe from old objective
-	if (objective > -1)
+	if (objective > OBJECTIVE_NONE)
 	{
 		snprintf (qvar, 256, "goal_state_%d", objective);
 		pQS->UnsubscribeMsg (ObjId (), qvar);
@@ -1040,8 +1072,8 @@ cScr_QuestArrow::UpdateObjective ()
 		pQS->UnsubscribeMsg (ObjId (), qvar);
 	}
 
-	objective = GetParamInt ("quest_arrow_goal", -1);
-	if (objective < 0) return;
+	objective = GetParamInt ("quest_arrow_goal", OBJECTIVE_NONE);
+	if (objective <= OBJECTIVE_NONE) return;
 
 	SetEnabledFromObjective ();
 
@@ -1055,7 +1087,7 @@ cScr_QuestArrow::UpdateObjective ()
 void
 cScr_QuestArrow::SetEnabledFromObjective ()
 {
-	if (objective < 0) return;
+	if (objective <= OBJECTIVE_NONE) return;
 
 	SService<IQuestSrv> pQS (g_pScriptManager);
 	char qvar[256];
@@ -1073,7 +1105,7 @@ cScr_QuestArrow::SetEnabledFromObjective ()
 void
 cScr_QuestArrow::GetTextFromObjective (cScrStr& msgstr)
 {
-	if (objective < 0)
+	if (objective <= OBJECTIVE_NONE)
 	{
 		msgstr = NULL;
 		return;
@@ -1093,10 +1125,10 @@ cScr_QuestArrow::GetTextFromObjective (cScrStr& msgstr)
 void
 cScr_QuestArrow::UpdateImage ()
 {
-	if (bitmap > -1) // even if it hasn't actually changed
+	if (IsValidBitmap (bitmap)) // even if it hasn't actually changed
 	{
 		FreeBitmap (bitmap);
-		bitmap = -1;
+		bitmap = INVALID_BITMAP;
 		ScheduleRedraw ();
 	}
 
@@ -1108,7 +1140,7 @@ cScr_QuestArrow::UpdateImage ()
 	else
 	{
 		bitmap = LoadBitmap (image);
-		if (bitmap < 0)
+		if (!IsValidBitmap (bitmap))
 		{
 			DebugPrintf ("Warning: could not load quest_arrow_image"
 				" at `%s'.", (const char*) image);
@@ -1362,7 +1394,7 @@ cScr_StatMeter::Redraw ()
 		for (int i = 1; i <= value_int; ++i)
 		{
 			if (!bitmaps.empty ())
-				DrawBitmap (bitmaps[0], unit);
+				DrawBitmap (bitmaps.front (), unit);
 			else if (symbol != SYMBOL_NONE)
 				DrawSymbol (symbol, size, unit);
 
@@ -1481,7 +1513,7 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 	UpdateImage ();
 
 	if (!bitmaps.empty ())
-		size = GetBitmapSize (bitmaps[0]);
+		size = GetBitmapSize (bitmaps.front ());
 	else
 	{
 		size.w = GetParamInt ("stat_meter_width",
@@ -1621,7 +1653,7 @@ cScr_ToolSight::cScr_ToolSight (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cScr_HUDElement (pszName, iHostObjId),
 	  SCRIPT_VAROBJ (ToolSight, enabled, iHostObjId),
-	  symbol (SYMBOL_NONE), bitmap (-1), color (0)
+	  symbol (SYMBOL_NONE), bitmap (INVALID_BITMAP), color (0)
 {}
 
 bool
@@ -1631,7 +1663,7 @@ cScr_ToolSight::Prepare ()
 
 	// get canvas, image, and text size and calculate element size
 	CanvasSize canvas = GetCanvasSize (),
-		elem_size = (bitmap > -1)
+		elem_size = IsValidBitmap (bitmap)
 			? GetBitmapSize (bitmap) : SYMBOL_SIZE;
 
 	// calculate center of canvas and position of element
@@ -1649,7 +1681,7 @@ void
 cScr_ToolSight::Redraw ()
 {
 	SetDrawingColor (color);
-	if (bitmap > -1)
+	if (IsValidBitmap (bitmap))
 		DrawBitmap (bitmap);
 	else if (symbol != SYMBOL_NONE)
 		DrawSymbol (symbol, SYMBOL_SIZE);
@@ -1669,10 +1701,10 @@ cScr_ToolSight::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 long
 cScr_ToolSight::OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	if (bitmap > -1)
+	if (IsValidBitmap (bitmap))
 	{
 		FreeBitmap (bitmap);
-		bitmap = -1;
+		bitmap = INVALID_BITMAP;
 	}
 	return cScr_HUDElement::OnEndScript (pMsg, mpReply);
 }
@@ -1718,10 +1750,10 @@ cScr_ToolSight::OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply)
 void
 cScr_ToolSight::UpdateImage ()
 {
-	if (bitmap > -1) // even if it hasn't actually changed
+	if (IsValidBitmap (bitmap)) // even if it hasn't actually changed
 	{
 		FreeBitmap (bitmap);
-		bitmap = -1;
+		bitmap = INVALID_BITMAP;
 		ScheduleRedraw ();
 	}
 
@@ -1734,7 +1766,7 @@ cScr_ToolSight::UpdateImage ()
 	else
 	{
 		bitmap = LoadBitmap (image);
-		if (bitmap < 0)
+		if (!IsValidBitmap (bitmap))
 		{
 			DebugPrintf ("Warning: could not load tool_sight_image"
 				" at `%s'.", (const char*) image);

@@ -26,6 +26,7 @@
 #if !SCR_GENSCRIPTS
 #include "BaseScript.h"
 #include "BaseTrap.h"
+#include "utils.h"
 #endif // SCR_GENSCRIPTS
 
 

@@ -23,7 +23,6 @@
 #include "Text.h"
 #include <ScriptLib.h>
 #include <darkhook.h>
-#include "utils.h"
 
 
 
@@ -100,8 +99,8 @@ HUDSubtitle::Prepare ()
 	CanvasSize canvas = GetCanvasSize (),
 		text_size = GetTextSize (text),
 		elem_size;
-	elem_size.w = 2*BORDER + 2*PADDING + text_size.w;
-	elem_size.h = 2*BORDER + 2*PADDING + text_size.h;
+	elem_size.w = BORDER + PADDING + text_size.w + PADDING + BORDER;
+	elem_size.h = BORDER + PADDING + text_size.h + PADDING + BORDER;
 
 	// get host's position in canvas coordinates
 	CanvasPoint host_pos;
@@ -144,6 +143,9 @@ HUDSubtitle::Redraw ()
 
 /* KDSubtitled */
 
+const float
+cScr_Subtitled::EARSHOT = 80.0;
+
 cScr_Subtitled::cScr_Subtitled (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  SCRIPT_VAROBJ (Subtitled, last_schema, iHostObjId),
@@ -152,7 +154,7 @@ cScr_Subtitled::cScr_Subtitled (const char* pszName, int iHostObjId)
 
 cScr_Subtitled::~cScr_Subtitled ()
 {
-	EndSubtitle (0);
+	EndSubtitle ();
 }
 
 long
@@ -163,8 +165,10 @@ cScr_Subtitled::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 		object host = (pMsg->data2.type == kMT_Int)
 			? int (pMsg->data2) : pMsg->from;
 		object schema = (pMsg->data.type == kMT_Int)
-			? int (pMsg->data) : (pMsg->data.type == kMT_String)
-			? StrToObject ((const char*) pMsg->data) : 0;
+			? object (int (pMsg->data))
+			: (pMsg->data.type == kMT_String)
+			? StrToObject ((const char*) pMsg->data)
+			: None;
 		return Subtitle (host, schema) ? S_OK : S_FALSE;
 	}
 	return cBaseScript::OnMessage (pMsg, mpReply);
@@ -185,7 +189,7 @@ cScr_Subtitled::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
 long
 cScr_Subtitled::OnEndScript (sScrMsg*, cMultiParm&)
 {
-	EndSubtitle (0);
+	EndSubtitle ();
 	return S_OK;
 }
 
@@ -208,7 +212,7 @@ cScr_Subtitled::Subtitle (object host, object schema)
 	if (text.IsEmpty ()) return false;
 
 	// end any previous subtitle on this object
-	EndSubtitle (0);
+	EndSubtitle ();
 
 	// get or calculate schema duration
 	SService<IPropertySrv> pPS (g_pScriptManager);
@@ -305,7 +309,7 @@ cScr_SubtitledAI::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	cMultiParm schema, flags;
 
 	pPS->Get (schema, ObjId (), "Speech", "schemaID");
-	if (schema.type != kMT_Int || int (schema) == 0)
+	if (schema.type != kMT_Int || int (schema) == None)
 		return result; // not a valid schema
 
 	pPS->Get (flags, ObjId (), "Speech", "flags");
@@ -316,7 +320,7 @@ cScr_SubtitledAI::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	SService<IObjectSrv> pOS (g_pScriptManager);
 	cScrVec host_pos; pOS->Position (host_pos, ObjId ());
 	cScrVec player_pos; pOS->Position (player_pos, StrToObject ("Player"));
-	if (host_pos.Distance (player_pos) >= 80.0)
+	if (host_pos.Distance (player_pos) >= EARSHOT)
 		return result; // too far away
 
 	// display the subtitle
@@ -339,7 +343,7 @@ cScr_SubtitledVO::OnTurnOn (sScrMsg*, cMultiParm&)
 {
 	// get one SoundDescription-linked schema
 	object schema =
-		LinkIter (ObjId (), 0, "SoundDescription").Destination ();
+		LinkIter (ObjId (), Any, "SoundDescription").Destination ();
 	if (!schema) return S_FALSE;
 
 	// only display subtitle once (per object)
