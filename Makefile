@@ -96,22 +96,27 @@ $(bin2dir)/BaseTrap.o: BaseTrap.h BaseScript.h Script.h
 
 KDSCRIPT_HEADERS = \
 	CustomHUD.h \
-	NewDark.h \
+	Rendering.h \
+	Text.h \
 	Other.h
 KDSCRIPT_OBJS1 = \
 	$(bin1dir)/CustomHUD.o \
-	$(bin1dir)/NewDark.o \
+	$(bin1dir)/Rendering.o \
+	$(bin1dir)/Text.o \
 	$(bin1dir)/Other.o
 KDSCRIPT_OBJS2 = \
 	$(bin2dir)/CustomHUD.o \
-	$(bin2dir)/NewDark.o \
+	$(bin2dir)/Rendering.o \
+	$(bin2dir)/Text.o \
 	$(bin2dir)/Other.o
-$(bin1dir)/CustomHUD.o: CustomHUD.h BaseScript.h Script.h scriptvars.h utils.h
-$(bin2dir)/CustomHUD.o: CustomHUD.h BaseScript.h Script.h scriptvars.h utils.h
-$(bin1dir)/NewDark.o: NewDark.h BaseScript.h Script.h BaseTrap.h scriptvars.h utils.h
-$(bin2dir)/NewDark.o: NewDark.h BaseScript.h Script.h BaseTrap.h scriptvars.h utils.h
-$(bin1dir)/Other.o: Other.h BaseScript.h Script.h utils.h
-$(bin2dir)/Other.o: Other.h BaseScript.h Script.h utils.h
+$(bin1dir)/CustomHUD.o: CustomHUD.h BaseScript.h Script.h scriptvars.h ScriptModule.h utils.h
+$(bin2dir)/CustomHUD.o: CustomHUD.h BaseScript.h Script.h scriptvars.h ScriptModule.h utils.h
+$(bin1dir)/Rendering.o: Rendering.h BaseScript.h Script.h BaseTrap.h scriptvars.h utils.h
+$(bin2dir)/Rendering.o: Rendering.h BaseScript.h Script.h BaseTrap.h scriptvars.h utils.h
+$(bin1dir)/Text.o: Text.h BaseScript.h Script.h scriptvars.h CustomHUD.h utils.h
+$(bin2dir)/Text.o: Text.h BaseScript.h Script.h scriptvars.h CustomHUD.h utils.h
+$(bin1dir)/Other.o: Other.h BaseScript.h Script.h BaseTrap.h utils.h
+$(bin2dir)/Other.o: Other.h BaseScript.h Script.h BaseTrap.h utils.h
 
 MODULE_OBJS = \
 	$(bindir)/Allocator.o \

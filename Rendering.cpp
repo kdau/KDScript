@@ -1,5 +1,5 @@
 /******************************************************************************
- *  NewDark.cpp: scripts exposing NewDark script-only features
+ *  Rendering.cpp: scripts affecting weather, precipitation, and textures
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *  Adapted in part from Public Scripts
@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 
-#include "NewDark.h"
+#include "Rendering.h"
 #include <ScriptLib.h>
 #include "utils.h"
 
@@ -116,102 +116,105 @@ cScr_TransitionTrap::Increment ()
 
 
 
-/* KDGetInfo */
+/* KDTrapEnvMap */
 
-cScr_GetInfo::cScr_GetInfo (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId)
+cScr_TrapEnvMap::cScr_TrapEnvMap (const char* pszName, int iHostObjId)
+	: cBaseScript (pszName, iHostObjId),
+	  cBaseTrap (pszName, iHostObjId)
 {}
 
 long
-cScr_GetInfo::OnBeginScript (sScrMsg*, cMultiParm&)
+cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 {
-	// not everything is available yet, so wait for next message cycle
-	SimplePost (ObjId (), ObjId (), "UpdateVariables");
-	return S_OK;
-}
+	int zone = GetObjectParamInt (ObjId (), "env_map_zone", 0);
+	char* texture = GetObjectParamString (ObjId (),
+		bState ? "env_map_on" : "env_map_off", NULL);
 
-long
-cScr_GetInfo::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	if (!strcmp (pMsg->message, "UpdateVariables"))
+	if (zone < 0 || zone > 63 || !texture) return S_FALSE;
+
+	if (!CheckEngineVersion (1, 20))
 	{
-		UpdateVariables ();
-		return S_OK;
+		DebugPrintf ("KDTrapEnvMap cannot be used with this version of "
+			"the Dark Engine. Upgrade to version 1.20 or higher.");
+		return S_FALSE;
 	}
-	return cBaseScript::OnMessage (pMsg, mpReply);
-}
 
-long
-cScr_GetInfo::OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg, cMultiParm&)
-{
-	if (pMsg->fResuming)
-		UpdateVariables ();
-	return S_OK;
-}
-
-long
-cScr_GetInfo::OnEndScript (sScrMsg*, cMultiParm&)
-{
-	DeleteVariables ();
-	return S_OK;
-}
-
-void
-cScr_GetInfo::UpdateVariables ()
-{
-	SService<IDarkGameSrv> pDGS (g_pScriptManager);
 	SService<IEngineSrv> pES (g_pScriptManager);
-	SService<IQuestSrv> pQS (g_pScriptManager);
-	SService<IVersionSrv> pVS (g_pScriptManager);
+	pES->SetEnvMapZone (zone, texture);
+	g_pMalloc->Free (texture);
 
-	pQS->Set ("info_directx_version", pES->IsRunningDX6 () ? 6 : 9,
-		kQuestDataMission);
-
-	int display_height = 0, display_width = 0;
-	pES->GetCanvasSize (display_width, display_height);
-	pQS->Set ("info_display_height", display_height, kQuestDataMission);
-	pQS->Set ("info_display_width", display_width, kQuestDataMission);
-
-	int value = 0;
-	if (pES->ConfigGetInt ("sfx_eax", value))
-		pQS->Set ("info_has_eax", value, kQuestDataMission);
-	if (pES->ConfigGetInt ("fogging", value))
-		pQS->Set ("info_has_fog", value, kQuestDataMission);
-	if (pES->ConfigGetInt ("game_hardware", value))
-		pQS->Set ("info_has_hw3d", value, kQuestDataMission);
-	if (pES->ConfigGetInt ("enhanced_sky", value))
-		pQS->Set ("info_has_sky", value, kQuestDataMission);
-	if (pES->ConfigGetInt ("render_weather", value))
-		pQS->Set ("info_has_weather", value, kQuestDataMission);
-
-#if (_DARKGAME == 2)
-	pQS->Set ("info_mission", pDGS->GetCurrentMission (), kQuestDataMission);
-#endif
-
-	pQS->Set ("info_mode", pVS->IsEditor (), kQuestDataMission);
-
-	int version_major = 0, version_minor = 0;
-	pVS->GetVersion (version_major, version_minor);
-	pQS->Set ("info_version_major", version_major, kQuestDataMission);
-	pQS->Set ("info_version_minor", version_minor, kQuestDataMission);
+	return S_OK;
 }
 
-void
-cScr_GetInfo::DeleteVariables ()
+
+
+/* KDTrapFog */
+
+cScr_TrapFog::cScr_TrapFog (const char* pszName, int iHostObjId)
+	: cBaseScript (pszName, iHostObjId),
+	  cBaseTrap (pszName, iHostObjId),
+	  cScr_TransitionTrap (pszName, iHostObjId),
+	  SCRIPT_VAROBJ (TrapFog, zone, iHostObjId),
+	  SCRIPT_VAROBJ (TrapFog, start_color, iHostObjId),
+	  SCRIPT_VAROBJ (TrapFog, end_color, iHostObjId),
+	  SCRIPT_VAROBJ (TrapFog, start_dist, iHostObjId),
+	  SCRIPT_VAROBJ (TrapFog, end_dist, iHostObjId)
+{}
+
+bool
+cScr_TrapFog::OnPrepare (bool state)
 {
-	SService<IQuestSrv> pQS (g_pScriptManager);
-	pQS->Delete ("info_directx_version");
-	pQS->Delete ("info_display_height");
-	pQS->Delete ("info_display_width");
-	pQS->Delete ("info_has_eax");
-	pQS->Delete ("info_has_fog");
-	pQS->Delete ("info_has_hw3d");
-	pQS->Delete ("info_has_sky");
-	pQS->Delete ("info_has_weather");
-	pQS->Delete ("info_mission");
-	pQS->Delete ("info_mode");
-	pQS->Delete ("info_version_major");
-	pQS->Delete ("info_version_minor");
+	int _zone = GetObjectParamInt (ObjId (), "fog_zone", 0);
+	ulong _end_color = GetObjectParamColor (ObjId (),
+		state ? "fog_color_on" : "fog_color_off", 0);
+	float _end_dist = GetObjectParamFloat (ObjId (),
+		state ? "fog_dist_on" : "fog_dist_off", -1.0);
+
+	if (_zone < 0 || _zone > 8 || (_end_color == 0 && _end_dist < 0.0))
+		return false;
+
+	zone = _zone;
+
+	int start_red, start_green, start_blue; float _start_dist;
+	SService<IEngineSrv> pES (g_pScriptManager);
+	if (zone == 0)
+		pES->GetFog (start_red, start_green, start_blue, _start_dist);
+	else
+		pES->GetFogZone (zone, start_red, start_green, start_blue,
+			_start_dist);
+	start_color = makecolor (start_red, start_green, start_blue);
+	start_dist = _start_dist;
+
+	end_color = _end_color ? _end_color : start_color;
+	end_dist = (_end_dist >= 0.0) ? _end_dist : _start_dist;
+
+	// notify KDSyncGlobalFog if present
+	object player = StrToObject ("Player");
+	if (player)
+		SimpleSend (ObjId (), player, "FogZoneChanging", (int) zone,
+			(int) end_color, (float) end_dist);
+
+	return true;
+}
+
+bool
+cScr_TrapFog::OnIncrement ()
+{
+	ulong color = InterpolateColor (start_color, end_color);
+
+	float fake_end_dist = (end_dist == 0.0 && GetProgress () < 1.0)
+		? 100000.0 : end_dist;
+	float dist = Interpolate (start_dist, fake_end_dist);
+
+	SService<IEngineSrv> pES (g_pScriptManager);
+	if (zone == 0)
+		pES->SetFog (getred (color), getgreen (color), getblue (color),
+			dist);
+	else
+		pES->SetFogZone (zone, getred (color), getgreen (color),
+			getblue (color), dist);
+
+	return true;
 }
 
 
@@ -321,165 +324,7 @@ cScr_SyncGlobalFog::OnIncrement ()
 
 
 
-/* KDTrapEnvMap */
-
-cScr_TrapEnvMap::cScr_TrapEnvMap (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  cBaseTrap (pszName, iHostObjId)
-{}
-
-long
-cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
-{
-	int zone = GetObjectParamInt (ObjId (), "env_map_zone", 0);
-	char* texture = GetObjectParamString (ObjId (),
-		bState ? "env_map_on" : "env_map_off", NULL);
-
-	if (zone < 0 || zone > 63 || !texture) return S_FALSE;
-
-	if (!CheckEngineVersion (1, 20))
-	{
-		DebugPrintf ("KDTrapEnvMap cannot be used with this version of "
-			"the Dark Engine. Upgrade to version 1.20 or higher.");
-		return S_FALSE;
-	}
-
-	SService<IEngineSrv> pES (g_pScriptManager);
-	pES->SetEnvMapZone (zone, texture);
-	g_pMalloc->Free (texture);
-
-	return S_OK;
-}
-
-
-
-/* KDTrapFog */
-
-cScr_TrapFog::cScr_TrapFog (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  cBaseTrap (pszName, iHostObjId),
-	  cScr_TransitionTrap (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, zone, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, start_color, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, end_color, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, start_dist, iHostObjId),
-	  SCRIPT_VAROBJ (TrapFog, end_dist, iHostObjId)
-{}
-
-bool
-cScr_TrapFog::OnPrepare (bool state)
-{
-	int _zone = GetObjectParamInt (ObjId (), "fog_zone", 0);
-	ulong _end_color = GetObjectParamColor (ObjId (),
-		state ? "fog_color_on" : "fog_color_off", 0);
-	float _end_dist = GetObjectParamFloat (ObjId (),
-		state ? "fog_dist_on" : "fog_dist_off", -1.0);
-
-	if (_zone < 0 || _zone > 8 || (_end_color == 0 && _end_dist < 0.0))
-		return false;
-
-	zone = _zone;
-
-	int start_red, start_green, start_blue; float _start_dist;
-	SService<IEngineSrv> pES (g_pScriptManager);
-	if (zone == 0)
-		pES->GetFog (start_red, start_green, start_blue, _start_dist);
-	else
-		pES->GetFogZone (zone, start_red, start_green, start_blue,
-			_start_dist);
-	start_color = makecolor (start_red, start_green, start_blue);
-	start_dist = _start_dist;
-
-	end_color = _end_color ? _end_color : start_color;
-	end_dist = (_end_dist >= 0.0) ? _end_dist : _start_dist;
-
-	// notify KDSyncGlobalFog if present
-	object player = StrToObject ("Player");
-	if (player)
-		SimpleSend (ObjId (), player, "FogZoneChanging", (int) zone,
-			(int) end_color, (float) end_dist);
-
-	return true;
-}
-
-bool
-cScr_TrapFog::OnIncrement ()
-{
-	ulong color = InterpolateColor (start_color, end_color);
-
-	float fake_end_dist = (end_dist == 0.0 && GetProgress () < 1.0)
-		? 100000.0 : end_dist;
-	float dist = Interpolate (start_dist, fake_end_dist);
-
-	SService<IEngineSrv> pES (g_pScriptManager);
-	if (zone == 0)
-		pES->SetFog (getred (color), getgreen (color), getblue (color),
-			dist);
-	else
-		pES->SetFogZone (zone, getred (color), getgreen (color),
-			getblue (color), dist);
-
-	return true;
-}
-
-
-
-/* KDTrapNextMission */
-
-cScr_TrapNextMission::cScr_TrapNextMission (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  cBaseTrap (pszName, iHostObjId)
-{}
-
-long
-cScr_TrapNextMission::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
-{
-	int next_mission = GetObjectParamInt (ObjId (),
-		bState ? "next_mission_on" : "next_mission_off", 0);
-
-	if (next_mission < 1) return S_FALSE;
-
-#if (_DARKGAME == 2)
-	SService<IDarkGameSrv> pDGS (g_pScriptManager);
-	pDGS->SetNextMission (next_mission);
-	return S_OK;
-#else
-	DebugPrintf ("Error: the KDTrapNextMission script is not available "
-		"for this game.");
-	return S_FALSE;
-#endif
-}
-
-
-
 /* DarkWeather */
-
-struct DarkWeather
-{
-	DarkWeather ();
-	void SetFromMission ();
-	void ApplyToMission () const;
-
-	enum PrecipType
-	{
-		PRECIP_SNOW = 0,
-		PRECIP_RAIN = 1
-	} precip_type;
-	float precip_freq;
-	float precip_speed;
-	float vis_dist;
-	float rend_radius;
-	float alpha;
-	float brightness;
-	float snow_jitter;
-	float rain_length;
-	float splash_freq;
-	float splash_radius;
-	float splash_height;
-	float splash_duration;
-	cScrStr texture;
-	cScrVec wind;
-};
 
 DarkWeather::DarkWeather ()
 	: precip_type (PRECIP_SNOW), precip_freq (0.0), precip_speed (0.0),
@@ -495,12 +340,13 @@ void
 DarkWeather::SetFromMission ()
 {
 	SService<IEngineSrv> pES (g_pScriptManager);
-	int _type;
+	int _type; cScrStr _texture;
 	pES->GetWeather (_type, precip_freq, precip_speed, vis_dist,
 		rend_radius, alpha, brightness, snow_jitter, rain_length,
 		splash_freq, splash_radius, splash_height, splash_duration,
-		texture, wind);
+		_texture, wind);
 	precip_type = (PrecipType) _type;
+	texture = _texture;
 }
 
 void

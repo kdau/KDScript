@@ -61,14 +61,16 @@
 #include "BaseTrap.h"
 
 #include "CustomHUD.h"
-#include "NewDark.h"
+#include "Rendering.h"
+#include "Text.h"
 #include "Other.h"
 
 #undef BASESCRIPT_H
 #undef BASETRAP_H
 
 #undef CUSTOMHUD_H
-#undef NEWDARK_H
+#undef RENDERING_H
+#undef TEXT_H
 #undef OTHER_H
 
 #if defined(SCR_GENSCRIPTFACTORY)

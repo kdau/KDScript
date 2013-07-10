@@ -20,61 +20,13 @@
  *
  *****************************************************************************/
 
-#ifndef OTHER_H
-#define OTHER_H
+#ifndef TEXT_H
+#define TEXT_H
 
 #if !SCR_GENSCRIPTS
 #include "BaseScript.h"
 #include "scriptvars.h"
 #include "CustomHUD.h"
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_Carried : public virtual cBaseScript
-{
-public:
-	cScr_Carried (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnCreate (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-
-private:
-	void Drop ();
-	void FixPhysics ();
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDCarried","BaseScript",cScr_Carried)
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_Carrier : public virtual cBaseAIScript
-{
-public:
-	cScr_Carrier (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnCreate (sScrMsg* pMsg, cMultiParm& mpReply);
-
-	virtual long OnAIModeChange (sAIModeChangeMsg* pMsg,
-		cMultiParm& mpReply);
-	virtual long OnAlertness (sAIAlertnessMsg* pMsg, cMultiParm& mpReply);
-
-private:
-	void CreateAttachments ();
-	void CreateAttachment (object archetype, int joint);
-
-	void NotifyCarried (const char* message,
-		const cMultiParm& data = cMultiParm::Undef);
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDCarrier","BaseAIScript",cScr_Carrier)
 #endif // SCR_GENSCRIPTS
 
 
@@ -178,5 +130,5 @@ GEN_FACTORY("KDSubtitledVO","KDSubtitled",cScr_SubtitledVO)
 
 
 
-#endif // OTHER_H
+#endif // TEXT_H
 

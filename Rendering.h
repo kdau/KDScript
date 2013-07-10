@@ -1,5 +1,5 @@
 /******************************************************************************
- *  NewDark.h: scripts exposing NewDark script-only features
+ *  Rendering.h: scripts affecting weather, precipitation, and textures
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *  Adapted in part from Public Scripts
@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef NEWDARK_H
-#define NEWDARK_H
+#ifndef RENDERING_H
+#define RENDERING_H
 
 #if !SCR_GENSCRIPTS
 #include "BaseScript.h"
@@ -85,54 +85,6 @@ private:
 
 
 #if !SCR_GENSCRIPTS
-class cScr_GetInfo : public virtual cBaseScript
-{
-public:
-	cScr_GetInfo (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg,
-		cMultiParm& mpReply);
-	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
-
-private:
-	void UpdateVariables ();
-	void DeleteVariables ();
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDGetInfo","BaseScript",cScr_GetInfo)
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_SyncGlobalFog : public cScr_TransitionTrap
-{
-public:
-	cScr_SyncGlobalFog (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-
-	void Sync (ulong color, float dist, bool sync_color = true);
-	virtual bool OnPrepare (bool) { return false; } // not really a trap
-	virtual bool OnIncrement ();
-
-private:
-	script_int last_room_zone;
-	script_int start_color, end_color; // ulong
-	script_float start_dist, end_dist;
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDSyncGlobalFog","KDTransitionTrap",cScr_SyncGlobalFog)
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
 class cScr_TrapEnvMap : public virtual cBaseTrap
 {
 public:
@@ -169,21 +121,58 @@ GEN_FACTORY("KDTrapFog","KDTransitionTrap",cScr_TrapFog)
 
 
 #if !SCR_GENSCRIPTS
-class cScr_TrapNextMission : public virtual cBaseTrap
+class cScr_SyncGlobalFog : public cScr_TransitionTrap
 {
 public:
-	cScr_TrapNextMission (const char* pszName, int iHostObjId);
+	cScr_SyncGlobalFog (const char* pszName, int iHostObjId);
 
 protected:
-	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+
+	void Sync (ulong color, float dist, bool sync_color = true);
+	virtual bool OnPrepare (bool) { return false; } // not really a trap
+	virtual bool OnIncrement ();
+
+private:
+	script_int last_room_zone;
+	script_int start_color, end_color; // ulong
+	script_float start_dist, end_dist;
 };
 #else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapNextMission","BaseTrap",cScr_TrapNextMission)
+GEN_FACTORY("KDSyncGlobalFog","KDTransitionTrap",cScr_SyncGlobalFog)
 #endif // SCR_GENSCRIPTS
 
 
 
 #if !SCR_GENSCRIPTS
+struct DarkWeather
+{
+	DarkWeather ();
+	void SetFromMission ();
+	void ApplyToMission () const;
+
+	enum PrecipType
+	{
+		PRECIP_SNOW = 0,
+		PRECIP_RAIN = 1
+	} precip_type;
+	float precip_freq;
+	float precip_speed;
+	float vis_dist;
+	float rend_radius;
+	float alpha;
+	float brightness;
+	float snow_jitter;
+	float rain_length;
+	float splash_freq;
+	float splash_radius;
+	float splash_height;
+	float splash_duration;
+	cAnsiStr texture;
+	cScrVec wind;
+};
+
 class cScr_TrapWeather : public cScr_TransitionTrap
 {
 public:
@@ -203,5 +192,5 @@ GEN_FACTORY("KDTrapWeather","KDTransitionTrap",cScr_TrapWeather)
 
 
 
-#endif // NEWDARK_H
+#endif // RENDERING_H
 
