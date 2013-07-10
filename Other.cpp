@@ -94,9 +94,37 @@ void
 cScr_Carried::Drop ()
 {
 	SService<IObjectSrv> pOS (g_pScriptManager);
+	SService<IPropertySrv> pPS (g_pScriptManager);
+	SService<IPhysSrv> pPhS (g_pScriptManager);
 	SService<IQuestSrv> pQS (g_pScriptManager);
 
 	object drop = ObjId ();
+	cScrVec position; pOS->Position (position, drop);
+	cScrVec facing; pOS->Facing (facing, drop);
+
+	// remove FrobInert if requested
+	if (GetObjectParamBool (drop, "inert_until_dropped", false))
+		RemoveSingleMetaProperty ("FrobInert", drop);
+
+	// turn off the object and others if requested
+	if (GetObjectParamBool (drop, "off_when_dropped", false))
+	{
+		SimpleSend (drop, drop, "TurnOff");
+		CDSend ("TurnOff", drop);
+	}
+
+#if (_DARKGAME == 2)
+	// confirm that object would not drop out of world
+	true_bool position_valid;
+	pOS->IsPositionValid (position_valid, drop);
+	if (!position_valid)
+	{
+		DebugPrintf ("Not dropping %s at invalid position (%f,%f,%f).",
+			(const char*) FormatObjectName (drop),
+			position.x, position.y, position.z);
+		return;
+	}
+#endif
 
 	for (LinkIter container (0, ObjId (), "Contains");
 	     container; ++container)
@@ -139,8 +167,7 @@ cScr_Carried::Drop ()
 		DebugPrintf ("replacing self with clone %d", int (drop));
 	}
 
-	// become physical if not already, ensuring model is appropriate
-	SService<IPropertySrv> pPS (g_pScriptManager);
+	// ensure that the object is physical
 	if (!pPS->Possessed (drop, "PhysType"))
 	{
 		// create an OBB model to allow check of object dimensions
@@ -151,25 +178,11 @@ cScr_Carried::Drop ()
 		SimplePost (drop, drop, "FixPhysics");
 	}
 
-	// teleport to own position to avoid winding up at origin (?!)
-	cScrVec position; pOS->Position (position, drop);
-	cScrVec facing; pOS->Facing (facing, drop);
+	// teleport object to own position to avoid winding up at origin (?!)
 	pOS->Teleport (drop, position, facing, 0);
 
-	// give self a push to cause drop
-	SService<IPhysSrv> pPhS (g_pScriptManager);
+	// give object a push to cause it to drop
 	pPhS->SetVelocity (drop, {0.0, 0.0, -0.1});
-
-	// remove FrobInert if requested
-	if (GetObjectParamBool (drop, "inert_until_dropped", false))
-		RemoveSingleMetaProperty ("FrobInert", drop);
-
-	// turn off the object and others if requested
-	if (GetObjectParamBool (drop, "off_when_dropped", false))
-	{
-		SimpleSend (drop, drop, "TurnOff");
-		CDSend ("TurnOff", drop);
-	}
 }
 
 void

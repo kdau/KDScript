@@ -150,6 +150,12 @@ cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 
 /* KDTrapFog */
 
+static inline float
+FakeFogDistance (float distance, float progress)
+{
+	return (distance == 0.0 && progress < 1.0) ? 10000.0 : distance;
+}
+
 cScr_TrapFog::cScr_TrapFog (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cBaseTrap (pszName, iHostObjId),
@@ -201,10 +207,8 @@ bool
 cScr_TrapFog::OnIncrement ()
 {
 	ulong color = InterpolateColor (start_color, end_color);
-
-	float fake_end_dist = (end_dist == 0.0 && GetProgress () < 1.0)
-		? 100000.0 : end_dist;
-	float dist = Interpolate (start_dist, fake_end_dist);
+	float dist = Interpolate (FakeFogDistance (start_dist, GetProgress ()),
+		FakeFogDistance (end_dist, GetProgress ()));
 
 	SService<IEngineSrv> pES (g_pScriptManager);
 	if (zone == 0)
@@ -299,9 +303,9 @@ cScr_SyncGlobalFog::Sync (ulong color, float dist, bool sync_color)
 
 	end_color = sync_color ? color : start_color;
 
-	float _ed, mult = GetObjectParamFloat (ObjId (), "fog_dist_mult", 1.0),
+	float mult = GetObjectParamFloat (ObjId (), "fog_dist_mult", 1.0),
 		add = GetObjectParamFloat (ObjId (), "fog_dist_add", 0.0);
-	end_dist = _ed = (sync_dist || start_dist == 0.0 || dist == 0.0)
+	end_dist = (sync_dist || start_dist == 0.0 || dist == 0.0)
 		? (dist == 0.0 ? dist : dist * mult + add) : start_dist;
 
 	Begin ();
@@ -311,10 +315,8 @@ bool
 cScr_SyncGlobalFog::OnIncrement ()
 {
 	ulong color = InterpolateColor (start_color, end_color);
-
-	float fake_end_dist = (end_dist == 0.0 && GetProgress () < 1.0)
-		? 100000.0 : end_dist;
-	float dist = Interpolate (start_dist, fake_end_dist);
+	float dist = Interpolate (FakeFogDistance (start_dist, GetProgress ()),
+			FakeFogDistance (end_dist, GetProgress ()));
 
 	SService<IEngineSrv> pES (g_pScriptManager);
 	pES->SetFog (getred (color), getgreen (color), getblue (color), dist);
