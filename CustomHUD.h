@@ -266,6 +266,7 @@ private:
 	void UpdateText ();
 
 	ulong color;
+	bool shadow;
 	void UpdateColor ();
 };
 #else // SCR_GENSCRIPTS

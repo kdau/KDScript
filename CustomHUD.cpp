@@ -856,7 +856,8 @@ cScr_QuestArrow::cScr_QuestArrow (const char* pszName, int iHostObjId)
 	  cScr_HUDElement (pszName, iHostObjId),
 	  SCRIPT_VAROBJ (QuestArrow, enabled, iHostObjId), obscured (false),
 	  objective (-1), symbol (SYMBOL_NONE), symbol_dirn (DIRN_NONE),
-	  bitmap (-1), image_pos (), text (), text_pos (), color (0)
+	  bitmap (-1), image_pos (), text (), text_pos (), color (0),
+	  shadow (true)
 {}
 
 // No override of EnterGameMode. If the canvas size did change and the text
@@ -942,9 +943,9 @@ cScr_QuestArrow::Redraw ()
 	if (bitmap > -1)
 		DrawBitmap (bitmap, image_pos);
 	else if (symbol != SYMBOL_NONE)
-		DrawSymbol (symbol, SYMBOL_SIZE, image_pos, symbol_dirn, true);
+		DrawSymbol (symbol, SYMBOL_SIZE, image_pos, symbol_dirn, shadow);
 
-	DrawText (text, text_pos, true);
+	DrawText (text, text_pos, shadow);
 }
 
 long
@@ -1164,9 +1165,11 @@ void
 cScr_QuestArrow::UpdateColor ()
 {
 	ulong _color = GetParamColor ("quest_arrow_color", 0xffffff);
-	if (color != _color)
+	bool _shadow = GetParamBool ("quest_arrow_shadow", true);
+	if (color != _color || shadow != _shadow)
 	{
 		color = _color;
+		shadow = _shadow;
 		ScheduleRedraw ();
 	}
 }
