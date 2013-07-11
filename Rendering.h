@@ -32,29 +32,6 @@
 
 
 
-/**
- * AbstractScript: KDTransitionTrap
- * Inherits: BaseTrap
- * Parameter: transition (time) - Length of the transition, in milliseconds.
- *
- * Abstract base script for traps that create smooth transitions between two
- * states. The length of the transition in milliseconds is specified in the
- * "transition" parameter. If that parameter is undefined or set to zero, the
- * transition will be instantaneous. The usual trap control flags, locking, and
- * timing (before the start of the transition, not its length) are respected.
- *
- * A concrete script inheriting from TransitionTrap should implement OnPrepare
- * and OnIncrement, making preliminary calculations for the transition in the
- * former and actually performing the change of state in the latter. OnPrepare
- * has an argument "state" which will indicate the trap's new on/off state.
- * The GetProgress method returns a float value ranging linearly from 0.0 at the
- * start of the transition to 1.0 at its end. The GetIncrementDelta method can
- * be overridden to change the time between increments in milliseconds.
- *
- * A non-trap script may inherit from TransitionTrap. It should return false
- * from OnPrepare (to prevent response to TurnOn/TurnOff) and call Begin after
- * its own preparations to start each transition.
- */
 #if !SCR_GENSCRIPTS
 class cScr_TransitionTrap : public virtual cBaseTrap
 {
@@ -65,17 +42,16 @@ protected:
 	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
 
-	virtual bool OnPrepare (bool state) = 0;
+	virtual bool OnPrepare (bool state);
 	void Begin ();
-	virtual bool OnIncrement () = 0;
+	virtual bool OnIncrement ();
 
 	float GetProgress ();
 	float Interpolate (float start, float end);
 	ulong InterpolateColor (ulong start, ulong end);
 
-	virtual int GetIncrementDelta () const { return 50; }
-
 private:
+	static const int INCREMENT_TIME;
 	void Increment ();
 
 	script_handle<tScrTimer> timer;
@@ -170,7 +146,6 @@ protected:
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 
 	void Sync (ulong color, float distance, bool sync_color = true);
-	virtual bool OnPrepare (bool) { return false; } // not really a trap
 	virtual bool OnIncrement ();
 
 private:

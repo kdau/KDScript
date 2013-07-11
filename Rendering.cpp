@@ -27,6 +27,9 @@
 
 /* KDTransitionTrap */
 
+const int
+cScr_TransitionTrap::INCREMENT_TIME = 50;
+
 cScr_TransitionTrap::cScr_TransitionTrap (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cBaseTrap (pszName, iHostObjId),
@@ -59,6 +62,13 @@ cScr_TransitionTrap::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
 	return cBaseTrap::OnTimer (pMsg, mpReply);
 }
 
+bool
+cScr_TransitionTrap::OnPrepare (bool)
+{
+	// trap behavior requires an override of this method
+	return false;
+}
+
 void
 cScr_TransitionTrap::Begin ()
 {
@@ -70,6 +80,14 @@ cScr_TransitionTrap::Begin ()
 
 	time_remaining = GetObjectParamTime (ObjId (), "transition", 0);
 	Increment ();
+}
+
+bool
+cScr_TransitionTrap::OnIncrement ()
+{
+	DebugString ("Error: OnIncrement unimplemented in script inheriting "
+		"from TransitionTrap.");
+	return false;
 }
 
 float
@@ -102,8 +120,8 @@ cScr_TransitionTrap::Increment ()
 	if (OnIncrement () && time_remaining > 0)
 	{
 		time_remaining =
-			std::max (0, time_remaining - GetIncrementDelta ());
-		timer = SetTimedMessage ("Increment", GetIncrementDelta (),
+			std::max (0, time_remaining - INCREMENT_TIME);
+		timer = SetTimedMessage ("Increment", INCREMENT_TIME,
 			kSTM_OneShot, Name ());
 	}
 	else

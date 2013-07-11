@@ -289,8 +289,8 @@ cScr_SubtitledAI::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 	}
 	catch (no_interface&)
 	{
-		DebugString ("The DarkHook service could not be located. "
-			"This AI's speech will not be subtitled.");
+		DebugString ("Warning: The DarkHook service could not be "
+			"located. This AI's speech will not be subtitled.");
 	}
 	return cScr_Subtitled::OnBeginScript (pMsg, mpReply);
 }

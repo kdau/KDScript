@@ -135,7 +135,7 @@ protected:
 	void SetParamString (const char* param, const char* value);
 
 	virtual bool Prepare ();
-	virtual void Redraw () = 0;
+	virtual void Redraw ();
 	bool NeedsRedraw ();
 	void ScheduleRedraw ();
 
@@ -197,6 +197,9 @@ protected:
 	Symbol InterpretSymbol (const char* symbol, bool directional = false);
 
 private:
+	__attribute__((format (printf,2,3)))
+		void _DebugPrintf (const char* format, ...);
+
 	SService<IDarkOverlaySrv> pDOS;
 	object host, handler;
 	int overlay;
@@ -224,8 +227,6 @@ protected:
 
 	bool SubscribeProperty (const char* property);
 	virtual void OnPropertyChanged (const char* property);
-
-	virtual void Redraw ();
 };
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("KDHUDElement","BaseScript",cScr_HUDElement)

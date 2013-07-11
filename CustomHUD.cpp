@@ -22,7 +22,8 @@
 
 #include "CustomHUD.h"
 #include <cmath>
-#include <sec_api/stdlib_s.h>
+#include <cstdarg>
+#include <cstdlib>
 #include <lg/objstd.h>
 #include <darkhook.h>
 #include <ScriptLib.h>
@@ -283,7 +284,7 @@ HUDElement::Initialize ()
 
 	if (!handler)
 	{
-		DebugPrintf ("Warning: could not locate handler object. "
+		_DebugPrintf ("Warning: could not locate handler object. "
 			"This HUD element cannot be drawn.");
 		return false;
 	}
@@ -389,6 +390,12 @@ HUDElement::Prepare ()
 	return true;
 }
 
+void
+HUDElement::Redraw ()
+{
+	_DebugPrintf ("Error: Redraw unimplemented in a HUD element class.");
+}
+
 bool
 HUDElement::NeedsRedraw ()
 {
@@ -416,7 +423,7 @@ HUDElement::CreateOverlay ()
 			(last_position.x, last_position.y, last_size.w,
 			last_size.h, last_opacity, true);
 		if (!IsOverlay ())
-			DebugPrintf ("Warning: could not create HUD overlay.");
+			_DebugPrintf ("Warning: could not create HUD overlay.");
 		return IsOverlay ();
 	}
 	else
@@ -637,7 +644,7 @@ HUDElement::DrawBitmap (int bitmap, CanvasPoint position, CanvasRect clip)
 	CHECK_DRAWING ();
 	if (!IsValidBitmap (bitmap))
 	{
-		DebugPrintf ("Warning: DrawBitmap called for invalid bitmap.");
+		_DebugPrintf ("Warning: DrawBitmap called for invalid bitmap.");
 		return;
 	}
 
@@ -789,7 +796,7 @@ HUDElement::InterpretSymbol (const char* symbol, bool directional)
 	{
 		if (!directional)
 		{
-			DebugPrintf ("Warning: a non-directional HUD element "
+			_DebugPrintf ("Warning: a non-directional HUD element "
 				"cannot have an arrow symbol.");
 			return SYMBOL_NONE;
 		}
@@ -806,9 +813,22 @@ HUDElement::InterpretSymbol (const char* symbol, bool directional)
 		return SYMBOL_SQUARE;
 
 	else if (symbol[0] == '@')
-		DebugPrintf ("Warning: invalid symbol name `%s'.", symbol);
+		_DebugPrintf ("Warning: invalid symbol name `%s'.", symbol);
 
 	return SYMBOL_NONE;
+}
+
+void
+HUDElement::_DebugPrintf (const char* format, ...)
+{
+	va_list va;
+	char message[1000];
+
+	va_start (va, format);
+	_vsnprintf (message, 999, format, va);
+	va_end (va);
+
+	g_pfnMPrintf ("HUDElement [%d]: %s\n", int (host), message);
 }
 
 
@@ -858,18 +878,14 @@ cScr_HUDElement::SubscribeProperty (const char* property)
 	}
 	catch (no_interface&)
 	{
-		DebugString ("The DarkHook service could not be located. "
-			"This custom HUD element may not update properly.");
+		DebugString ("Warning: The DarkHook service could not be "
+			"located. This custom HUD element may work properly.");
 		return false;
 	}
 }
 
 void
 cScr_HUDElement::OnPropertyChanged (const char*)
-{}
-
-void
-cScr_HUDElement::Redraw ()
 {}
 
 
