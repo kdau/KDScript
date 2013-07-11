@@ -1216,8 +1216,8 @@ cScr_StatMeter::MARGIN = 16;
 cScr_StatMeter::cScr_StatMeter (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cScr_HUDElement (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (StatMeter, enabled, iHostObjId),
-	  style (STYLE_PROGRESS), position (POS_NW), orient (ORIENT_HORIZ),
+	  SCRIPT_VAROBJ (StatMeter, enabled, iHostObjId), style (STYLE_PROGRESS),
+	  position (POS_NW), offset (), orient (ORIENT_HORIZ),
 	  symbol (SYMBOL_NONE), bitmaps (), size (), spacing (0),
 	  qvar (), prop_name (), prop_field (), prop_comp (COMP_NONE),
 	  prop_object (iHostObjId), post_sim_fix (false),
@@ -1323,7 +1323,7 @@ cScr_StatMeter::Prepare ()
 
 	// If this script ever becomes an overlay, it won't be able to redraw
 	// every frame. We would need to subscribe to the qvar/property.
-	SetPosition (elem_pos);
+	SetPosition (elem_pos + offset);
 	if (NeedsRedraw ())
 		SetSize (elem_size);
 	else
@@ -1499,6 +1499,9 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 		position = POS_NW;
 	}
 
+	offset.x = GetParamInt ("stat_meter_offset_x", 0);
+	offset.y = GetParamInt ("stat_meter_offset_y", 0);
+
 	cAnsiStr _orient = GetParamString ("stat_meter_orient", NULL);
 	if (!stricmp (_orient, "horiz")) orient = ORIENT_HORIZ;
 	else if (!stricmp (_orient, "vert")) orient = ORIENT_VERT;
@@ -1653,7 +1656,7 @@ cScr_ToolSight::cScr_ToolSight (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cScr_HUDElement (pszName, iHostObjId),
 	  SCRIPT_VAROBJ (ToolSight, enabled, iHostObjId),
-	  symbol (SYMBOL_NONE), bitmap (INVALID_BITMAP), color (0)
+	  symbol (SYMBOL_NONE), bitmap (INVALID_BITMAP), color (0), offset ()
 {}
 
 bool
@@ -1668,8 +1671,8 @@ cScr_ToolSight::Prepare ()
 
 	// calculate center of canvas and position of element
 	CanvasPoint canvas_center (canvas.w / 2, canvas.h / 2),
-		elem_pos (canvas_center.x - elem_size.w / 2,
-			canvas_center.y - elem_size.h / 2);
+		elem_pos (canvas_center.x - elem_size.w / 2 + offset.x,
+			canvas_center.y - elem_size.h / 2 + offset.y);
 
 	SetPosition (elem_pos);
 	if (NeedsRedraw ()) SetSize (elem_size);
@@ -1692,8 +1695,7 @@ cScr_ToolSight::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 {
 	long result = cScr_HUDElement::OnBeginScript (pMsg, mpReply);
 	enabled.Init (false);
-	UpdateImage ();
-	UpdateColor ();
+	OnPropertyChanged ("DesignNote");
 	SubscribeProperty ("DesignNote");
 	return result;
 }
@@ -1716,6 +1718,7 @@ cScr_ToolSight::OnPropertyChanged (const char* property)
 	{
 		UpdateImage ();
 		UpdateColor ();
+		UpdateOffset ();
 	}
 }
 
@@ -1788,6 +1791,18 @@ cScr_ToolSight::UpdateColor ()
 	if (color != _color)
 	{
 		color = _color;
+		ScheduleRedraw ();
+	}
+}
+
+void
+cScr_ToolSight::UpdateOffset ()
+{
+	CanvasPoint _offset (GetParamInt ("tool_sight_offset_x", 0),
+		GetParamInt ("tool_sight_offset_y", 0));
+	if (offset != _offset)
+	{
+		offset = _offset;
 		ScheduleRedraw ();
 	}
 }

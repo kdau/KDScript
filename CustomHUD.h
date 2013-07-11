@@ -330,6 +330,7 @@ private:
 		POS_WEST,
 		POS_NW
 	} position;
+	CanvasPoint offset;
 
 	enum Orient
 	{
@@ -397,6 +398,9 @@ private:
 
 	ulong color;
 	void UpdateColor ();
+
+	CanvasPoint offset;
+	void UpdateOffset ();
 };
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("KDToolSight","KDHUDElement",cScr_ToolSight)
