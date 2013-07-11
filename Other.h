@@ -103,6 +103,36 @@ GEN_FACTORY("KDGetInfo","BaseScript",cScr_GetInfo)
 
 
 #if !SCR_GENSCRIPTS
+class cScr_JunkTool : public virtual cBaseScript
+{
+public:
+	cScr_JunkTool (const char* pszName, int iHostObjId);
+
+protected:
+	virtual long OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnInvDeSelect (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnFrobToolEnd (sFrobMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnSlain (sSlayMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnDestroy (sScrMsg* pMsg, cMultiParm& mpReply);
+
+private:
+	object GetAvatarContainer ();
+
+	void StartJunk (object avatar);
+	void EndJunk (object avatar);
+
+	object CreateFrobbable (object avatar);
+};
+#else // SCR_GENSCRIPTS
+GEN_FACTORY("KDJunkTool","BaseScript",cScr_JunkTool)
+#endif // SCR_GENSCRIPTS
+
+
+
+#if !SCR_GENSCRIPTS
 class cScr_TrapNextMission : public virtual cBaseTrap
 {
 public:
