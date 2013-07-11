@@ -105,11 +105,11 @@ HUDSubtitle::Prepare ()
 	// get host's position in canvas coordinates
 	CanvasPoint host_pos;
 	if (GetHost () == StrToObject ("Player"))
-		host_pos = CanvasPoint (canvas) / 2;
+		host_pos = CanvasPoint (canvas.w / 2, canvas.h / 2);
 	else
 	{
 		host_pos = ObjectCentroidToCanvas (GetHost ());
-		if (host_pos == OFFSCREEN) return false;
+		if (!host_pos) return false;
 	}
 
 	// calculate element position

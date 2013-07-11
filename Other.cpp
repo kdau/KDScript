@@ -631,8 +631,7 @@ cScr_TrapNextMission::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 	pDGS->SetNextMission (next_mission);
 	return S_OK;
 #else
-	DebugPrintf ("Error: the KDTrapNextMission script is not available "
-		"for this game.");
+	DebugPrintf ("Error: this script is not available for this game.");
 	return S_FALSE;
 #endif
 }

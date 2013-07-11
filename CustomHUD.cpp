@@ -31,27 +31,23 @@
 
 
 
-/* CanvasPoint, CanvasSize, CanvasRect */
+/* CanvasPoint */
 
 const CanvasPoint
-ORIGIN = { 0, 0 };
+CanvasPoint::ORIGIN = { 0, 0 };
 
 const CanvasPoint
-OFFSCREEN = { -1, -1 };
-
-const CanvasRect
-NOCLIP = { 0, 0, -1, -1 };
-
-const CanvasRect
-OFFSCREEN_R = { -1, -1, -1, -1 };
+CanvasPoint::OFFSCREEN = { -1, -1 };
 
 CanvasPoint::CanvasPoint (int _x, int _y)
 	: x (_x), y (_y)
 {}
 
-CanvasPoint::CanvasPoint (const CanvasSize& area)
-	: x (area.w), y (area.h)
-{}
+CanvasPoint::operator bool () const
+{
+	// This does not (yet) check whether the point is within the canvas max.
+	return x >= 0 && y >= 0;
+}
 
 bool
 CanvasPoint::operator == (const CanvasPoint& rhs) const
@@ -89,9 +85,19 @@ CanvasPoint::operator / (int rhs) const
 	return CanvasPoint (x / rhs, y / rhs);
 }
 
+
+
+/* CanvasSize */
+
 CanvasSize::CanvasSize (int _w, int _h)
 	: w (_w), h (_h)
 {}
+
+CanvasSize::operator bool () const
+{
+	// An empty size still counts as valid.
+	return w >= 0 && h >= 0;
+}
 
 bool
 CanvasSize::operator == (const CanvasSize& rhs) const
@@ -105,9 +111,26 @@ CanvasSize::operator != (const CanvasSize& rhs) const
 	return w != rhs.w || h != rhs.h;
 }
 
+
+
+/* CanvasRect */
+
+const CanvasRect
+CanvasRect::NOCLIP = { 0, 0, -1, -1 };
+
+const CanvasRect
+CanvasRect::OFFSCREEN = { -1, -1, -1, -1 };
+
 CanvasRect::CanvasRect (int _x, int _y, int _w, int _h)
 	: x (_x), y (_y), w (_w), h (_h)
 {}
+
+CanvasRect::operator bool () const
+{
+	// A rect may legitimately extend off the screen. This does not (yet)
+	// check that at least part of the rect is onscreen.
+	return (*this == NOCLIP) || (w >= 0 && h >= 0);
+}
 
 bool
 CanvasRect::operator == (const CanvasRect& rhs) const
@@ -227,8 +250,8 @@ cScr_CustomHUD::OnUIEnterMode ()
 	}
 
 // if not an overlay, add the element position to the drawing position
-#define OFFSET(position) \
-	(position + (IsOverlay () ? ORIGIN : last_position) + drawing_offset)
+#define OFFSET(position) (position + (IsOverlay () \
+	? CanvasPoint::ORIGIN : last_position) + drawing_offset)
 
 HUDElement::HUDElement (object _host)
 	: pDOS (g_pScriptManager), host (_host), handler (),
@@ -524,7 +547,7 @@ HUDElement::FillArea (CanvasRect area)
 {
 	CHECK_DRAWING ();
 
-	if (area == NOCLIP)
+	if (area == CanvasRect::NOCLIP)
 	{
 		area.x = last_position.x;
 		area.y = last_position.y;
@@ -543,7 +566,7 @@ HUDElement::DrawBox (CanvasRect area)
 {
 	CHECK_DRAWING ();
 
-	if (area == NOCLIP)
+	if (area == CanvasRect::NOCLIP)
 	{
 		area.x = last_position.x;
 		area.y = last_position.y;
@@ -649,13 +672,16 @@ HUDElement::DrawBitmap (int bitmap, CanvasPoint position, CanvasRect clip)
 	}
 
 	position = OFFSET (position);
-	if (clip == NOCLIP)
+	if (clip == CanvasRect::NOCLIP)
 		pDOS->DrawBitmap (bitmap, position.x, position.y);
 	else
 	{
 		CanvasSize bitmap_size = GetBitmapSize (bitmap);
-		if (clip.w == NOCLIP.w) clip.w = bitmap_size.w - clip.x;
-		if (clip.h == NOCLIP.h) clip.h = bitmap_size.h - clip.y;
+		if (clip.w == CanvasRect::NOCLIP.w)
+			clip.w = bitmap_size.w - clip.x;
+		if (clip.h == CanvasRect::NOCLIP.h)
+			clip.h = bitmap_size.h - clip.y;
+
 		pDOS->DrawSubBitmap (bitmap, position.x, position.y,
 			clip.x, clip.y, clip.w, clip.h);
 	}
@@ -672,18 +698,19 @@ CanvasPoint
 HUDElement::LocationToCanvas (const cScrVec& location)
 {
 	CanvasPoint result;
-	CHECK_DRAWING (OFFSCREEN);
+	CHECK_DRAWING (CanvasPoint::OFFSCREEN);
 	bool onscreen = pDOS->WorldToScreen (location, result.x, result.y);
-	return onscreen ? result : OFFSCREEN;
+	return onscreen ? result : CanvasPoint::OFFSCREEN;
 }
 
 CanvasRect
 HUDElement::ObjectToCanvas (object target)
 {
-	CHECK_DRAWING (OFFSCREEN_R);
+	CHECK_DRAWING (CanvasRect::OFFSCREEN);
 	int x1, y1, x2, y2;
 	bool onscreen = pDOS->GetObjectScreenBounds (target, x1, y1, x2, y2);
-	return onscreen ? CanvasRect (x1, y1, x2 - x1, y2 - y1) : OFFSCREEN_R;
+	return onscreen ? CanvasRect (x1, y1, x2 - x1, y2 - y1)
+		: CanvasRect::OFFSCREEN;
 }
 
 CanvasPoint
@@ -692,10 +719,10 @@ HUDElement::ObjectCentroidToCanvas (object target)
 	SService<IObjectSrv> pOS (g_pScriptManager);
 	cScrVec centroid; pOS->Position (centroid, target);
 	CanvasPoint result = LocationToCanvas (centroid);
-	if (result == OFFSCREEN) // centroid is out, try bounds
+	if (!result) // centroid is out, try bounds
 	{
 		CanvasRect bounds = ObjectToCanvas (target);
-		if (bounds != OFFSCREEN_R) // use center of bounds instead
+		if (bounds) // use center of bounds instead
 		{
 			result.x = bounds.x + bounds.w / 2;
 			result.y = bounds.y + bounds.h / 2;
@@ -782,7 +809,7 @@ HUDElement::GetSymbolCenter (Symbol symbol, CanvasSize size,
 		return CanvasPoint (size.w / 2, size.h / 2);
 	case SYMBOL_NONE:
 	default:
-		return OFFSCREEN;
+		return CanvasPoint::OFFSCREEN;
 	}
 }
 
@@ -935,7 +962,7 @@ cScr_QuestArrow::Prepare ()
 
 	// get object's position in canvas coordinates
 	CanvasPoint obj_pos = ObjectCentroidToCanvas (ObjId ());
-	if (obj_pos == OFFSCREEN) return false;
+	if (!obj_pos) return false;
 
 	// choose alignment of image and text
 	symbol_dirn = (obj_pos.x > canvas.w / 2)

@@ -41,22 +41,31 @@ struct CanvasSize;
 struct CanvasPoint
 {
 	int x, y;
+
 	CanvasPoint (int x = 0, int y = 0);
-	explicit CanvasPoint (const CanvasSize& area);
+
+	operator bool () const;
+
 	bool operator == (const CanvasPoint& rhs) const;
 	bool operator != (const CanvasPoint& rhs) const;
+
 	CanvasPoint operator + (const CanvasPoint& rhs) const;
 	CanvasPoint operator - (const CanvasPoint& rhs) const;
 	CanvasPoint operator * (int rhs) const;
 	CanvasPoint operator / (int rhs) const;
+
+	static const CanvasPoint ORIGIN;
+	static const CanvasPoint OFFSCREEN;
 };
-extern const CanvasPoint ORIGIN;
-extern const CanvasPoint OFFSCREEN;
 
 struct CanvasSize
 {
 	int w, h;
+
 	CanvasSize (int w = 0, int h = 0);
+
+	operator bool () const;
+
 	bool operator == (const CanvasSize& rhs) const;
 	bool operator != (const CanvasSize& rhs) const;
 };
@@ -64,14 +73,20 @@ struct CanvasSize
 struct CanvasRect
 {
 	int x, y, w, h;
+
 	CanvasRect (int x = 0, int y = 0, int w = 0, int h = 0);
+
+	operator bool () const;
+
 	bool operator == (const CanvasRect& rhs) const;
 	bool operator != (const CanvasRect& rhs) const;
+
 	CanvasRect operator + (const CanvasPoint& rhs) const;
 	CanvasRect operator - (const CanvasPoint& rhs) const;
+
+	static const CanvasRect NOCLIP;
+	static const CanvasRect OFFSCREEN;
 };
-extern const CanvasRect NOCLIP;
-extern const CanvasRect OFFSCREEN_R;
 
 #endif // !SCR_GENSCRIPTS
 
@@ -151,15 +166,16 @@ protected:
 	void SetScale (int scale);
 
 	void SetDrawingColor (ulong color);
-	void SetDrawingOffset (CanvasPoint offset = ORIGIN);
+	void SetDrawingOffset (CanvasPoint offset = CanvasPoint::ORIGIN);
 
 	void FillBackground (int color, int opacity);
-	void FillArea (CanvasRect area = NOCLIP);
-	void DrawBox (CanvasRect area = NOCLIP);
+	void FillArea (CanvasRect area = CanvasRect::NOCLIP);
+	void DrawBox (CanvasRect area = CanvasRect::NOCLIP);
 	void DrawLine (CanvasPoint from, CanvasPoint to);
 
 	CanvasSize GetTextSize (const char* text);
-	void DrawText (const char* text, CanvasPoint position = ORIGIN,
+	void DrawText (const char* text,
+		CanvasPoint position = CanvasPoint::ORIGIN,
 		bool shadowed = false);
 
 	enum { INVALID_BITMAP = -1 };
@@ -167,8 +183,8 @@ protected:
 	int LoadBitmap (const char* path);
 	void LoadBitmaps (const char* path, std::vector<int>& bitmaps);
 	CanvasSize GetBitmapSize (int bitmap);
-	void DrawBitmap (int bitmap, CanvasPoint position = ORIGIN,
-		CanvasRect clip = NOCLIP);
+	void DrawBitmap (int bitmap, CanvasPoint position = CanvasPoint::ORIGIN,
+		CanvasRect clip = CanvasRect::NOCLIP);
 	void FreeBitmap (int bitmap);
 
 	CanvasPoint LocationToCanvas (const cScrVec& location);
@@ -190,7 +206,8 @@ protected:
 		DIRN_RIGHT,
 	};
 	void DrawSymbol (Symbol symbol, CanvasSize size,
-		CanvasPoint position = ORIGIN, Direction direction = DIRN_NONE,
+		CanvasPoint position = CanvasPoint::ORIGIN,
+		Direction direction = DIRN_NONE,
 		bool shadowed = false);
 	CanvasPoint GetSymbolCenter (Symbol symbol, CanvasSize size,
 		Direction direction = DIRN_NONE);

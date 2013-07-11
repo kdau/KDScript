@@ -151,7 +151,7 @@ cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 
 	if (!CheckEngineVersion (1, 20))
 	{
-		DebugPrintf ("KDTrapEnvMap cannot be used with this version of "
+		DebugPrintf ("This script cannot be used with this version of "
 			"the Dark Engine. Upgrade to version 1.20 or higher.");
 		return S_FALSE;
 	}
@@ -242,7 +242,7 @@ cScr_TrapFog::OnPrepare (bool state)
 	end_color = (_end_color > 0) ? _end_color : start_color;
 	end_dist = (_end_dist >= 0.0) ? _end_dist : start_dist;
 
-	// notify KDSyncGlobalFog if present
+	// notify SyncGlobalFog if present
 	object player = StrToObject ("Player");
 	if (player)
 		SimpleSend (ObjId (), player, "FogZoneChanging", (int) zone,
@@ -376,12 +376,13 @@ void
 DarkWeather::GetFromMission ()
 {
 	SService<IEngineSrv> pES (g_pScriptManager);
-	int _type; cScrStr _texture;
-	pES->GetWeather (_type, precip_freq, precip_speed, vis_dist,
+	int _precip_type;
+	const char* _texture = NULL;
+	pES->GetWeather (_precip_type, precip_freq, precip_speed, vis_dist,
 		rend_radius, alpha, brightness, snow_jitter, rain_length,
 		splash_freq, splash_radius, splash_height, splash_duration,
 		_texture, wind);
-	precip_type = (PrecipType) _type;
+	precip_type = (PrecipType) _precip_type;
 	texture = _texture;
 }
 
