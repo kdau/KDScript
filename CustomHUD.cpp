@@ -43,7 +43,8 @@ CanvasPoint::CanvasPoint (int _x, int _y)
 	: x (_x), y (_y)
 {}
 
-CanvasPoint::operator bool () const
+bool
+CanvasPoint::Valid () const
 {
 	// This does not (yet) check whether the point is within the canvas max.
 	return x >= 0 && y >= 0;
@@ -93,7 +94,8 @@ CanvasSize::CanvasSize (int _w, int _h)
 	: w (_w), h (_h)
 {}
 
-CanvasSize::operator bool () const
+bool
+CanvasSize::Valid () const
 {
 	// An empty size still counts as valid.
 	return w >= 0 && h >= 0;
@@ -125,7 +127,8 @@ CanvasRect::CanvasRect (int _x, int _y, int _w, int _h)
 	: x (_x), y (_y), w (_w), h (_h)
 {}
 
-CanvasRect::operator bool () const
+bool
+CanvasRect::Valid () const
 {
 	// A rect may legitimately extend off the screen. This does not (yet)
 	// check that at least part of the rect is onscreen.
@@ -158,73 +161,170 @@ CanvasRect::operator - (const CanvasPoint& rhs) const
 
 
 
-/* KDCustomHUD */
+/* HUDBitmap */
 
-cScr_CustomHUD::cScr_CustomHUD (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId)
-{}
+const std::size_t
+HUDBitmap::STATIC = 0;
 
-long
-cScr_CustomHUD::OnBeginScript (sScrMsg*, cMultiParm&)
+const int
+HUDBitmap::INVALID_HANDLE = -1;
+
+HUDBitmap::HUDBitmap (const char* path, bool animation)
 {
-	if (!!stricmp (ObjectToStr (ObjId ()), "CustomHUD"))
-		DebugString ("Warning: this script should be placed on an object named `CustomHUD'.");
+	if (!path) throw std::invalid_argument ("no path specified");
 
+	char dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT], file[_MAX_FNAME];
+	_splitpath (path, NULL, dir, fname, ext);
 	SService<IDarkOverlaySrv> pDOS (g_pScriptManager);
-	pDOS->SetHandler (this);
 
-	return S_OK;
-}
+	for (std::size_t frame = 0; frame < (animation ? 128 : 1); ++frame)
+	{
+		if (frame == STATIC)
+			snprintf (file, _MAX_FNAME, "%s%s", fname, ext);
+		else
+			snprintf (file, _MAX_FNAME, "%s_%d%s",
+				fname, frame, ext);
 
-long
-cScr_CustomHUD::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	if (!stricmp (pMsg->message, "RegisterElement") &&
-	    pMsg->data.type == kMT_Int)
-	{
-		elements.push_back
-			(reinterpret_cast<cScr_HUDElement*> (long (pMsg->data)));
-		return S_OK;
-	}
-	else
-	if (!stricmp (pMsg->message, "UnregisterElement") &&
-	    pMsg->data.type == kMT_Int)
-	{
-		elements.remove
-			(reinterpret_cast<cScr_HUDElement*> (long (pMsg->data)));
-		return S_OK;
+		int handle = pDOS->GetBitmap (file, dir);
+		if (handle != INVALID_HANDLE)
+			frames.push_back (handle);
+		else
+			break;
 	}
 
-	return cBaseScript::OnMessage (pMsg, mpReply);
+	if (frames.empty ())
+		throw std::runtime_error ("bitmap file invalid or not found");
 }
 
-long
-cScr_CustomHUD::OnEndScript (sScrMsg*, cMultiParm&)
+HUDBitmap::~HUDBitmap ()
 {
 	SService<IDarkOverlaySrv> pDOS (g_pScriptManager);
-	pDOS->SetHandler (NULL);
-	return S_OK;
+	for (auto frame : frames)
+		pDOS->FlushBitmap (frame);
+}
+
+CanvasSize
+HUDBitmap::GetSize () const
+{
+	CanvasSize result;
+	SService<IDarkOverlaySrv> pDOS (g_pScriptManager);
+	pDOS->GetBitmapSize (frames.front (), result.w, result.h);
+	return result;
+}
+
+std::size_t
+HUDBitmap::GetFrames () const
+{
+	return frames.size ();
 }
 
 void
-cScr_CustomHUD::DrawHUD ()
+HUDBitmap::Draw (std::size_t frame, CanvasPoint position, CanvasRect clip)
+{
+	SService<IDarkOverlaySrv> pDOS (g_pScriptManager);
+	if (clip == CanvasRect::NOCLIP)
+		pDOS->DrawBitmap (frames.at (frame), position.x, position.y);
+	else
+	{
+		CanvasSize size = GetSize ();
+		if (clip.w == CanvasRect::NOCLIP.w) clip.w = size.w - clip.x;
+		if (clip.h == CanvasRect::NOCLIP.h) clip.h = size.h - clip.y;
+		pDOS->DrawSubBitmap (frames.at (frame), position.x, position.y,
+			clip.x, clip.y, clip.w, clip.h);
+	}
+}
+
+
+
+/* CustomHUD */
+
+CustomHUD::CustomHUD ()
+{
+	SService<IDarkOverlaySrv> pDOS (g_pScriptManager);
+	pDOS->SetHandler (this);
+}
+
+CustomHUD::~CustomHUD ()
+{
+	SService<IDarkOverlaySrv> pDOS (g_pScriptManager);
+	pDOS->SetHandler (NULL);
+}
+
+CustomHUDPtr
+CustomHUD::Get ()
+{
+	static std::weak_ptr<CustomHUD> single;
+	CustomHUDPtr result = single.lock ();
+	if (!result)
+	{
+		result = CustomHUDPtr (new CustomHUD ());
+		single = result;
+	}
+	return result;
+}
+
+void
+CustomHUD::DrawHUD ()
 {
 	for (auto element : elements)
 		element->DrawStage1 ();
 }
 
 void
-cScr_CustomHUD::DrawTOverlay ()
+CustomHUD::DrawTOverlay ()
 {
 	for (auto element : elements)
 		element->DrawStage2 ();
 }
 
 void
-cScr_CustomHUD::OnUIEnterMode ()
+CustomHUD::OnUIEnterMode ()
 {
 	for (auto element : elements)
 		element->EnterGameMode ();
+}
+
+void
+CustomHUD::RegisterElement (HUDElement& element)
+{
+	elements.push_back (&element);
+}
+
+void
+CustomHUD::UnregisterElement (HUDElement& element)
+{
+	elements.remove (&element);
+}
+
+HUDBitmapPtr
+CustomHUD::LoadBitmap (const char* path, bool animation)
+{
+	HUDBitmapPtr result;
+
+	// try an existing bitmap
+	HUDBitmaps::iterator existing = bitmaps.find (path);
+	if (existing != bitmaps.end ())
+	{
+		result = existing->second.lock ();
+		if (result)
+			return result;
+		else
+			bitmaps.erase (existing);
+	}
+
+	try
+	{
+		// load a new one
+		result = HUDBitmapPtr (new HUDBitmap (path, animation));
+		bitmaps.insert (std::make_pair (path, result));
+	}
+	catch (std::exception& e)
+	{
+		::DebugPrintf ("Warning: Could not load bitmap at `%s': %s.",
+			path, e.what ());
+	}
+
+	return result;
 }
 
 
@@ -249,16 +349,16 @@ cScr_CustomHUD::OnUIEnterMode ()
 		return retval; \
 	}
 
-// if not an overlay, add the element position to the drawing position
-#define OFFSET(position) (position + (IsOverlay () \
-	? CanvasPoint::ORIGIN : last_position) + drawing_offset)
+// add the element position (if not overlay) and offset to the point
+#define OFFSET(point) (point + \
+	(IsOverlay () ? CanvasPoint::ORIGIN : position) + drawing_offset)
 
 HUDElement::HUDElement (object _host)
-	: pDOS (g_pScriptManager), host (_host), handler (),
-	  overlay (INVALID_OVERLAY),
+	: pDOS (g_pScriptManager), host (_host),
 	  draw (true), redraw (true), drawing (false),
-	  last_position (), last_size (1, 1), last_scale (1),
-	  last_opacity (255), last_color (0xffffff), drawing_offset ()
+	  overlay (INVALID_OVERLAY), opacity (255),
+	  position (), size (1, 1), scale (1),
+	  drawing_color (0xffffff), drawing_offset ()
 {}
 
 HUDElement::~HUDElement ()
@@ -301,34 +401,24 @@ HUDElement::EnterGameMode ()
 bool
 HUDElement::Initialize ()
 {
-	// locate the handler object
-	ScriptParamsIter handler_link (host, "CustomHUD");
-	handler = handler_link ? handler_link : StrToObject ("CustomHUD");
-
-	if (!handler)
-	{
-		_DebugPrintf ("Warning: could not locate handler object. "
-			"This HUD element cannot be drawn.");
-		return false;
-	}
-
-	// register with handler
-	SimpleSend (host, handler, "RegisterElement", long (this));
+	// register with the handler object
+	hud = CustomHUD::Get ();
+	hud->RegisterElement (*this);
 	return true;
 }
 
 void
 HUDElement::Deinitialize ()
 {
-	// unregister from handler
-	if (handler)
-	{
-		SimpleSend (host, handler, "UnregisterElement", long (this));
-		handler = None;
-	}
-
 	// destroy any overlay
 	DestroyOverlay ();
+
+	// unregister with the handler object
+	if (hud)
+	{
+		hud->UnregisterElement (*this);
+		hud.reset ();
+	}
 }
 
 object
@@ -340,42 +430,43 @@ HUDElement::GetHost ()
 bool
 HUDElement::GetParamBool (const char* param, bool default_value)
 {
-	return GetObjectParamBool (host, param,
-		GetObjectParamBool (handler, param, default_value));
+	return GetObjectParamBool (host, param, GetObjectParamBool
+		(StrToObject ("CustomHUD"), param, default_value));
 }
 
 ulong
 HUDElement::GetParamColor (const char* param, ulong default_value)
 {
-	return GetObjectParamColor (host, param,
-		GetObjectParamColor (handler, param, default_value));
+	return GetObjectParamColor (host, param, GetObjectParamColor
+		(StrToObject ("CustomHUD"), param, default_value));
 }
 
 float
 HUDElement::GetParamFloat (const char* param, float default_value)
 {
-	return GetObjectParamFloat (host, param,
-		GetObjectParamFloat (handler, param, default_value));
+	return GetObjectParamFloat (host, param, GetObjectParamFloat
+		(StrToObject ("CustomHUD"), param, default_value));
 }
 
 int
 HUDElement::GetParamInt (const char* param, int default_value)
 {
-	return GetObjectParamInt (host, param,
-		GetObjectParamInt (handler, param, default_value));
+	return GetObjectParamInt (host, param, GetObjectParamInt
+		(StrToObject ("CustomHUD"), param, default_value));
 }
 
 object
 HUDElement::GetParamObject (const char* param, object default_value)
 {
-	return GetObjectParamObject (host, param,
-		GetObjectParamObject (handler, param, default_value));
+	return GetObjectParamObject (host, param, GetObjectParamObject
+		(StrToObject ("CustomHUD"), param, default_value));
 }
 
 cAnsiStr
 HUDElement::GetParamString (const char* param, const char* default_value)
 {
-	char* handler_val = GetObjectParamString (handler, param, default_value);
+	char* handler_val = GetObjectParamString
+		(StrToObject ("CustomHUD"), param, default_value);
 	char* host_val = GetObjectParamString (host, param, handler_val);
 	cAnsiStr result;
 	if (host_val) { result = host_val; g_pMalloc->Free (host_val); }
@@ -440,17 +531,19 @@ HUDElement::IsOverlay ()
 bool
 HUDElement::CreateOverlay ()
 {
-	if (!IsOverlay ())
-	{
-		overlay = pDOS->CreateTOverlayItem
-			(last_position.x, last_position.y, last_size.w,
-			last_size.h, last_opacity, true);
-		if (!IsOverlay ())
-			_DebugPrintf ("Warning: could not create HUD overlay.");
-		return IsOverlay ();
-	}
-	else
+	if (IsOverlay ()) return true;
+
+	overlay = pDOS->CreateTOverlayItem (position.x, position.y,
+		size.w, size.h, opacity, true);
+	ScheduleRedraw ();
+
+	if (IsOverlay ())
 		return true;
+	else
+	{
+		_DebugPrintf ("Error: Could not create HUD overlay.");
+		return false;
+	}
 }
 
 void
@@ -460,13 +553,14 @@ HUDElement::DestroyOverlay ()
 	{
 		pDOS->DestroyTOverlayItem (overlay);
 		overlay = INVALID_OVERLAY;
+		ScheduleRedraw ();
 	}
 }
 
 void
-HUDElement::SetOpacity (int opacity)
+HUDElement::SetOpacity (int _opacity)
 {
-	last_opacity = opacity;
+	opacity = _opacity;
 	CHECK_OVERLAY ();
 	pDOS->UpdateTOverlayAlpha (overlay, opacity);
 }
@@ -474,57 +568,66 @@ HUDElement::SetOpacity (int opacity)
 CanvasSize
 HUDElement::GetCanvasSize ()
 {
-	int width = 0, height = 0;
+	CanvasSize result;
 	SService<IEngineSrv> pES (g_pScriptManager);
-	pES->GetCanvasSize (width, height);
-	return CanvasSize (width, height);
+	pES->GetCanvasSize (result.w, result.h);
+	return result;
 }
 
 void
-HUDElement::SetPosition (CanvasPoint position)
+HUDElement::SetPosition (CanvasPoint _position)
 {
-	last_position = position;
+	if (position == _position) return;
+	position = _position;
 	if (IsOverlay ())
 		pDOS->UpdateTOverlayPosition (overlay, position.x, position.y);
-	// For non-overlay elements, last_position will be used when drawing.
+	else
+		ScheduleRedraw ();
 }
 
 CanvasSize
 HUDElement::GetSize ()
 {
-	return last_size;
+	return size;
 }
 
 void
-HUDElement::SetSize (CanvasSize size)
+HUDElement::SetSize (CanvasSize _size)
 {
-	last_size = size;
+	if (size == _size) return;
+	size = _size;
+
+	// This is not intended behavior. Set size before creating overlay.
 	if (IsOverlay ())
 	{
-		// This is not intended behavior and should be avoided.
-		DestroyOverlay ();
+		DestroyOverlay (); // destroy overlay at old size
 		CreateOverlay (); // get a new one at the new size
-		if (last_scale != 1) SetScale (last_scale); // restore scale
+		if (scale != 1) // restore scale if needed
+			pDOS->UpdateTOverlaySize (overlay,
+				size.w * scale, size.h * scale);
 		ScheduleRedraw ();
 	}
+
 	// For non-overlay elements, size is ignored.
 }
 
 void
-HUDElement::SetScale (int scale)
+HUDElement::SetScale (int _scale)
 {
-	last_scale = scale;
+	if (scale == _scale) return;
+	scale = _scale;
 	CHECK_OVERLAY ();
-	pDOS->UpdateTOverlaySize (overlay,
-		last_size.w * scale, last_size.h * scale);
+	pDOS->UpdateTOverlaySize (overlay, size.w * scale, size.h * scale);
 }
 
 void
 HUDElement::SetDrawingColor (ulong color)
 {
-	last_color = color;
+	// don't check for equality; this method may be used to restore
+	drawing_color = color;
 	CHECK_DRAWING ();
-	pDOS->SetTextColor (getred (color), getgreen (color), getblue (color));
+	pDOS->SetTextColor (getred (drawing_color), getgreen (drawing_color),
+		getblue (drawing_color));
 }
 
 void
@@ -535,11 +638,11 @@ HUDElement::SetDrawingOffset (CanvasPoint offset)
 }
 
 void
-HUDElement::FillBackground (int color, int opacity)
+HUDElement::FillBackground (int color, int _opacity)
 {
 	CHECK_OVERLAY ();
 	CHECK_DRAWING ();
-	pDOS->FillTOverlay (color, opacity);
+	pDOS->FillTOverlay (color, _opacity);
 }
 
 void
@@ -549,10 +652,10 @@ HUDElement::FillArea (CanvasRect area)
 
 	if (area == CanvasRect::NOCLIP)
 	{
-		area.x = last_position.x;
-		area.y = last_position.y;
-		area.w = last_size.w;
-		area.h = last_size.h;
+		area.x = position.x;
+		area.y = position.y;
+		area.w = size.w;
+		area.h = size.h;
 	}
 	else
 		area = OFFSET (area);
@@ -568,10 +671,10 @@ HUDElement::DrawBox (CanvasRect area)
 
 	if (area == CanvasRect::NOCLIP)
 	{
-		area.x = last_position.x;
-		area.y = last_position.y;
-		area.w = last_size.w;
-		area.h = last_size.h;
+		area.x = position.x;
+		area.y = position.y;
+		area.w = size.w;
+		area.h = size.h;
 	}
 	else
 		area = OFFSET (area);
@@ -603,95 +706,34 @@ HUDElement::GetTextSize (const char* text)
 }
 
 void
-HUDElement::DrawText (const char* text, CanvasPoint position, bool shadowed)
+HUDElement::DrawText (const char* text, CanvasPoint _position, bool shadowed)
 {
 	CHECK_DRAWING ();
-	position = OFFSET (position);
+	_position = OFFSET (_position);
 	if (shadowed)
 	{
 		pDOS->SetTextColor (0, 0, 0);
-		pDOS->DrawString (text, position.x + 1, position.y + 1);
-		SetDrawingColor (last_color);
+		pDOS->DrawString (text, _position.x + 1, _position.y + 1);
+		SetDrawingColor (drawing_color);
 	}
-	pDOS->DrawString (text, position.x, position.y);
+	pDOS->DrawString (text, _position.x, _position.y);
 }
 
-int
-HUDElement::LoadBitmap (const char* path)
+HUDBitmapPtr
+HUDElement::LoadBitmap (const char* path, bool animation)
 {
-	char dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT], file[_MAX_FNAME];
-	_splitpath (path, NULL, dir, fname, ext);
-	snprintf (file, _MAX_FNAME, "%s%s", fname, ext);
-	return pDOS->GetBitmap (file, dir);
+	return hud ? hud->LoadBitmap (path, animation) : HUDBitmapPtr ();
 }
 
 void
-HUDElement::LoadBitmaps (const char* path, std::vector<int>& bitmaps)
-{
-	char dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT], file[_MAX_FNAME];
-	_splitpath (path, NULL, dir, fname, ext);
-
-	for (int frame = 0; frame < 128; ++frame)
-	{
-		if (frame == 0)
-			snprintf (file, _MAX_FNAME, "%s%s", fname, ext);
-		else
-			snprintf (file, _MAX_FNAME, "%s_%d%s", fname, frame, ext);
-
-		int bitmap = pDOS->GetBitmap (file, dir);
-		if (IsValidBitmap (bitmap))
-			bitmaps.push_back (bitmap);
-		else
-			break;
-	}
-}
-
-bool
-HUDElement::IsValidBitmap (int bitmap)
-{
-	return bitmap > INVALID_BITMAP;
-}
-
-CanvasSize
-HUDElement::GetBitmapSize (int bitmap)
-{
-	CanvasSize result;
-	if (IsValidBitmap (bitmap))
-		pDOS->GetBitmapSize (bitmap, result.w, result.h);
-	return result;
-}
-
-void
-HUDElement::DrawBitmap (int bitmap, CanvasPoint position, CanvasRect clip)
+HUDElement::DrawBitmap (HUDBitmapPtr& bitmap, std::size_t frame,
+	CanvasPoint _position, CanvasRect clip)
 {
 	CHECK_DRAWING ();
-	if (!IsValidBitmap (bitmap))
-	{
-		_DebugPrintf ("Warning: DrawBitmap called for invalid bitmap.");
-		return;
-	}
-
-	position = OFFSET (position);
-	if (clip == CanvasRect::NOCLIP)
-		pDOS->DrawBitmap (bitmap, position.x, position.y);
+	if (bitmap)
+		bitmap->Draw (frame, OFFSET (_position), clip);
 	else
-	{
-		CanvasSize bitmap_size = GetBitmapSize (bitmap);
-		if (clip.w == CanvasRect::NOCLIP.w)
-			clip.w = bitmap_size.w - clip.x;
-		if (clip.h == CanvasRect::NOCLIP.h)
-			clip.h = bitmap_size.h - clip.y;
-
-		pDOS->DrawSubBitmap (bitmap, position.x, position.y,
-			clip.x, clip.y, clip.w, clip.h);
-	}
-}
-
-void
-HUDElement::FreeBitmap (int bitmap)
-{
-	if (IsValidBitmap (bitmap))
-		pDOS->FlushBitmap (bitmap);
+		_DebugPrintf ("Error: DrawBitmap called for invalid bitmap.");
 }
 
 CanvasPoint
@@ -719,10 +761,10 @@ HUDElement::ObjectCentroidToCanvas (object target)
 	SService<IObjectSrv> pOS (g_pScriptManager);
 	cScrVec centroid; pOS->Position (centroid, target);
 	CanvasPoint result = LocationToCanvas (centroid);
-	if (!result) // centroid is out, try bounds
+	if (!result.Valid ()) // centroid is out, try bounds
 	{
 		CanvasRect bounds = ObjectToCanvas (target);
-		if (bounds) // use center of bounds instead
+		if (bounds.Valid ()) // use center of bounds instead
 		{
 			result.x = bounds.x + bounds.w / 2;
 			result.y = bounds.y + bounds.h / 2;
@@ -732,19 +774,19 @@ HUDElement::ObjectCentroidToCanvas (object target)
 }
 
 void
-HUDElement::DrawSymbol (Symbol symbol, CanvasSize size,
-	CanvasPoint position, Direction direction, bool shadowed)
+HUDElement::DrawSymbol (Symbol symbol, CanvasSize _size,
+	CanvasPoint _position, Direction direction, bool shadowed)
 {
 	if (shadowed)
 	{
 		pDOS->SetTextColor (0, 0, 0);
-		CanvasPoint shadow_pos (position.x + 1, position.y + 1);
-		DrawSymbol (symbol, size, shadow_pos, direction, false);
-		SetDrawingColor (last_color);
+		CanvasPoint shadow_pos (_position.x + 1, _position.y + 1);
+		DrawSymbol (symbol, _size, shadow_pos, direction, false);
+		SetDrawingColor (drawing_color);
 	}
 
-	CanvasPoint xqtr (size.w / 4, 0), yqtr (0, size.h / 4);
-	drawing_offset = drawing_offset + position;
+	CanvasPoint xqtr (_size.w / 4, 0), yqtr (0, _size.h / 4);
+	drawing_offset = drawing_offset + _position;
 
 	switch (symbol)
 	{
@@ -776,18 +818,18 @@ HUDElement::DrawSymbol (Symbol symbol, CanvasSize size,
 		DrawLine (yqtr*2, xqtr*4 + yqtr*2);
 		break;
 	case SYMBOL_SQUARE:
-		FillArea (CanvasRect (0, 0, size.w, size.h));
+		FillArea (CanvasRect (0, 0, _size.w, _size.h));
 		break;
 	case SYMBOL_NONE:
 	default:
 		break;
 	}
 
-	drawing_offset = drawing_offset - position;
+	drawing_offset = drawing_offset - _position;
 }
 
 CanvasPoint
-HUDElement::GetSymbolCenter (Symbol symbol, CanvasSize size,
+HUDElement::GetSymbolCenter (Symbol symbol, CanvasSize _size,
 	Direction direction)
 {
 	switch (symbol)
@@ -796,9 +838,9 @@ HUDElement::GetSymbolCenter (Symbol symbol, CanvasSize size,
 		switch (direction)
 		{
 		case DIRN_LEFT:
-			return CanvasPoint (0, size.h / 2);
+			return CanvasPoint (0, _size.h / 2);
 		case DIRN_RIGHT:
-			return CanvasPoint (size.w, size.h / 2);
+			return CanvasPoint (_size.w, _size.h / 2);
 		case DIRN_NONE:
 		default:
 			break; // fall through to below (= center)
@@ -806,7 +848,7 @@ HUDElement::GetSymbolCenter (Symbol symbol, CanvasSize size,
 	case SYMBOL_CROSSHAIRS:
 	case SYMBOL_RETICULE:
 	case SYMBOL_SQUARE:
-		return CanvasPoint (size.w / 2, size.h / 2);
+		return CanvasPoint (_size.w / 2, _size.h / 2);
 	case SYMBOL_NONE:
 	default:
 		return CanvasPoint::OFFSCREEN;
@@ -823,7 +865,7 @@ HUDElement::InterpretSymbol (const char* symbol, bool directional)
 	{
 		if (!directional)
 		{
-			_DebugPrintf ("Warning: a non-directional HUD element "
+			_DebugPrintf ("Warning: A non-directional HUD element "
 				"cannot have an arrow symbol.");
 			return SYMBOL_NONE;
 		}
@@ -840,7 +882,8 @@ HUDElement::InterpretSymbol (const char* symbol, bool directional)
 		return SYMBOL_SQUARE;
 
 	else if (symbol[0] == '@')
-		_DebugPrintf ("Warning: invalid symbol name `%s'.", symbol);
+		_DebugPrintf ("Warning: `%s' is not a valid symbol name.",
+			symbol);
 
 	return SYMBOL_NONE;
 }
@@ -931,12 +974,9 @@ cScr_QuestArrow::cScr_QuestArrow (const char* pszName, int iHostObjId)
 	  SCRIPT_VAROBJ (QuestArrow, enabled, iHostObjId),
 	  obscured (false), objective (OBJECTIVE_NONE),
 	  symbol (SYMBOL_NONE), symbol_dirn (DIRN_NONE),
-	  bitmap (INVALID_BITMAP), image_pos (), text (), text_pos (),
+	  bitmap (), image_pos (), text (), text_pos (),
 	  color (0), shadow (true)
 {}
-
-// No override of EnterGameMode. If the canvas size did change and the text
-// needs to be moved relative to the image, the next Prepare call will do it.
 
 bool
 cScr_QuestArrow::Prepare ()
@@ -953,8 +993,7 @@ cScr_QuestArrow::Prepare ()
 
 	// get canvas, image, and text size and calculate element size
 	CanvasSize canvas = GetCanvasSize (),
-		image_size = IsValidBitmap (bitmap)
-			? GetBitmapSize (bitmap) : SYMBOL_SIZE,
+		image_size = bitmap ? bitmap->GetSize () : SYMBOL_SIZE,
 		text_size = GetTextSize (text),
 		elem_size;
 	elem_size.w = image_size.w + PADDING + text_size.w;
@@ -962,7 +1001,7 @@ cScr_QuestArrow::Prepare ()
 
 	// get object's position in canvas coordinates
 	CanvasPoint obj_pos = ObjectCentroidToCanvas (ObjId ());
-	if (!obj_pos) return false;
+	if (!obj_pos.Valid ()) return false;
 
 	// choose alignment of image and text
 	symbol_dirn = (obj_pos.x > canvas.w / 2)
@@ -971,8 +1010,7 @@ cScr_QuestArrow::Prepare ()
 
 	// calculate absolute position of image
 	CanvasPoint image_center, image_apos;
-	image_center = IsValidBitmap (bitmap)
-		? CanvasPoint (image_size.w / 2, image_size.h / 2)
+	image_center = bitmap ? CanvasPoint (image_size.w / 2, image_size.h / 2)
 		: GetSymbolCenter (symbol, SYMBOL_SIZE, symbol_dirn);
 	image_apos.x = obj_pos.x - image_center.x;
 	image_apos.y = obj_pos.y - image_center.y;
@@ -1005,8 +1043,7 @@ cScr_QuestArrow::Prepare ()
 	}
 
 	SetPosition (elem_pos);
-	if (NeedsRedraw ()) SetSize (elem_size);
-
+	SetSize (elem_size);
 	return true;
 }
 
@@ -1015,8 +1052,8 @@ cScr_QuestArrow::Redraw ()
 {
 	SetDrawingColor (color);
 
-	if (IsValidBitmap (bitmap))
-		DrawBitmap (bitmap, image_pos);
+	if (bitmap)
+		DrawBitmap (bitmap, HUDBitmap::STATIC, image_pos);
 	else if (symbol != SYMBOL_NONE)
 		DrawSymbol (symbol, SYMBOL_SIZE, image_pos, symbol_dirn, shadow);
 
@@ -1040,11 +1077,7 @@ cScr_QuestArrow::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 long
 cScr_QuestArrow::OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	if (IsValidBitmap (bitmap))
-	{
-		FreeBitmap (bitmap);
-		bitmap = INVALID_BITMAP;
-	}
+	bitmap.reset ();
 	return cScr_HUDElement::OnEndScript (pMsg, mpReply);
 }
 
@@ -1168,12 +1201,9 @@ cScr_QuestArrow::GetTextFromObjective (cScrStr& msgstr)
 void
 cScr_QuestArrow::UpdateImage ()
 {
-	if (IsValidBitmap (bitmap)) // even if it hasn't actually changed
-	{
-		FreeBitmap (bitmap);
-		bitmap = INVALID_BITMAP;
-		ScheduleRedraw ();
-	}
+	// hold local reference to old bitmap in case it is unchanged
+	HUDBitmapPtr old_bitmap = bitmap;
+	bitmap.reset ();
 
 	cAnsiStr image = GetParamString ("quest_arrow_image", "@arrow");
 	Symbol _symbol = SYMBOL_NONE;
@@ -1183,15 +1213,11 @@ cScr_QuestArrow::UpdateImage ()
 	else
 	{
 		bitmap = LoadBitmap (image);
-		if (!IsValidBitmap (bitmap))
-		{
-			DebugPrintf ("Warning: could not load quest_arrow_image"
-				" at `%s'.", (const char*) image);
+		if (!bitmap)
 			_symbol = SYMBOL_ARROW;
-		}
 	}
 
-	if (symbol != _symbol)
+	if (symbol != _symbol || bitmap != old_bitmap)
 	{
 		symbol = _symbol;
 		ScheduleRedraw ();
@@ -1223,8 +1249,8 @@ cScr_QuestArrow::UpdateText ()
 #endif // _DARKGAME == 2
 
 	else if (__text.GetAt (0) == '@')
-		DebugPrintf ("Warning: invalid quest_arrow_text value of `%s'.",
-			(const char*) __text);
+		DebugPrintf ("Warning: `%s' is not a valid quest arrow text "
+			"source.", (const char*) __text);
 
 	else
 		pDS->GetString (_text, "hud", __text, "", "strings");
@@ -1261,7 +1287,7 @@ cScr_StatMeter::cScr_StatMeter (const char* pszName, int iHostObjId)
 	  cScr_HUDElement (pszName, iHostObjId),
 	  SCRIPT_VAROBJ (StatMeter, enabled, iHostObjId), style (STYLE_PROGRESS),
 	  position (POS_NW), offset (), orient (ORIENT_HORIZ),
-	  symbol (SYMBOL_NONE), bitmaps (), size (), spacing (0),
+	  symbol (SYMBOL_NONE), bitmap (), size (), spacing (0),
 	  qvar (), prop_name (), prop_field (), prop_comp (COMP_NONE),
 	  prop_object (iHostObjId), post_sim_fix (false),
 	  min (0.0), max (0.0), low (0), high (0),
@@ -1364,14 +1390,11 @@ cScr_StatMeter::Prepare ()
 		elem_pos.y = canvas.h - MARGIN - elem_size.h; break;
 	}
 
+	SetPosition (elem_pos + offset);
+	SetSize (elem_size);
 	// If this script ever becomes an overlay, it won't be able to redraw
 	// every frame. We would need to subscribe to the qvar/property.
-	SetPosition (elem_pos + offset);
-	if (NeedsRedraw ())
-		SetSize (elem_size);
-	else
-		ScheduleRedraw ();
-
+	ScheduleRedraw ();
 	return true;
 }
 
@@ -1391,7 +1414,7 @@ cScr_StatMeter::Redraw ()
 	case VALUE_MED: default: tier_color = color_med; break;
 	}
 
-	// draw meter
+	// draw progress bar
 	if (style == STYLE_PROGRESS)
 	{
 		SetDrawingColor (color_bg);
@@ -1430,14 +1453,15 @@ cScr_StatMeter::Redraw ()
 		FillArea (fill_area);
 	}
 
+	// draw individual units
 	else if (style == STYLE_UNITS)
 	{
 		SetDrawingColor (tier_color);
 		CanvasPoint unit;
 		for (int i = 1; i <= value_int; ++i)
 		{
-			if (!bitmaps.empty ())
-				DrawBitmap (bitmaps.front (), unit);
+			if (bitmap)
+				DrawBitmap (bitmap, HUDBitmap::STATIC, unit);
 			else if (symbol != SYMBOL_NONE)
 				DrawSymbol (symbol, size, unit);
 
@@ -1448,11 +1472,12 @@ cScr_StatMeter::Redraw ()
 		}
 	}
 
+	// draw solid gem
 	else if (style == STYLE_GEM)
 	{
-		if (!bitmaps.empty ())
-			DrawBitmap (bitmaps[std::lround
-				(value_pct * (bitmaps.size () - 1))]);
+		if (bitmap)
+			DrawBitmap (bitmap, std::lround
+				(value_pct * (bitmap->GetFrames () - 1)));
 		else
 		{
 			SetDrawingColor (color_blend);
@@ -1476,7 +1501,7 @@ cScr_StatMeter::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 long
 cScr_StatMeter::OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	FreeBitmaps ();
+	bitmap.reset ();
 	return cScr_HUDElement::OnEndScript (pMsg, mpReply);
 }
 
@@ -1510,7 +1535,7 @@ void
 cScr_StatMeter::OnPropertyChanged (const char* property)
 {
 	if (!!strcmp (property, "DesignNote")) return;
-	ScheduleRedraw ();
+	ScheduleRedraw (); // too many to check, so just assume we're affected
 
 	cAnsiStr _style = GetParamString ("stat_meter_style", NULL);
 	if (!stricmp (_style, "progress")) style = STYLE_PROGRESS;
@@ -1519,8 +1544,8 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 	else
 	{
 		if (!_style.IsEmpty ())
-			DebugPrintf ("Warning: invalid meter style `%s'.",
-				(const char*) _style);
+			DebugPrintf ("Warning: `%s' is not a valid stat meter "
+				"style.", (const char*) _style);
 		style = STYLE_PROGRESS;
 	}
 
@@ -1537,8 +1562,8 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 	else
 	{
 		if (!_position.IsEmpty ())
-			DebugPrintf ("Warning: invalid position `%s'.",
-				(const char*) _position);
+			DebugPrintf ("Warning: `%s' is not a valid stat meter "
+				"position.", (const char*) _position);
 		position = POS_NW;
 	}
 
@@ -1551,15 +1576,15 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 	else
 	{
 		if (!_orient.IsEmpty ())
-			DebugPrintf ("Warning: invalid meter orientation `%s'.",
-				(const char*) _orient);
+			DebugPrintf ("Warning: `%s' is not a valid stat meter "
+				"orientation.", (const char*) _orient);
 		orient = ORIENT_HORIZ;
 	}
 
 	UpdateImage ();
 
-	if (!bitmaps.empty ())
-		size = GetBitmapSize (bitmaps.front ());
+	if (bitmap)
+		size = bitmap->GetSize ();
 	else
 	{
 		size.w = GetParamInt ("stat_meter_width",
@@ -1574,8 +1599,9 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 	prop_name = GetParamString ("stat_source_property", NULL);
 	prop_field = GetParamString ("stat_source_field", NULL);
 	if (!qvar.IsEmpty () && !prop_name.IsEmpty ())
-		DebugPrintf ("Warning: qvar and property specified; will use "
-			"quest variable and ignore property.");
+		DebugPrintf ("Warning: Both a quest variable and a property "
+			"were specified; will use the quest variable and "
+			"ignore the property.");
 
 	cAnsiStr _prop_comp = GetParamString ("stat_source_component", NULL);
 	if (!stricmp (_prop_comp, "x")) prop_comp = COMP_X;
@@ -1584,8 +1610,8 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 	else
 	{
 		if (!_prop_comp.IsEmpty ())
-			DebugPrintf ("Warning: invalid vector component `%s'.",
-				(const char*) _prop_comp);
+			DebugPrintf ("Warning: `%s' is not a valid vector "
+				"component.", (const char*) _prop_comp);
 		prop_comp = COMP_NONE;
 	}
 
@@ -1593,13 +1619,13 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 
 	low = GetParamInt ("stat_range_low", 25);
 	if (low < 0 || low > 100)
-		DebugPrintf ("Warning: low bracket %d%% is out of range.", low);
+		DebugPrintf ("Warning: Low bracket %d%% is out of range.", low);
 	high = GetParamInt ("stat_range_high", 75);
 	if (high < 0 || high > 100)
-		DebugPrintf ("Warning: high bracket %d%% is out of range.", high);
+		DebugPrintf ("Warning: High bracket %d%% is out of range.", high);
 	if (low >= high)
-		DebugPrintf ("Warning: low bracket %d%% is greater than or "
-			"equal to high bracket %d%%", low, high);
+		DebugPrintf ("Warning: Low bracket %d%% is greater than or "
+			"equal to high bracket %d%%.", low, high);
 
 	color_bg = GetParamColor ("stat_color_bg", 0x000000);
 	color_low = GetParamColor ("stat_color_low", 0x0000ff);
@@ -1610,51 +1636,37 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 void
 cScr_StatMeter::UpdateImage ()
 {
-	FreeBitmaps ();
+	// hold local reference to old bitmap in case it is unchanged
+	HUDBitmapPtr old_bitmap = bitmap;
+	bitmap.reset ();
 
 	cAnsiStr image = GetParamString ("stat_meter_image",
 		(style == STYLE_GEM) ? "@none" : "@square");
 	Symbol _symbol = SYMBOL_NONE;
 
 	if (image.GetAt (0) == '@')
-		_symbol = InterpretSymbol (image);
-
+		_symbol = InterpretSymbol (image, false);
 	else
 	{
-		LoadBitmaps (image, bitmaps);
-		if (bitmaps.empty ())
-		{
-			DebugPrintf ("Warning: could not load stat_meter_image"
-				" at `%s'.", (const char*) image);
+		bitmap = LoadBitmap (image, true);
+		if (!bitmap)
 			_symbol = (style == STYLE_GEM)
 				? SYMBOL_NONE : SYMBOL_ARROW;
-		}
 	}
 
-	if (symbol != _symbol)
+	if (symbol != _symbol || bitmap != old_bitmap)
 	{
 		symbol = _symbol;
 		ScheduleRedraw ();
 	}
 
-	if ((!bitmaps.empty () || symbol != SYMBOL_NONE) &&
-	    style == STYLE_PROGRESS)
+	if (style == STYLE_PROGRESS && (bitmap || symbol != SYMBOL_NONE))
 		DebugString ("Warning: stat_meter_image will be ignored for "
 			"a progress-style meter.");
 
-	if (symbol != SYMBOL_NONE && style == STYLE_GEM)
-		DebugString ("Warning: symbol will be ignored for a gem-style "
-			"meter.");
-}
-
-void
-cScr_StatMeter::FreeBitmaps ()
-{
-	while (!bitmaps.empty ())
-	{
-		FreeBitmap (bitmaps.back ());
-		bitmaps.pop_back ();
-	}
+	if (style == STYLE_GEM && symbol != SYMBOL_NONE)
+		DebugString ("Warning: Symbol %s will be ignored for a "
+			"gem-style meter.", (const char*) image);
 }
 
 void
@@ -1684,8 +1696,8 @@ cScr_StatMeter::UpdateObject ()
 	min = GetParamFloat ("stat_range_min", min);
 	max = GetParamFloat ("stat_range_max", max);
 	if (min > max)
-		DebugPrintf ("Warning: minimum value %f is greater than "
-			"maximum value %f", min, max);
+		DebugPrintf ("Warning: Minimum value %f is greater than "
+			"maximum value %f.", min, max);
 }
 
 
@@ -1699,7 +1711,7 @@ cScr_ToolSight::cScr_ToolSight (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cScr_HUDElement (pszName, iHostObjId),
 	  SCRIPT_VAROBJ (ToolSight, enabled, iHostObjId),
-	  symbol (SYMBOL_NONE), bitmap (INVALID_BITMAP), color (0), offset ()
+	  symbol (SYMBOL_NONE), bitmap (), color (0), offset ()
 {}
 
 bool
@@ -1709,8 +1721,7 @@ cScr_ToolSight::Prepare ()
 
 	// get canvas, image, and text size and calculate element size
 	CanvasSize canvas = GetCanvasSize (),
-		elem_size = IsValidBitmap (bitmap)
-			? GetBitmapSize (bitmap) : SYMBOL_SIZE;
+		elem_size = bitmap ? bitmap->GetSize () : SYMBOL_SIZE;
 
 	// calculate center of canvas and position of element
 	CanvasPoint canvas_center (canvas.w / 2, canvas.h / 2),
@@ -1718,8 +1729,7 @@ cScr_ToolSight::Prepare ()
 			canvas_center.y - elem_size.h / 2 + offset.y);
 
 	SetPosition (elem_pos);
-	if (NeedsRedraw ()) SetSize (elem_size);
-
+	SetSize (elem_size);
 	return true;
 }
 
@@ -1727,8 +1737,8 @@ void
 cScr_ToolSight::Redraw ()
 {
 	SetDrawingColor (color);
-	if (IsValidBitmap (bitmap))
-		DrawBitmap (bitmap);
+	if (bitmap)
+		DrawBitmap (bitmap, HUDBitmap::STATIC);
 	else if (symbol != SYMBOL_NONE)
 		DrawSymbol (symbol, SYMBOL_SIZE);
 }
@@ -1746,22 +1756,30 @@ cScr_ToolSight::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 long
 cScr_ToolSight::OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	if (IsValidBitmap (bitmap))
-	{
-		FreeBitmap (bitmap);
-		bitmap = INVALID_BITMAP;
-	}
+	bitmap.reset ();
 	return cScr_HUDElement::OnEndScript (pMsg, mpReply);
 }
 
 void
 cScr_ToolSight::OnPropertyChanged (const char* property)
 {
-	if (!strcmp (property, "DesignNote"))
+	if (!!strcmp (property, "DesignNote")) return;
+
+	UpdateImage ();
+
+	ulong _color = GetParamColor ("tool_sight_color", 0x808080);
+	if (color != _color)
 	{
-		UpdateImage ();
-		UpdateColor ();
-		UpdateOffset ();
+		color = _color;
+		ScheduleRedraw ();
+	}
+
+	CanvasPoint _offset (GetParamInt ("tool_sight_offset_x", 0),
+		GetParamInt ("tool_sight_offset_y", 0));
+	if (offset != _offset)
+	{
+		offset = _offset;
+		ScheduleRedraw ();
 	}
 }
 
@@ -1796,56 +1814,25 @@ cScr_ToolSight::OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply)
 void
 cScr_ToolSight::UpdateImage ()
 {
-	if (IsValidBitmap (bitmap)) // even if it hasn't actually changed
-	{
-		FreeBitmap (bitmap);
-		bitmap = INVALID_BITMAP;
-		ScheduleRedraw ();
-	}
+	// hold local reference to old bitmap in case it is unchanged
+	HUDBitmapPtr old_bitmap = bitmap;
+	bitmap.reset ();
 
 	cAnsiStr image = GetParamString ("tool_sight_image", "@crosshairs");
 	Symbol _symbol = SYMBOL_NONE;
 
 	if (image.GetAt (0) == '@')
-		_symbol = InterpretSymbol (image);
-
+		_symbol = InterpretSymbol (image, false);
 	else
 	{
 		bitmap = LoadBitmap (image);
-		if (!IsValidBitmap (bitmap))
-		{
-			DebugPrintf ("Warning: could not load tool_sight_image"
-				" at `%s'.", (const char*) image);
+		if (!bitmap)
 			_symbol = SYMBOL_CROSSHAIRS;
-		}
 	}
 
-	if (symbol != _symbol)
+	if (symbol != _symbol || bitmap != old_bitmap)
 	{
 		symbol = _symbol;
-		ScheduleRedraw ();
-	}
-}
-
-void
-cScr_ToolSight::UpdateColor ()
-{
-	ulong _color = GetParamColor ("tool_sight_color", 0x808080);
-	if (color != _color)
-	{
-		color = _color;
-		ScheduleRedraw ();
-	}
-}
-
-void
-cScr_ToolSight::UpdateOffset ()
-{
-	CanvasPoint _offset (GetParamInt ("tool_sight_offset_x", 0),
-		GetParamInt ("tool_sight_offset_y", 0));
-	if (offset != _offset)
-	{
-		offset = _offset;
 		ScheduleRedraw ();
 	}
 }

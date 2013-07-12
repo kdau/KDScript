@@ -151,8 +151,9 @@ cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 
 	if (!CheckEngineVersion (1, 20))
 	{
-		DebugPrintf ("This script cannot be used with this version of "
-			"the Dark Engine. Upgrade to version 1.20 or higher.");
+		DebugPrintf ("Error: This script cannot be used with this "
+			"version of the Dark Engine. Upgrade to NewDark "
+			"version 1.20 or higher.");
 		return S_FALSE;
 	}
 

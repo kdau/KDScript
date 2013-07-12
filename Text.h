@@ -67,6 +67,7 @@ private:
 
 	cAnsiStr text;
 	ulong color;
+	bool player;
 };
 #endif // !SCR_GENSCRIPTS
 

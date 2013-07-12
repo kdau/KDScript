@@ -84,7 +84,8 @@ const int
 HUDSubtitle::PADDING = 8;
 
 HUDSubtitle::HUDSubtitle (object host, const char* _text, ulong _color)
-	: HUDElement (host), text (_text), color (_color)
+	: HUDElement (host), text (_text), color (_color),
+	  player (host == StrToObject ("Player"))
 {
 	Initialize ();
 }
@@ -104,12 +105,12 @@ HUDSubtitle::Prepare ()
 
 	// get host's position in canvas coordinates
 	CanvasPoint host_pos;
-	if (GetHost () == StrToObject ("Player"))
+	if (player)
 		host_pos = CanvasPoint (canvas.w / 2, canvas.h / 2);
 	else
 	{
 		host_pos = ObjectCentroidToCanvas (GetHost ());
-		if (!host_pos) return false;
+		if (!host_pos.Valid ()) return false;
 	}
 
 	// calculate element position
@@ -120,7 +121,7 @@ HUDSubtitle::Prepare ()
 		host_pos.y + PADDING));
 
 	SetPosition (elem_pos);
-	if (NeedsRedraw ()) SetSize (elem_size);
+	SetSize (elem_size);
 	return true;
 }
 
@@ -200,7 +201,7 @@ cScr_Subtitled::Subtitle (object host, object schema)
 	if (!ObjectExists (host) || !ObjectExists (schema) ||
 	    !InheritsFrom ("Schema", schema))
 	{
-		DebugPrintf ("Warning: can't subtitle invalid host/schema pair "
+		DebugPrintf ("Warning: Can't subtitle invalid host/schema pair "
 			"%d/%d.", int (host), int (schema));
 		return false;
 	}
@@ -289,7 +290,7 @@ cScr_SubtitledAI::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 	}
 	catch (no_interface&)
 	{
-		DebugString ("Warning: The DarkHook service could not be "
+		DebugString ("Error: The DarkHook service could not be "
 			"located. This AI's speech will not be subtitled.");
 	}
 	return cScr_Subtitled::OnBeginScript (pMsg, mpReply);

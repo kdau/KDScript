@@ -25,7 +25,9 @@
 
 #if !SCR_GENSCRIPTS
 #include <list>
+#include <memory>
 #include <vector>
+#include <unordered_map>
 #include <lg/interface.h>
 #include <lg/scrservices.h>
 #include "BaseScript.h"
@@ -36,16 +38,13 @@
 
 
 #if !SCR_GENSCRIPTS
-struct CanvasSize;
-
 struct CanvasPoint
 {
 	int x, y;
 
 	CanvasPoint (int x = 0, int y = 0);
 
-	operator bool () const;
-
+	bool Valid () const;
 	bool operator == (const CanvasPoint& rhs) const;
 	bool operator != (const CanvasPoint& rhs) const;
 
@@ -57,27 +56,33 @@ struct CanvasPoint
 	static const CanvasPoint ORIGIN;
 	static const CanvasPoint OFFSCREEN;
 };
+#endif // SCR_GENSCRIPTS
 
+
+
+#if !SCR_GENSCRIPTS
 struct CanvasSize
 {
 	int w, h;
 
 	CanvasSize (int w = 0, int h = 0);
 
-	operator bool () const;
-
+	bool Valid () const;
 	bool operator == (const CanvasSize& rhs) const;
 	bool operator != (const CanvasSize& rhs) const;
 };
+#endif // SCR_GENSCRIPTS
 
+
+
+#if !SCR_GENSCRIPTS
 struct CanvasRect
 {
 	int x, y, w, h;
 
 	CanvasRect (int x = 0, int y = 0, int w = 0, int h = 0);
 
-	operator bool () const;
-
+	bool Valid () const;
 	bool operator == (const CanvasRect& rhs) const;
 	bool operator != (const CanvasRect& rhs) const;
 
@@ -87,8 +92,37 @@ struct CanvasRect
 	static const CanvasRect NOCLIP;
 	static const CanvasRect OFFSCREEN;
 };
+#endif // SCR_GENSCRIPTS
 
-#endif // !SCR_GENSCRIPTS
+
+
+#if !SCR_GENSCRIPTS
+class HUDBitmap
+{
+public:
+	virtual ~HUDBitmap ();
+
+	CanvasSize GetSize () const;
+
+	std::size_t GetFrames () const;
+	static const std::size_t STATIC;
+
+protected:
+	friend class CustomHUD;
+	friend class HUDElement;
+
+	HUDBitmap (const char* path, bool animation);
+
+	void Draw (std::size_t frame, CanvasPoint position,
+		CanvasRect clip = CanvasRect::NOCLIP);
+
+private:
+	static const int INVALID_HANDLE;
+	std::vector<int> frames;
+};
+typedef std::shared_ptr<HUDBitmap> HUDBitmapPtr;
+typedef std::unordered_map<std::string, std::weak_ptr<HUDBitmap>> HUDBitmaps;
+#endif // SCR_GENSCRIPTS
 
 
 
@@ -96,25 +130,32 @@ struct CanvasRect
 class HUDElement;
 typedef std::list<HUDElement*> HUDElements;
 
-class cScr_CustomHUD : public virtual cBaseScript, public IDarkOverlayHandler
+class CustomHUD;
+typedef std::shared_ptr<CustomHUD> CustomHUDPtr;
+
+class CustomHUD : public IDarkOverlayHandler
 {
 public:
-	cScr_CustomHUD (const char* pszName, int iHostObjId);
+	virtual ~CustomHUD ();
+
+	static CustomHUDPtr Get ();
 
 	STDMETHOD_(void, DrawHUD) ();
 	STDMETHOD_(void, DrawTOverlay) ();
 	STDMETHOD_(void, OnUIEnterMode) ();
 
+	void RegisterElement (HUDElement& element);
+	void UnregisterElement (HUDElement& element);
+
+	HUDBitmapPtr LoadBitmap (const char* path, bool animation);
+
 protected:
-	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	CustomHUD ();
 
 private:
 	HUDElements elements;
+	HUDBitmaps bitmaps;
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDCustomHUD","BaseScript",cScr_CustomHUD)
 #endif // SCR_GENSCRIPTS
 
 
@@ -178,14 +219,10 @@ protected:
 		CanvasPoint position = CanvasPoint::ORIGIN,
 		bool shadowed = false);
 
-	enum { INVALID_BITMAP = -1 };
-	bool IsValidBitmap (int bitmap);
-	int LoadBitmap (const char* path);
-	void LoadBitmaps (const char* path, std::vector<int>& bitmaps);
-	CanvasSize GetBitmapSize (int bitmap);
-	void DrawBitmap (int bitmap, CanvasPoint position = CanvasPoint::ORIGIN,
+	HUDBitmapPtr LoadBitmap (const char* path, bool animation = false);
+	void DrawBitmap (HUDBitmapPtr& bitmap, std::size_t frame,
+		CanvasPoint position = CanvasPoint::ORIGIN,
 		CanvasRect clip = CanvasRect::NOCLIP);
-	void FreeBitmap (int bitmap);
 
 	CanvasPoint LocationToCanvas (const cScrVec& location);
 	CanvasRect ObjectToCanvas (object target);
@@ -218,13 +255,19 @@ private:
 		void _DebugPrintf (const char* format, ...);
 
 	SService<IDarkOverlaySrv> pDOS;
-	object host, handler;
-	int overlay;
+	CustomHUDPtr hud;
+	object host;
+
 	bool draw, redraw, drawing;
-	CanvasPoint last_position;
-	CanvasSize last_size;
-	int last_scale, last_opacity;
-	ulong last_color;
+
+	int overlay;
+	int opacity;
+
+	CanvasPoint position;
+	CanvasSize size;
+	int scale;
+
+	ulong drawing_color;
 	CanvasPoint drawing_offset;
 };
 #endif // !SCR_GENSCRIPTS
@@ -285,7 +328,7 @@ private:
 
 	Symbol symbol;
 	Direction symbol_dirn;
-	int bitmap;
+	HUDBitmapPtr bitmap;
 	CanvasPoint image_pos;
 	void UpdateImage ();
 
@@ -321,8 +364,6 @@ protected:
 
 private:
 	void UpdateImage ();
-	void FreeBitmaps ();
-
 	void UpdateObject ();
 
 	static const int MARGIN;
@@ -357,7 +398,7 @@ private:
 	} orient;
 
 	Symbol symbol;
-	std::vector<int> bitmaps;
+	HUDBitmapPtr bitmap;
 
 	CanvasSize size;
 	int spacing;
@@ -406,19 +447,16 @@ protected:
 	virtual long OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply);
 
 private:
+	void UpdateImage ();
+
 	static const CanvasSize SYMBOL_SIZE;
 
 	script_int enabled; // bool
 
 	Symbol symbol;
-	int bitmap;
-	void UpdateImage ();
-
+	HUDBitmapPtr bitmap;
 	ulong color;
-	void UpdateColor ();
-
 	CanvasPoint offset;
-	void UpdateOffset ();
 };
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("KDToolSight","KDHUDElement",cScr_ToolSight)

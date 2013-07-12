@@ -163,7 +163,7 @@ cScr_Carried::Drop ()
 		// clone self and add reference link to AI
 		pOS->Create (drop, ObjId ());
 		CreateLink ("CulpableFor", ai, drop);
-		DebugPrintf ("replacing self with clone %d", int (drop));
+		DebugPrintf ("Replacing self with clone %d.", int (drop));
 	}
 
 	// ensure that the object is physical
@@ -296,7 +296,7 @@ cScr_Carrier::CreateAttachment (object archetype, int joint)
 			&joint, sizeof (joint)) != None)
 		return; // don't attach a second object to the same joint
 
-	DebugPrintf ("attaching %s to joint %d",
+	DebugPrintf ("Attaching a new %s to joint %d.",
 		(const char*) FormatObjectName (archetype), joint);
 
 	object attachment;
@@ -631,7 +631,7 @@ cScr_TrapNextMission::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 	pDGS->SetNextMission (next_mission);
 	return S_OK;
 #else
-	DebugPrintf ("Error: this script is not available for this game.");
+	DebugPrintf ("Error: This script is not available for this game.");
 	return S_FALSE;
 #endif
 }
