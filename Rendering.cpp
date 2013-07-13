@@ -295,8 +295,10 @@ cScr_SyncGlobalFog::OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm&)
 		return S_FALSE; // no change
 
 	ulong color; float distance; bool sync_color;
-	if (new_zone == FOG_DISABLED) // disabled
+	if (new_zone == FOG_DISABLED)
 	{
+		if (!GetObjectParamBool (ObjId (), "sync_fog_disabled", false))
+			return S_FALSE;
 		color = 0;
 		distance = 0.0;
 		sync_color = false;
@@ -330,10 +332,11 @@ cScr_SyncGlobalFog::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 }
 
 void
-cScr_SyncGlobalFog::Sync (ulong color, float dist, bool sync_color)
+cScr_SyncGlobalFog::Sync (ulong color, float dist,
+	bool sync_color, bool sync_dist)
 {
 	sync_color &= GetObjectParamBool (ObjId (), "sync_fog_color", true);
-	bool sync_dist = (dist >= 0.0) &&
+	sync_dist &= (dist >= 0.0) &&
 		GetObjectParamBool (ObjId (), "sync_fog_dist", true);
 
 	start_color = GetColor (GLOBAL_ZONE);

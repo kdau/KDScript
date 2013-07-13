@@ -147,7 +147,8 @@ protected:
 	virtual long OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 
-	void Sync (ulong color, float distance, bool sync_color = true);
+	void Sync (ulong color, float distance, bool sync_color = true,
+		bool sync_distance = true);
 	virtual bool OnIncrement ();
 
 private:
