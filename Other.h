@@ -112,6 +112,7 @@ protected:
 	virtual long OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnInvDeSelect (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnFrobInvEnd (sFrobMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnFrobToolEnd (sFrobMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);

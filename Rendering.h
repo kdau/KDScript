@@ -57,7 +57,9 @@ private:
 	script_handle<tScrTimer> timer;
 	script_int time_total, time_remaining;
 };
-#endif // !SCR_GENSCRIPTS
+#else // SCR_GENSCRIPTS
+GEN_FACTORY("KDTransitionTrap","BaseTrap",cScr_TransitionTrap)
+#endif // SCR_GENSCRIPTS
 
 
 

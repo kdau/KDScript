@@ -452,6 +452,14 @@ cScr_JunkTool::OnInvDeFocus (sScrMsg*, cMultiParm&)
 }
 
 long
+cScr_JunkTool::OnFrobInvEnd (sFrobMsg*, cMultiParm&)
+{
+	// resume tool use
+	SimplePost (ObjId (), ObjId (), "ReselectMe");
+	return S_OK;
+}
+
+long
 cScr_JunkTool::OnFrobToolEnd (sFrobMsg*, cMultiParm&)
 {
 	// resume tool use
