@@ -110,7 +110,8 @@ public:
 	static void Set (int zone, ulong color, float distance);
 
 protected:
-	static float FakeDistance (float distance, bool final);
+	static float InterpolateDistance (float start, float end,
+		float progress);
 };
 #endif // !SCR_GENSCRIPTS
 

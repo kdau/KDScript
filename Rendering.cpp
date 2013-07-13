@@ -204,9 +204,15 @@ DarkFog::Set (int zone, ulong color, float distance)
 }
 
 float
-DarkFog::FakeDistance (float distance, bool final)
+DarkFog::InterpolateDistance (float start, float end, float progress)
 {
-	return (distance == 0.0 && !final) ? 10000.0 : distance;
+	if (progress == 1.0)
+		{} // don't fake distance at end
+	else if (start == 0.0)
+		start = 5.0 * end;
+	else if (end == 0.0)
+		end = 5.0 * start;
+	return start + progress * (end - start);
 }
 
 
@@ -255,10 +261,9 @@ cScr_TrapFog::OnPrepare (bool state)
 bool
 cScr_TrapFog::OnIncrement ()
 {
-	bool final = (GetProgress () >= 1.0);
 	ulong color = InterpolateColor (start_color, end_color);
-	float distance = Interpolate (FakeDistance (start_dist, final),
-		FakeDistance (end_dist, final));
+	float distance =
+		InterpolateDistance (start_dist, end_dist, GetProgress ());
 	Set (zone, color, distance);
 	return true;
 }
@@ -354,10 +359,8 @@ cScr_SyncGlobalFog::Sync (ulong color, float dist,
 bool
 cScr_SyncGlobalFog::OnIncrement ()
 {
-	bool final = (GetProgress () >= 1.0);
 	ulong color = InterpolateColor (start_color, end_color);
-	float dist = Interpolate (FakeDistance (start_dist, final),
-		FakeDistance (end_dist, final));
+	float dist = InterpolateDistance (start_dist, end_dist, GetProgress ());
 	Set (GLOBAL_ZONE, color, dist);
 	return true;
 }
