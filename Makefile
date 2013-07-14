@@ -70,7 +70,7 @@ LIBS2 := $(LIBS2) -lScript2-d
 else
 DEFINES := $(DEFINES) -DNDEBUG
 CXXFLAGS := $(CXXFLAGS) -O2
-# LDFLAGS := $(LDFLAGS)
+LDFLAGS := $(LDFLAGS) -Wl,--strip-debug
 LIBS := $(LIBS) -llg
 LIBS1 := $(LIBS1) -lScript1
 LIBS2 := $(LIBS2) -lScript2

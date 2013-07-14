@@ -900,10 +900,8 @@ void
 HUDElement::Offset (CanvasRect& area)
 {
 	Offset (*(CanvasPoint*)(&area));
-	if (area.w == CanvasRect::NOCLIP.w)
-		area.w  = size.w - area.x;
-	if (area.h == CanvasRect::NOCLIP.h)
-		area.h = size.h - area.y;
+	if (area.w == CanvasRect::NOCLIP.w) area.w = size.w;
+	if (area.h == CanvasRect::NOCLIP.h) area.h = size.h;
 }
 
 void
