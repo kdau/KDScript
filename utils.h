@@ -205,6 +205,16 @@ ulong AverageColors (ulong color1, ulong color2, float weight = 0.5);
  */
 bool CheckEngineVersion (int min_major, int min_minor);
 
+/**
+ * HasPlayerTouched
+ *
+ * Returns whether an Avatar object or the starting point contains the object.
+ * If historic is true, also returns true if an Avatar is culpable for the
+ * object. Also returns true if the object is attached to a PlayerArm or to a
+ * PlayerBowArm.
+ */
+bool HasPlayerTouched (object target, bool historic = true);
+
 
 
 /**
@@ -224,6 +234,8 @@ public:
 	virtual LinkIter& operator++ ();
 
 	operator link () const;
+	linkkind Flavor () const;
+	const char* FlavorName () const;
 	object Source () const;
 	object Destination () const;
 

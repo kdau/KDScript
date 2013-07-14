@@ -212,7 +212,7 @@ protected:
 	void SetPosition (CanvasPoint position);
 	CanvasSize GetSize ();
 	void SetSize (CanvasSize size);
-	void SetScale (int scale);
+	void SetScale (float scale);
 
 	void SetDrawingColor (ulong color);
 	void SetDrawingOffset (CanvasPoint offset = CanvasPoint::ORIGIN);
@@ -276,7 +276,7 @@ private:
 
 	CanvasPoint position;
 	CanvasSize size;
-	int scale;
+	float scale;
 
 	ulong drawing_color;
 	CanvasPoint drawing_offset;
@@ -292,9 +292,8 @@ public:
 	cScr_HUDElement (const char* pszName, int iHostObjId);
 
 protected:
-	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual void OnAnyMessage (sScrMsg* pMsg);
 	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 
 	bool SubscribeProperty (const char* property);
@@ -320,6 +319,7 @@ protected:
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual void OnPropertyChanged (const char* property);
 	virtual long OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnSlain (sSlayMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnQuestChange (sQuestMsg* pMsg, cMultiParm& mpReply);
 
 private:

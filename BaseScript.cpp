@@ -202,6 +202,7 @@ STDMETHODIMP cBaseScript::ReceiveMessage(sScrMsg* pMsg, sMultiParm* pReply, eScr
 {
 	long iRet = 0;
 	cScript::ReceiveMessage(pMsg, pReply, eTrace);
+	OnAnyMessage(pMsg);
 
 	switch (eTrace)
 	{

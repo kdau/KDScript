@@ -567,6 +567,39 @@ CheckEngineVersion (int min_major, int min_minor)
 		? (minor >= min_minor) : (major > min_major);
 }
 
+/* HasPlayerTouched */
+
+bool
+HasPlayerTouched (object target, bool historic)
+{
+	if (!target) return false;
+
+	object candidate = LinkIter (Any, target, "Contains").Source ();
+	if (candidate && (InheritsFrom ("Avatar", candidate) || // player
+	    LinkIter (candidate, Any, "PlayerFactory"))) // starting point
+		return true;
+
+	if (historic)
+	{
+		candidate = LinkIter (Any, target, "CulpableFor").Source ();
+		if (InheritsFrom ("Avatar", candidate)) return true;
+	}
+
+	SService<IPropertySrv> pPS (g_pScriptManager);
+	candidate = LinkIter (Any, target, "CreatureAttachment").Source ();
+	if (candidate && pPS->Possessed (candidate, "Creature"))
+	{
+		cMultiParm type;
+		pPS->Get (type, candidate, "Creature", NULL);
+		if (type.type == kMT_Int &&
+		    (int (type) == 1 || // PlayerArm
+		     int (type) == 2)) // PlayerBowArm
+			return true;
+	}
+
+	return false;
+}
+
 
 
 /* LinkIter */
@@ -598,6 +631,21 @@ LinkIter::operator++ ()
 LinkIter::operator link () const
 {
 	return links.AnyLinksLeft () ? links.Link () : link ();
+}
+
+linkkind
+LinkIter::Flavor () const
+{
+	return links.AnyLinksLeft () ? links.Get ().flavor : linkkind ();
+}
+
+const char*
+LinkIter::FlavorName () const
+{
+	SService<ILinkToolsSrv> pLTS (g_pScriptManager);
+	cScrStr result;
+	pLTS->LinkKindName (result, Flavor ());
+	return result;
 }
 
 object

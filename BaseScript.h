@@ -46,6 +46,7 @@ public:
 protected:
 	void InitScript(void);
 
+	virtual void OnAnyMessage(sScrMsg*) {}
 	virtual long OnMessage(sScrMsg* pMsg, cMultiParm& mpReply)
 		{ return cScript::ReceiveMessage(pMsg, &mpReply, kNoAction); }
 	virtual long OnBeginScript(sScrMsg*, cMultiParm&)

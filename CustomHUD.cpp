@@ -402,10 +402,16 @@ CustomHUD::UnlockMutex ()
 
 #define INVALID_OVERLAY -1
 
+#ifdef DEBUG
+#define _DEBUG_PRINTF(format, ...) _DebugPrintf (format, __VA_ARGS__)
+#else
+#define _DEBUG_PRINTF(format, ...)
+#endif
+
 #define CHECK_OVERLAY(retval) \
 	if (!IsOverlay ()) \
 	{ \
-		DEBUG_PRINTF ("%s called for non-overlay element; ignoring.", \
+		_DEBUG_PRINTF ("%s called for non-overlay element; ignoring.", \
 			__func__); \
 		return retval; \
 	}
@@ -413,7 +419,7 @@ CustomHUD::UnlockMutex ()
 #define CHECK_DRAWING(retval) \
 	if (!drawing) \
 	{ \
-		DEBUG_PRINTF ("%s called outside of draw cycle; ignoring.", \
+		_DEBUG_PRINTF ("%s called outside of draw cycle; ignoring.", \
 			__func__); \
 		return retval; \
 	}
@@ -422,7 +428,7 @@ HUDElement::HUDElement (object _host)
 	: pDOS (g_pScriptManager), host (_host),
 	  draw (true), redraw (true), drawing (false),
 	  overlay (INVALID_OVERLAY), opacity (255),
-	  position (), size (1, 1), scale (1),
+	  position (), size (1, 1), scale (1.0),
 	  drawing_color (0xffffff), drawing_offset ()
 {}
 
@@ -469,7 +475,11 @@ HUDElement::Initialize ()
 	if (hud) // already registered
 		return false;
 	else if (hud = CustomHUD::Get ()) // register with the handler
+	{
+		_DEBUG_PRINTF ("Registering %p with CustomHUD %p.",
+			this, hud.get ());
 		return hud->RegisterElement (*this);
+	}
 	else
 		return false;
 }
@@ -483,6 +493,8 @@ HUDElement::Deinitialize ()
 	// unregister with the handler
 	if (hud)
 	{
+		_DEBUG_PRINTF ("Unregistering %p with CustomHUD %p.",
+			this, hud.get ());
 		hud->UnregisterElement (*this);
 		hud.reset ();
 	}
@@ -669,7 +681,7 @@ HUDElement::SetSize (CanvasSize _size)
 	{
 		DestroyOverlay (); // destroy overlay at old size
 		CreateOverlay (); // get a new one at the new size
-		if (scale != 1) // restore scale if needed
+		if (scale != 1.0) // restore scale if needed
 			pDOS->UpdateTOverlaySize (overlay,
 				size.w * scale, size.h * scale);
 		ScheduleRedraw ();
@@ -679,7 +691,7 @@ HUDElement::SetSize (CanvasSize _size)
 }
 
 void
-HUDElement::SetScale (int _scale)
+HUDElement::SetScale (float _scale)
 {
 	if (scale == _scale) return;
 	scale = _scale;
@@ -974,10 +986,14 @@ cScr_HUDElement::cScr_HUDElement (const char* pszName, int iHostObjId)
 	DarkHookInitializeService (g_pScriptManager, g_pMalloc);
 }
 
-long
-cScr_HUDElement::OnBeginScript (sScrMsg*, cMultiParm&)
+void
+cScr_HUDElement::OnAnyMessage (sScrMsg*)
 {
-	return Initialize () ? S_OK : S_FALSE;
+	// ignore messages outside of game mode
+	SService<IVersionSrv> pVS (g_pScriptManager);
+	if (pVS->IsEditor () == 1) return;
+
+	Initialize ();
 }
 
 long
@@ -985,15 +1001,6 @@ cScr_HUDElement::OnEndScript (sScrMsg*, cMultiParm&)
 {
 	Deinitialize ();
 	return S_OK;
-}
-
-long
-cScr_HUDElement::OnSim (sSimMsg* pMsg, cMultiParm&)
-{
-	if (pMsg->fStarting)
-		return Initialize () ? S_OK : S_FALSE;
-	else
-		return S_FALSE;
 }
 
 long
@@ -1055,7 +1062,9 @@ cScr_QuestArrow::Initialize ()
 {
 	if (!cScr_HUDElement::Initialize ()) return false;
 
-	enabled.Init (GetParamBool ("quest_arrow", true));
+	enabled.Init (GetParamBool ("quest_arrow",
+		!HasPlayerTouched (ObjId ())));
+
 	OnPropertyChanged ("DesignNote"); // update all cached params
 
 	SubscribeProperty ("DesignNote");
@@ -1156,7 +1165,6 @@ cScr_QuestArrow::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 	}
 
 	if (!stricmp (pMsg->message, "QuestArrowOff") ||
-	    !stricmp (pMsg->message, "Slain") ||
 	    (!stricmp (pMsg->message, "AIModeChange") &&
 	        static_cast<sAIModeChangeMsg*> (pMsg)->mode == kAIM_Dead))
 	{
@@ -1189,6 +1197,13 @@ cScr_QuestArrow::OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply)
 	    InheritsFrom ("Avatar", pMsg->container))
 		enabled = false;
 	return cScr_HUDElement::OnContained (pMsg, mpReply);
+}
+
+long
+cScr_QuestArrow::OnSlain (sSlayMsg* pMsg, cMultiParm& mpReply)
+{
+	enabled = false;
+	return cScr_HUDElement::OnSlain (pMsg, mpReply);
 }
 
 long
