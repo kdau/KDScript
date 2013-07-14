@@ -53,6 +53,9 @@ struct CanvasPoint
 	CanvasPoint operator * (int rhs) const;
 	CanvasPoint operator / (int rhs) const;
 
+	CanvasPoint& operator += (const CanvasPoint& rhs);
+	CanvasPoint& operator -= (const CanvasPoint& rhs);
+
 	static const CanvasPoint ORIGIN;
 	static const CanvasPoint OFFSCREEN;
 };
@@ -76,11 +79,11 @@ struct CanvasSize
 
 
 #if !SCR_GENSCRIPTS
-struct CanvasRect
+struct CanvasRect : public CanvasPoint, public CanvasSize
 {
-	int x, y, w, h;
-
 	CanvasRect (int x = 0, int y = 0, int w = 0, int h = 0);
+	CanvasRect (CanvasPoint position, CanvasSize size);
+	explicit CanvasRect (CanvasSize size); // at ORIGIN
 
 	bool Valid () const;
 	bool operator == (const CanvasRect& rhs) const;
@@ -251,6 +254,9 @@ protected:
 	Symbol InterpretSymbol (const char* symbol, bool directional = false);
 
 private:
+	void Offset (CanvasPoint& point);
+	void Offset (CanvasRect& area);
+
 	__attribute__((format (printf,2,3)))
 		void _DebugPrintf (const char* format, ...);
 
@@ -364,6 +370,7 @@ protected:
 
 private:
 	void UpdateImage ();
+	void UpdateText ();
 	void UpdateObject ();
 
 	static const int MARGIN;
@@ -376,6 +383,14 @@ private:
 		STYLE_UNITS,
 		STYLE_GEM
 	} style;
+
+	Symbol symbol;
+	HUDBitmapPtr bitmap;
+	CanvasPoint meter_pos;
+	int spacing;
+
+	cAnsiStr text;
+	CanvasPoint text_pos;
 
 	enum Position
 	{
@@ -397,11 +412,7 @@ private:
 		ORIENT_VERT
 	} orient;
 
-	Symbol symbol;
-	HUDBitmapPtr bitmap;
-
-	CanvasSize size;
-	int spacing;
+	CanvasSize request_size;
 
 	cAnsiStr qvar, prop_name, prop_field;
 	enum Component { COMP_NONE, COMP_X, COMP_Y, COMP_Z } prop_comp;

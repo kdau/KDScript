@@ -86,6 +86,22 @@ CanvasPoint::operator / (int rhs) const
 	return CanvasPoint (x / rhs, y / rhs);
 }
 
+CanvasPoint&
+CanvasPoint::operator += (const CanvasPoint& rhs)
+{
+	x += rhs.x;
+	y += rhs.y;
+	return *this;
+}
+
+CanvasPoint&
+CanvasPoint::operator -= (const CanvasPoint& rhs)
+{
+	x -= rhs.x;
+	y -= rhs.y;
+	return *this;
+}
+
 
 
 /* CanvasSize */
@@ -124,7 +140,15 @@ const CanvasRect
 CanvasRect::OFFSCREEN = { -1, -1, -1, -1 };
 
 CanvasRect::CanvasRect (int _x, int _y, int _w, int _h)
-	: x (_x), y (_y), w (_w), h (_h)
+	: CanvasPoint (_x, _y), CanvasSize (_w, _h)
+{}
+
+CanvasRect::CanvasRect (CanvasPoint position, CanvasSize size)
+	: CanvasPoint (position), CanvasSize (size)
+{}
+
+CanvasRect::CanvasRect (CanvasSize size)
+	: CanvasPoint (), CanvasSize (size)
 {}
 
 bool
@@ -348,10 +372,6 @@ CustomHUD::LoadBitmap (const char* path, bool animation)
 			__func__); \
 		return retval; \
 	}
-
-// add the element position (if not overlay) and offset to the point
-#define OFFSET(point) (point + \
-	(IsOverlay () ? CanvasPoint::ORIGIN : position) + drawing_offset)
 
 HUDElement::HUDElement (object _host)
 	: pDOS (g_pScriptManager), host (_host),
@@ -649,17 +669,7 @@ void
 HUDElement::FillArea (CanvasRect area)
 {
 	CHECK_DRAWING ();
-
-	if (area == CanvasRect::NOCLIP)
-	{
-		area.x = position.x;
-		area.y = position.y;
-		area.w = size.w;
-		area.h = size.h;
-	}
-	else
-		area = OFFSET (area);
-
+	Offset (area);
 	for (int y = area.y; y < area.y + area.h; ++y)
 		pDOS->DrawLine (area.x, y, area.x + area.w, y);
 }
@@ -668,17 +678,7 @@ void
 HUDElement::DrawBox (CanvasRect area)
 {
 	CHECK_DRAWING ();
-
-	if (area == CanvasRect::NOCLIP)
-	{
-		area.x = position.x;
-		area.y = position.y;
-		area.w = size.w;
-		area.h = size.h;
-	}
-	else
-		area = OFFSET (area);
-
+	Offset (area);
 	pDOS->DrawLine (area.x, area.y, area.x + area.w, area.y);
 	pDOS->DrawLine (area.x, area.y, area.x, area.y + area.h);
 	pDOS->DrawLine (area.x + area.w, area.y,
@@ -691,8 +691,8 @@ void
 HUDElement::DrawLine (CanvasPoint from, CanvasPoint to)
 {
 	CHECK_DRAWING ();
-	from = OFFSET (from);
-	to = OFFSET (to);
+	Offset (from);
+	Offset (to);
 	pDOS->DrawLine (from.x, from.y, to.x, to.y);
 }
 
@@ -709,7 +709,7 @@ void
 HUDElement::DrawText (const char* text, CanvasPoint _position, bool shadowed)
 {
 	CHECK_DRAWING ();
-	_position = OFFSET (_position);
+	Offset (_position);
 	if (shadowed)
 	{
 		pDOS->SetTextColor (0, 0, 0);
@@ -730,8 +730,9 @@ HUDElement::DrawBitmap (HUDBitmapPtr& bitmap, std::size_t frame,
 	CanvasPoint _position, CanvasRect clip)
 {
 	CHECK_DRAWING ();
+	Offset (_position);
 	if (bitmap)
-		bitmap->Draw (frame, OFFSET (_position), clip);
+		bitmap->Draw (frame, _position, clip);
 	else
 		_DebugPrintf ("Error: DrawBitmap called for invalid bitmap.");
 }
@@ -786,7 +787,7 @@ HUDElement::DrawSymbol (Symbol symbol, CanvasSize _size,
 	}
 
 	CanvasPoint xqtr (_size.w / 4, 0), yqtr (0, _size.h / 4);
-	drawing_offset = drawing_offset + _position;
+	drawing_offset += _position;
 
 	switch (symbol)
 	{
@@ -818,14 +819,14 @@ HUDElement::DrawSymbol (Symbol symbol, CanvasSize _size,
 		DrawLine (yqtr*2, xqtr*4 + yqtr*2);
 		break;
 	case SYMBOL_SQUARE:
-		FillArea (CanvasRect (0, 0, _size.w, _size.h));
+		FillArea (CanvasRect (_size));
 		break;
 	case SYMBOL_NONE:
 	default:
 		break;
 	}
 
-	drawing_offset = drawing_offset - _position;
+	drawing_offset -= _position;
 }
 
 CanvasPoint
@@ -886,6 +887,23 @@ HUDElement::InterpretSymbol (const char* symbol, bool directional)
 			symbol);
 
 	return SYMBOL_NONE;
+}
+
+void
+HUDElement::Offset (CanvasPoint& point)
+{
+	point += drawing_offset;
+	if (!IsOverlay ()) point += position;
+}
+
+void
+HUDElement::Offset (CanvasRect& area)
+{
+	Offset (*(CanvasPoint*)(&area));
+	if (area.w == CanvasRect::NOCLIP.w)
+		area.w  = size.w - area.x;
+	if (area.h == CanvasRect::NOCLIP.h)
+		area.h = size.h - area.y;
 }
 
 void
@@ -1285,10 +1303,9 @@ cScr_StatMeter::MARGIN = 16;
 cScr_StatMeter::cScr_StatMeter (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cScr_HUDElement (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (StatMeter, enabled, iHostObjId), style (STYLE_PROGRESS),
-	  position (POS_NW), offset (), orient (ORIENT_HORIZ),
-	  symbol (SYMBOL_NONE), bitmap (), size (), spacing (0),
-	  qvar (), prop_name (), prop_field (), prop_comp (COMP_NONE),
+	  SCRIPT_VAROBJ (StatMeter, enabled, iHostObjId),
+	  style (STYLE_PROGRESS), symbol (SYMBOL_NONE), spacing (0),
+	  position (POS_NW), orient (ORIENT_HORIZ), prop_comp (COMP_NONE),
 	  prop_object (iHostObjId), post_sim_fix (false),
 	  min (0.0), max (0.0), low (0), high (0),
 	  color_bg (0), color_low (0), color_med (0), color_high (0),
@@ -1349,45 +1366,78 @@ cScr_StatMeter::Prepare ()
 	else
 		value_tier = VALUE_MED;
 
-	// get canvas size
-	CanvasSize canvas = GetCanvasSize ();
+	// get canvas and text sizes
+	CanvasSize canvas = GetCanvasSize (),
+		text_size = GetTextSize (text);
 
-	// calculate element size
-	CanvasSize elem_size = size;
-	if (style == STYLE_PROGRESS && orient == ORIENT_VERT)
-	{
-		elem_size.w = size.h;
-		elem_size.h = size.w;
-	}
-	else if (style == STYLE_UNITS)
+	// calculate meter size
+	CanvasSize meter_size = request_size;
+	if (style == STYLE_UNITS)
 	{
 		if (orient == ORIENT_HORIZ)
-			elem_size.w = value_int * size.w +
+			meter_size.w = value_int * request_size.w +
 				(value_int - 1) * spacing;
 		else // ORIENT_VERT
-			elem_size.h = value_int * size.h +
+			meter_size.h = value_int * request_size.h +
 				(value_int - 1) * spacing;
 	}
+	else if (orient == ORIENT_VERT)
+	{
+		meter_size.w = request_size.h;
+		meter_size.h = request_size.w;
+	}
 
-	// calculate element position
+	// calculate element size
+	CanvasSize elem_size;
+	bool show_text;
+	if (orient == ORIENT_HORIZ && !text.IsEmpty ())
+	{
+		show_text = true;
+		elem_size.w = std::max (meter_size.w, text_size.w);
+		elem_size.h = meter_size.h + spacing + text_size.h;
+	}
+	else // ORIENT_VERT and/or empty text
+	{
+		show_text = false;
+		elem_size = meter_size;
+	}
+
+	// calculate element position and positions of meter and text inside
 	CanvasPoint elem_pos;
 	switch (position)
 	{
 	case POS_NW: case POS_WEST: case POS_SW: default:
-		elem_pos.x = MARGIN; break;
+		elem_pos.x = MARGIN;
+		meter_pos.x = text_pos.x = 0;
+		break;
 	case POS_NORTH: case POS_CENTER: case POS_SOUTH:
-		elem_pos.x = (canvas.w - elem_size.w) / 2; break;
+		elem_pos.x = (canvas.w - elem_size.w) / 2;
+		meter_pos.x = std::max (0, (text_size.w - meter_size.w) / 2);
+		text_pos.x = std::max (0, (meter_size.w - text_size.w) / 2);
+		break;
 	case POS_NE: case POS_EAST: case POS_SE:
-		elem_pos.x = canvas.w - MARGIN - elem_size.w; break;
+		elem_pos.x = canvas.w - MARGIN - elem_size.w;
+		meter_pos.x = std::max (0, text_size.w - meter_size.w);
+		text_pos.x = std::max (0, meter_size.w - text_size.w);
+		break;
 	}
 	switch (position)
 	{
-	case POS_NW: case POS_NORTH: case POS_NE: default:
-		elem_pos.y = MARGIN; break;
-	case POS_WEST: case POS_CENTER: case POS_EAST:
-		elem_pos.y = (canvas.h - elem_size.h) / 2; break;
-	case POS_SW: case POS_SOUTH: case POS_SE:
-		elem_pos.y = canvas.h - MARGIN - elem_size.h; break;
+	case POS_NW: case POS_NORTH: case POS_NE: default: // text below
+		elem_pos.y = MARGIN;
+		meter_pos.y = 0;
+		text_pos.y = meter_size.h + spacing;
+		break;
+	case POS_WEST: case POS_CENTER: case POS_EAST: // text below
+		elem_pos.y = (canvas.h - elem_size.h) / 2;
+		meter_pos.y = 0;
+		text_pos.y = meter_size.h + spacing;
+		break;
+	case POS_SW: case POS_SOUTH: case POS_SE: // text above
+		elem_pos.y = canvas.h - MARGIN - elem_size.h;
+		meter_pos.y = show_text ? (text_size.h + spacing) : 0;
+		text_pos.y = 0;
+		break;
 	}
 
 	SetPosition (elem_pos + offset);
@@ -1401,8 +1451,6 @@ cScr_StatMeter::Prepare ()
 void
 cScr_StatMeter::Redraw ()
 {
-	CanvasSize elem_size = GetSize ();
-
 	// calculate value-sensitive colors
 	ulong tier_color, color_blend = (value_pct < 0.5)
 		? AverageColors (color_low, color_med, value_pct * 2.0)
@@ -1414,42 +1462,45 @@ cScr_StatMeter::Redraw ()
 	case VALUE_MED: default: tier_color = color_med; break;
 	}
 
+	// draw text, if any
+	if (orient == ORIENT_HORIZ && !text.IsEmpty ())
+	{
+		SetDrawingColor ((style == STYLE_GEM)
+			? color_blend : tier_color);
+		DrawText (text, text_pos, true);
+		SetDrawingOffset (meter_pos);
+	}
+
 	// draw progress bar
 	if (style == STYLE_PROGRESS)
 	{
+		CanvasRect fill_area (request_size);
+		if (orient == ORIENT_VERT) // invert dimensions
+		{
+			fill_area.w = request_size.h;
+			fill_area.h = request_size.w;
+		}
+
 		SetDrawingColor (color_bg);
-		FillArea ();
+		FillArea (fill_area);
 
 		SetDrawingColor (tier_color);
-		DrawBox ();
+		DrawBox (fill_area);
 
-		CanvasRect fill_area (0, 0, elem_size.w, elem_size.h);
 		if (orient == ORIENT_HORIZ)
-			switch (position)
-			{
-			case POS_NE: case POS_EAST: case POS_SE: // right->left
-				fill_area.x = std::lround
-					(elem_size.w * (1.0 - value_pct));
-				fill_area.w = std::lround
-					(elem_size.w * value_pct);
-				break;
-			default: // left->right
-				fill_area.w *= value_pct;
-				break;
-			}
+		{
+			fill_area.w = std::lround (fill_area.w * value_pct);
+			if (position == POS_NE || position == POS_EAST ||
+			    position == POS_SE) // right to left
+				fill_area.x = request_size.w - fill_area.w;
+		}
 		else // ORIENT_VERT
-			switch (position)
-			{
-			case POS_NW: case POS_NORTH: case POS_NE: // top->bottom
-				fill_area.h *= value_pct;
-				break;
-			default: // bottom->top
-				fill_area.y = std::lround
-					(elem_size.h * (1.0 - value_pct));
-				fill_area.h = std::lround
-					(elem_size.h * value_pct);
-				break;
-			}
+		{
+			fill_area.h = std::lround (fill_area.h * value_pct);
+			if (position != POS_NW && position != POS_NORTH &&
+			    position != POS_NE) // bottom to top
+				fill_area.y = request_size.w - fill_area.h;
+		}
 		FillArea (fill_area);
 	}
 
@@ -1463,12 +1514,12 @@ cScr_StatMeter::Redraw ()
 			if (bitmap)
 				DrawBitmap (bitmap, HUDBitmap::STATIC, unit);
 			else if (symbol != SYMBOL_NONE)
-				DrawSymbol (symbol, size, unit);
+				DrawSymbol (symbol, request_size, unit);
 
 			if (orient == ORIENT_HORIZ)
-				unit.x += size.w + spacing;
+				unit.x += request_size.w + spacing;
 			else // ORIENT_VERT
-				unit.y += size.h + spacing;
+				unit.y += request_size.h + spacing;
 		}
 	}
 
@@ -1480,12 +1531,20 @@ cScr_StatMeter::Redraw ()
 				(value_pct * (bitmap->GetFrames () - 1)));
 		else
 		{
+			CanvasRect fill_area (request_size);
+			if (orient == ORIENT_VERT)
+			{
+				fill_area.w = request_size.h;
+				fill_area.h = request_size.w;
+			}
 			SetDrawingColor (color_blend);
-			FillArea ();
+			FillArea (fill_area);
 			SetDrawingColor (color_bg);
-			DrawBox ();
+			DrawBox (fill_area);
 		}
 	}
+
+	SetDrawingOffset ();
 }
 
 long
@@ -1549,6 +1608,12 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 		style = STYLE_PROGRESS;
 	}
 
+	UpdateImage ();
+
+	spacing = GetParamInt ("stat_meter_spacing", 8);
+
+	UpdateText ();
+
 	cAnsiStr _position = GetParamString ("stat_meter_position", NULL);
 	if (!stricmp (_position, "center")) position = POS_CENTER;
 	else if (!stricmp (_position, "north")) position = POS_NORTH;
@@ -1581,18 +1646,14 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 		orient = ORIENT_HORIZ;
 	}
 
-	UpdateImage ();
-
 	if (bitmap)
-		size = bitmap->GetSize ();
+		request_size = bitmap->GetSize ();
 	else
 	{
-		size.w = GetParamInt ("stat_meter_width",
+		request_size.w = GetParamInt ("stat_meter_width",
 			(style == STYLE_UNITS) ? 32 : 128);
-		size.h = GetParamInt ("stat_meter_height", 32);
+		request_size.h = GetParamInt ("stat_meter_height", 32);
 	}
-
-	spacing = GetParamInt ("stat_meter_spacing", 8);
 
 	qvar = GetParamString ("stat_source_qvar", NULL);
 
@@ -1670,9 +1731,52 @@ cScr_StatMeter::UpdateImage ()
 }
 
 void
+cScr_StatMeter::UpdateText ()
+{
+	cAnsiStr __text = GetParamString ("stat_meter_text", "@none");
+	SService<IDataSrv> pDS (g_pScriptManager);
+	cScrStr _text;
+
+	if (__text.IsEmpty () || !stricmp (__text, "@none"))
+		{}
+
+	else if (!stricmp (__text, "@name"))
+	{
+		if (prop_object)
+			pDS->GetObjString (_text, prop_object, "objnames");
+		else
+			pDS->GetString (_text, "hud", qvar, "", "strings");
+	}
+
+	else if (!stricmp (__text, "@description"))
+	{
+		if (prop_object)
+			pDS->GetObjString (_text, prop_object, "objdescs");
+		else
+			DebugString ("Warning: `@description' is not a valid "
+				"stat meter text source for a quest variable "
+				"statistic.");
+	}
+
+	else if (__text.GetAt (0) == '@')
+		DebugPrintf ("Warning: `%s' is not a valid stat meter text "
+			"source.", (const char*) __text);
+
+	else
+		pDS->GetString (_text, "hud", __text, "", "strings");
+
+	if (!!strcmp (text, _text))
+	{
+		text = _text;
+		ScheduleRedraw ();
+	}
+}
+
+void
 cScr_StatMeter::UpdateObject ()
 {
 	prop_object = GetParamObject ("stat_source_object", ObjId ());
+	UpdateText (); // in case _text == @name or == @description
 
 	if (qvar.IsEmpty () && !stricmp (prop_name, "AI_Visibility") &&
 	    !stricmp (prop_field, "Level"))
