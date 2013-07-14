@@ -147,7 +147,7 @@ public:
 	STDMETHOD_(void, DrawTOverlay) ();
 	STDMETHOD_(void, OnUIEnterMode) ();
 
-	void RegisterElement (HUDElement& element);
+	bool RegisterElement (HUDElement& element);
 	void UnregisterElement (HUDElement& element);
 
 	HUDBitmapPtr LoadBitmap (const char* path, bool animation);
@@ -155,7 +155,12 @@ public:
 protected:
 	CustomHUD ();
 
+	bool LockMutex ();
+	bool UnlockMutex ();
+
 private:
+	HANDLE mutex;
+
 	HUDElements elements;
 	HUDBitmaps bitmaps;
 };
@@ -175,7 +180,7 @@ public:
 	virtual void EnterGameMode ();
 
 protected:
-	bool Initialize ();
+	virtual bool Initialize ();
 	void Deinitialize ();
 	object GetHost ();
 
@@ -289,6 +294,7 @@ public:
 protected:
 	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 
 	bool SubscribeProperty (const char* property);
@@ -307,11 +313,10 @@ public:
 	cScr_QuestArrow (const char* pszName, int iHostObjId);
 
 protected:
+	virtual bool Initialize ();
 	virtual bool Prepare ();
 	virtual void Redraw ();
 
-	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual void OnPropertyChanged (const char* property);
 	virtual long OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply);
@@ -359,11 +364,10 @@ public:
 	cScr_StatMeter (const char* pszName, int iHostObjId);
 
 protected:
+	virtual bool Initialize ();
 	virtual bool Prepare ();
 	virtual void Redraw ();
 
-	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual void OnPropertyChanged (const char* property);
@@ -446,16 +450,15 @@ public:
 	cScr_ToolSight (const char* pszName, int iHostObjId);
 
 protected:
+	virtual bool Initialize ();
 	virtual bool Prepare ();
 	virtual void Redraw ();
 
-	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual void OnPropertyChanged (const char* property);
 	virtual long OnInvSelect (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnInvFocus (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnInvDeSelect (sScrMsg* pMsg, cMultiParm& mpReply);
 	virtual long OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply);
+	virtual void OnPropertyChanged (const char* property);
 
 private:
 	void UpdateImage ();

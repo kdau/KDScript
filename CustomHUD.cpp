@@ -24,6 +24,10 @@
 #include <cmath>
 #include <cstdarg>
 #include <cstdlib>
+#include <windows.h>
+#undef DrawText // ugh, Windows...
+#undef GetClassName // ugh, Windows...
+#undef LoadBitmap // ugh, Windows...
 #include <lg/objstd.h>
 #include <darkhook.h>
 #include <ScriptLib.h>
@@ -263,7 +267,11 @@ HUDBitmap::Draw (std::size_t frame, CanvasPoint position, CanvasRect clip)
 /* CustomHUD */
 
 CustomHUD::CustomHUD ()
+	: mutex (CreateMutex (NULL, FALSE, NULL))
 {
+	if (mutex == NULL)
+		DebugPrintf ("Error: CustomHUD couldn't create a mutex.");
+
 	SService<IDarkOverlaySrv> pDOS (g_pScriptManager);
 	pDOS->SetHandler (this);
 }
@@ -274,9 +282,18 @@ CustomHUD::~CustomHUD ()
 	pDOS->SetHandler (NULL);
 }
 
+
 CustomHUDPtr
 CustomHUD::Get ()
 {
+	static HANDLE get_mutex = CreateMutex (NULL, FALSE, NULL);
+	if (get_mutex == NULL ||
+	    WaitForSingleObject (get_mutex, INFINITE) != WAIT_OBJECT_0)
+	{
+		DebugPrintf ("Error: CustomHUD::Get couldn't lock its mutex.");
+		return CustomHUDPtr ();
+	}
+
 	static std::weak_ptr<CustomHUD> single;
 	CustomHUDPtr result = single.lock ();
 	if (!result)
@@ -284,6 +301,8 @@ CustomHUD::Get ()
 		result = CustomHUDPtr (new CustomHUD ());
 		single = result;
 	}
+
+	ReleaseMutex (get_mutex);
 	return result;
 }
 
@@ -308,22 +327,28 @@ CustomHUD::OnUIEnterMode ()
 		element->EnterGameMode ();
 }
 
-void
+bool
 CustomHUD::RegisterElement (HUDElement& element)
 {
+	if (!LockMutex ()) return false;
 	elements.push_back (&element);
+	UnlockMutex ();
+	return true;
 }
 
 void
 CustomHUD::UnregisterElement (HUDElement& element)
 {
+	if (!LockMutex ()) return;
 	elements.remove (&element);
+	UnlockMutex ();
 }
 
 HUDBitmapPtr
 CustomHUD::LoadBitmap (const char* path, bool animation)
 {
 	HUDBitmapPtr result;
+	if (!LockMutex ()) return result;
 
 	// try an existing bitmap
 	HUDBitmaps::iterator existing = bitmaps.find (path);
@@ -331,7 +356,10 @@ CustomHUD::LoadBitmap (const char* path, bool animation)
 	{
 		result = existing->second.lock ();
 		if (result)
+		{
+			UnlockMutex ();
 			return result;
+		}
 		else
 			bitmaps.erase (existing);
 	}
@@ -348,7 +376,24 @@ CustomHUD::LoadBitmap (const char* path, bool animation)
 			path, e.what ());
 	}
 
+	UnlockMutex ();
 	return result;
+}
+
+bool
+CustomHUD::LockMutex ()
+{
+	if (mutex == NULL) return false;
+	bool result = WaitForSingleObject (mutex, INFINITE) == WAIT_OBJECT_0;
+	if (!result)
+		DebugPrintf ("Error: CustomHUD couldn't lock its mutex.");
+	return result;
+}
+
+bool
+CustomHUD::UnlockMutex ()
+{
+	return (mutex != NULL) ? ReleaseMutex (mutex) : false;
 }
 
 
@@ -421,10 +466,12 @@ HUDElement::EnterGameMode ()
 bool
 HUDElement::Initialize ()
 {
-	// register with the handler object
-	hud = CustomHUD::Get ();
-	hud->RegisterElement (*this);
-	return true;
+	if (hud) // already registered
+		return false;
+	else if (hud = CustomHUD::Get ()) // register with the handler
+		return hud->RegisterElement (*this);
+	else
+		return false;
 }
 
 void
@@ -433,7 +480,7 @@ HUDElement::Deinitialize ()
 	// destroy any overlay
 	DestroyOverlay ();
 
-	// unregister with the handler object
+	// unregister with the handler
 	if (hud)
 	{
 		hud->UnregisterElement (*this);
@@ -941,6 +988,15 @@ cScr_HUDElement::OnEndScript (sScrMsg*, cMultiParm&)
 }
 
 long
+cScr_HUDElement::OnSim (sSimMsg* pMsg, cMultiParm&)
+{
+	if (pMsg->fStarting)
+		return Initialize () ? S_OK : S_FALSE;
+	else
+		return S_FALSE;
+}
+
+long
 cScr_HUDElement::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 {
 	if (!stricmp (pMsg->message, "DHNotify"))
@@ -993,6 +1049,20 @@ cScr_QuestArrow::cScr_QuestArrow (const char* pszName, int iHostObjId)
 	  bitmap (), image_pos (), text (), text_pos (),
 	  color (0), shadow (true)
 {}
+
+bool
+cScr_QuestArrow::Initialize ()
+{
+	if (!cScr_HUDElement::Initialize ()) return false;
+
+	enabled.Init (GetParamBool ("quest_arrow", true));
+	OnPropertyChanged ("DesignNote"); // update all cached params
+
+	SubscribeProperty ("DesignNote");
+	SubscribeProperty ("GameName"); // for quest_arrow_text == "@name"
+
+	return true;
+}
 
 bool
 cScr_QuestArrow::Prepare ()
@@ -1074,27 +1144,6 @@ cScr_QuestArrow::Redraw ()
 		DrawSymbol (symbol, SYMBOL_SIZE, image_pos, symbol_dirn, shadow);
 
 	DrawText (text, text_pos, shadow);
-}
-
-long
-cScr_QuestArrow::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	long result = cScr_HUDElement::OnBeginScript (pMsg, mpReply);
-
-	enabled.Init (GetParamBool ("quest_arrow", true));
-	OnPropertyChanged ("DesignNote"); // update all cached params
-
-	SubscribeProperty ("DesignNote");
-	SubscribeProperty ("GameName"); // for quest_arrow_text == "@name"
-
-	return result;
-}
-
-long
-cScr_QuestArrow::OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	bitmap.reset ();
-	return cScr_HUDElement::OnEndScript (pMsg, mpReply);
 }
 
 long
@@ -1309,6 +1358,16 @@ cScr_StatMeter::cScr_StatMeter (const char* pszName, int iHostObjId)
 	  color_bg (0), color_low (0), color_med (0), color_high (0),
 	  value (0.0), value_pct (0.0), value_tier (VALUE_MED)
 {}
+
+bool
+cScr_StatMeter::Initialize ()
+{
+	if (!cScr_HUDElement::Initialize ()) return false;
+	enabled.Init (GetParamBool ("stat_meter", true));
+	OnPropertyChanged ("DesignNote"); // update all cached params
+	SubscribeProperty ("DesignNote");
+	return true;
+}
 
 bool
 cScr_StatMeter::Prepare ()
@@ -1546,23 +1605,6 @@ cScr_StatMeter::Redraw ()
 }
 
 long
-cScr_StatMeter::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	long result = cScr_HUDElement::OnBeginScript (pMsg, mpReply);
-	enabled.Init (GetParamBool ("stat_meter", true));
-	OnPropertyChanged ("DesignNote"); // update all cached params
-	SubscribeProperty ("DesignNote");
-	return result;
-}
-
-long
-cScr_StatMeter::OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	bitmap.reset ();
-	return cScr_HUDElement::OnEndScript (pMsg, mpReply);
-}
-
-long
 cScr_StatMeter::OnSim (sSimMsg* pMsg, cMultiParm& mpReply)
 {
 	if (pMsg->fStarting)
@@ -1594,7 +1636,7 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 	if (!!strcmp (property, "DesignNote")) return;
 	ScheduleRedraw (); // too many to check, so just assume we're affected
 
-	cAnsiStr _style = GetParamString ("stat_meter_style", NULL);
+	cAnsiStr _style = GetParamString ("stat_meter_style", "");
 	if (!stricmp (_style, "progress")) style = STYLE_PROGRESS;
 	else if (!stricmp (_style, "units")) style = STYLE_UNITS;
 	else if (!stricmp (_style, "gem")) style = STYLE_GEM;
@@ -1612,7 +1654,7 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 
 	UpdateText ();
 
-	cAnsiStr _position = GetParamString ("stat_meter_position", NULL);
+	cAnsiStr _position = GetParamString ("stat_meter_position", "");
 	if (!stricmp (_position, "center")) position = POS_CENTER;
 	else if (!stricmp (_position, "north")) position = POS_NORTH;
 	else if (!stricmp (_position, "ne")) position = POS_NE;
@@ -1633,7 +1675,7 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 	offset.x = GetParamInt ("stat_meter_offset_x", 0);
 	offset.y = GetParamInt ("stat_meter_offset_y", 0);
 
-	cAnsiStr _orient = GetParamString ("stat_meter_orient", NULL);
+	cAnsiStr _orient = GetParamString ("stat_meter_orient", "");
 	if (!stricmp (_orient, "horiz")) orient = ORIENT_HORIZ;
 	else if (!stricmp (_orient, "vert")) orient = ORIENT_VERT;
 	else
@@ -1653,16 +1695,19 @@ cScr_StatMeter::OnPropertyChanged (const char* property)
 		request_size.h = GetParamInt ("stat_meter_height", 32);
 	}
 
-	qvar = GetParamString ("stat_source_qvar", NULL);
+	qvar = GetParamString ("stat_source_qvar", "");
 
-	prop_name = GetParamString ("stat_source_property", NULL);
-	prop_field = GetParamString ("stat_source_field", NULL);
+	prop_name = GetParamString ("stat_source_property", "");
+	prop_field = GetParamString ("stat_source_field", "");
 	if (!qvar.IsEmpty () && !prop_name.IsEmpty ())
 		DebugPrintf ("Warning: Both a quest variable and a property "
 			"were specified; will use the quest variable and "
 			"ignore the property.");
+	else if (qvar.IsEmpty () && prop_name.IsEmpty ())
+		DebugPrintf ("Warning: Neither a quest variable nor a property "
+			"was specified; the stat meter will not be displayed.");
 
-	cAnsiStr _prop_comp = GetParamString ("stat_source_component", NULL);
+	cAnsiStr _prop_comp = GetParamString ("stat_source_component", "");
 	if (!stricmp (_prop_comp, "x")) prop_comp = COMP_X;
 	else if (!stricmp (_prop_comp, "y")) prop_comp = COMP_Y;
 	else if (!stricmp (_prop_comp, "z")) prop_comp = COMP_Z;
@@ -1700,7 +1745,7 @@ cScr_StatMeter::UpdateImage ()
 	bitmap.reset ();
 
 	cAnsiStr image = GetParamString ("stat_meter_image",
-		(style == STYLE_GEM) ? "@none" : "@square");
+		(style == STYLE_UNITS) ? "@square" : "@none");
 	Symbol _symbol = SYMBOL_NONE;
 
 	if (image.GetAt (0) == '@')
@@ -1713,19 +1758,26 @@ cScr_StatMeter::UpdateImage ()
 				? SYMBOL_NONE : SYMBOL_ARROW;
 	}
 
+	if (style == STYLE_PROGRESS && bitmap)
+	{
+		DebugString ("Warning: Bitmap image `%s' will be ignored for "
+			"a progress-style meter.", (const char*) image);
+		bitmap.reset ();
+	}
+
+	if (style != STYLE_UNITS && symbol != SYMBOL_NONE)
+	{
+		DebugString ("Warning: Symbol %s will be ignored for a "
+			"non-units-style meter.", (const char*) image);
+		symbol = SYMBOL_NONE;
+	}
+
 	if (symbol != _symbol || bitmap != old_bitmap)
 	{
 		symbol = _symbol;
 		ScheduleRedraw ();
 	}
 
-	if (style == STYLE_PROGRESS && (bitmap || symbol != SYMBOL_NONE))
-		DebugString ("Warning: stat_meter_image will be ignored for "
-			"a progress-style meter.");
-
-	if (style == STYLE_GEM && symbol != SYMBOL_NONE)
-		DebugString ("Warning: Symbol %s will be ignored for a "
-			"gem-style meter.", (const char*) image);
 }
 
 void
@@ -1817,6 +1869,16 @@ cScr_ToolSight::cScr_ToolSight (const char* pszName, int iHostObjId)
 {}
 
 bool
+cScr_ToolSight::Initialize ()
+{
+	if (!cScr_HUDElement::Initialize ()) return false;
+	enabled.Init (false);
+	OnPropertyChanged ("DesignNote");
+	SubscribeProperty ("DesignNote");
+	return true;
+}
+
+bool
 cScr_ToolSight::Prepare ()
 {
 	if (!enabled) return false;
@@ -1846,46 +1908,6 @@ cScr_ToolSight::Redraw ()
 }
 
 long
-cScr_ToolSight::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	long result = cScr_HUDElement::OnBeginScript (pMsg, mpReply);
-	enabled.Init (false);
-	OnPropertyChanged ("DesignNote");
-	SubscribeProperty ("DesignNote");
-	return result;
-}
-
-long
-cScr_ToolSight::OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	bitmap.reset ();
-	return cScr_HUDElement::OnEndScript (pMsg, mpReply);
-}
-
-void
-cScr_ToolSight::OnPropertyChanged (const char* property)
-{
-	if (!!strcmp (property, "DesignNote")) return;
-
-	UpdateImage ();
-
-	ulong _color = GetParamColor ("tool_sight_color", 0x808080);
-	if (color != _color)
-	{
-		color = _color;
-		ScheduleRedraw ();
-	}
-
-	CanvasPoint _offset (GetParamInt ("tool_sight_offset_x", 0),
-		GetParamInt ("tool_sight_offset_y", 0));
-	if (offset != _offset)
-	{
-		offset = _offset;
-		ScheduleRedraw ();
-	}
-}
-
-long
 cScr_ToolSight::OnInvSelect (sScrMsg* pMsg, cMultiParm& mpReply)
 {
 	enabled = true;
@@ -1911,6 +1933,29 @@ cScr_ToolSight::OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply)
 {
 	enabled = false;
 	return cScr_HUDElement::OnInvDeFocus (pMsg, mpReply);
+}
+
+void
+cScr_ToolSight::OnPropertyChanged (const char* property)
+{
+	if (!!strcmp (property, "DesignNote")) return;
+
+	UpdateImage ();
+
+	ulong _color = GetParamColor ("tool_sight_color", 0x808080);
+	if (color != _color)
+	{
+		color = _color;
+		ScheduleRedraw ();
+	}
+
+	CanvasPoint _offset (GetParamInt ("tool_sight_offset_x", 0),
+		GetParamInt ("tool_sight_offset_y", 0));
+	if (offset != _offset)
+	{
+		offset = _offset;
+		ScheduleRedraw ();
+	}
 }
 
 void

@@ -209,9 +209,9 @@ DarkFog::InterpolateDistance (float start, float end, float progress)
 	if (progress == 1.0)
 		{} // don't fake distance at end
 	else if (start == 0.0)
-		start = 5.0 * end;
+		start = 50.0 * end;
 	else if (end == 0.0)
-		end = 5.0 * start;
+		end = 50.0 * start;
 	return start + progress * (end - start);
 }
 
