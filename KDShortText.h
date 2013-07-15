@@ -1,9 +1,7 @@
 /******************************************************************************
- *  Other.h: miscellaneous useful scripts
+ *  KDShortText.h
  *
- *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
- *  Adapted in part from Public Scripts
- *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
+ *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,17 +18,12 @@
  *
  *****************************************************************************/
 
-#ifndef TEXT_H
-#define TEXT_H
+#ifndef KDSHORTTEXT_H
+#define KDSHORTTEXT_H
 
 #if !SCR_GENSCRIPTS
 #include "BaseScript.h"
-#include "scriptvars.h"
-#include "CustomHUD.h"
-#include "utils.h"
 #endif // SCR_GENSCRIPTS
-
-
 
 #if !SCR_GENSCRIPTS
 class cScr_ShortText : public virtual cBaseScript
@@ -49,90 +42,5 @@ private:
 GEN_FACTORY("KDShortText","BaseScript",cScr_ShortText)
 #endif // SCR_GENSCRIPTS
 
-
-
-#if !SCR_GENSCRIPTS
-class HUDSubtitle : public HUDElement
-{
-public:
-	HUDSubtitle (object host, const char* text, ulong color);
-	virtual ~HUDSubtitle ();
-
-protected:
-	virtual bool Prepare ();
-	virtual void Redraw ();
-
-private:
-	static const int BORDER, PADDING;
-
-	cAnsiStr text;
-	ulong color;
-	bool player;
-};
-#endif // !SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_Subtitled : public virtual cBaseScript
-{
-public:
-	cScr_Subtitled (const char* pszName, int iHostObjId);
-	virtual ~cScr_Subtitled ();
-
-protected:
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
-
-	bool Subtitle (object host, object schema);
-	void EndSubtitle (object schema = None);
-
-	static const float EARSHOT;
-
-private:
-	script_int last_schema; // object
-	HUDSubtitle* element;
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDSubtitled","BaseScript",cScr_Subtitled)
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_SubtitledAI : public cScr_Subtitled
-{
-public:
-	cScr_SubtitledAI (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDSubtitledAI","KDSubtitled",cScr_SubtitledAI)
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_SubtitledVO : public cScr_Subtitled
-{
-public:
-	cScr_SubtitledVO (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnTurnOn (sScrMsg* pMsg, cMultiParm& mpReply);
-
-private:
-	script_int played; // bool
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDSubtitledVO","KDSubtitled",cScr_SubtitledVO)
-#endif // SCR_GENSCRIPTS
-
-
-
-#endif // TEXT_H
+#endif // KDSHORTTEXT_H
 

@@ -1,9 +1,7 @@
 /******************************************************************************
- *  Other.h: all other scripts
+ *  KDGetInfo.h
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
- *  Adapted in part from Public Scripts
- *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,64 +18,12 @@
  *
  *****************************************************************************/
 
-#ifndef OTHER_H
-#define OTHER_H
+#ifndef KDGETINFO_H
+#define KDGETINFO_H
 
 #if !SCR_GENSCRIPTS
 #include "BaseScript.h"
-#include "BaseTrap.h"
-#include "utils.h"
 #endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_Carried : public virtual cBaseScript
-{
-public:
-	cScr_Carried (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnCreate (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-
-private:
-	void Drop ();
-	void FixPhysics ();
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDCarried","BaseScript",cScr_Carried)
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_Carrier : public virtual cBaseAIScript
-{
-public:
-	cScr_Carrier (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnCreate (sScrMsg* pMsg, cMultiParm& mpReply);
-
-	virtual long OnAIModeChange (sAIModeChangeMsg* pMsg,
-		cMultiParm& mpReply);
-	virtual long OnAlertness (sAIAlertnessMsg* pMsg, cMultiParm& mpReply);
-
-private:
-	void CreateAttachments ();
-	void CreateAttachment (object archetype, int joint);
-
-	void NotifyCarried (const char* message,
-		const cMultiParm& data = cMultiParm::Undef);
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDCarrier","BaseAIScript",cScr_Carrier)
-#endif // SCR_GENSCRIPTS
-
-
 
 #if !SCR_GENSCRIPTS
 class cScr_GetInfo : public virtual cBaseScript
@@ -100,53 +46,5 @@ private:
 GEN_FACTORY("KDGetInfo","BaseScript",cScr_GetInfo)
 #endif // SCR_GENSCRIPTS
 
-
-
-#if !SCR_GENSCRIPTS
-class cScr_JunkTool : public virtual cBaseScript
-{
-public:
-	cScr_JunkTool (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnInvDeSelect (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnFrobInvEnd (sFrobMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnFrobToolEnd (sFrobMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnSlain (sSlayMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnDestroy (sScrMsg* pMsg, cMultiParm& mpReply);
-
-private:
-	object GetAvatarContainer ();
-
-	void StartJunk (object avatar);
-	void EndJunk (object avatar);
-
-	object CreateFrobbable (object avatar);
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDJunkTool","BaseScript",cScr_JunkTool)
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_TrapNextMission : public virtual cBaseTrap
-{
-public:
-	cScr_TrapNextMission (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapNextMission","BaseTrap",cScr_TrapNextMission)
-#endif // SCR_GENSCRIPTS
-
-
-
-#endif // OTHER_H
+#endif // KDGETINFO_H
 

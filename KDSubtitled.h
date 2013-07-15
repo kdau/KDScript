@@ -1,9 +1,7 @@
 /******************************************************************************
- *  Other.h: miscellaneous useful scripts
+ *  KDSubtitled.h: HUDSubtitle, KDSubtitled, KDSubtitledAI, KDSubtitledVO
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
- *  Adapted in part from Public Scripts
- *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,33 +18,13 @@
  *
  *****************************************************************************/
 
-#ifndef TEXT_H
-#define TEXT_H
+#ifndef KDSUBTITLED_H
+#define KDSUBTITLED_H
 
 #if !SCR_GENSCRIPTS
 #include "BaseScript.h"
-#include "scriptvars.h"
-#include "CustomHUD.h"
-#include "utils.h"
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_ShortText : public virtual cBaseScript
-{
-public:
-	cScr_ShortText (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnFrobWorldEnd (sFrobMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnWorldSelect (sScrMsg* pMsg, cMultiParm& mpReply);
-
-private:
-	void DisplayMessage ();
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDShortText","BaseScript",cScr_ShortText)
+#include "KDHUDElement.h"
+#include "scriptvars.h" //FIXME
 #endif // SCR_GENSCRIPTS
 
 
@@ -86,7 +64,7 @@ protected:
 	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
 
 	bool Subtitle (object host, object schema);
-	void EndSubtitle (object schema = None);
+	void EndSubtitle (object schema);
 
 	static const float EARSHOT;
 
@@ -134,5 +112,5 @@ GEN_FACTORY("KDSubtitledVO","KDSubtitled",cScr_SubtitledVO)
 
 
 
-#endif // TEXT_H
+#endif // KDSUBTITLED_H
 

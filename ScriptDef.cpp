@@ -60,18 +60,42 @@
 #include "BaseScript.h"
 #include "BaseTrap.h"
 
-#include "CustomHUD.h"
-#include "Rendering.h"
-#include "Text.h"
-#include "Other.h"
+#include "KDCarried.h"
+#include "KDCarrier.h"
+#include "KDCustomHUD.h"
+#include "KDGetInfo.h"
+#include "KDHUDElement.h"
+#include "KDJunkTool.h"
+#include "KDQuestArrow.h"
+#include "KDShortText.h"
+#include "KDStatMeter.h"
+#include "KDSubtitled.h"
+#include "KDToolSight.h"
+#include "KDTransitionTrap.h"
+#include "KDTrapEnvMap.h"
+#include "KDTrapFog.h"
+#include "KDTrapNextMission.h"
+#include "KDTrapWeather.h"
 
 #undef BASESCRIPT_H
 #undef BASETRAP_H
 
-#undef CUSTOMHUD_H
-#undef RENDERING_H
-#undef TEXT_H
-#undef OTHER_H
+#undef KDCARRIED_H
+#undef KDCARRIER_H
+#undef KDCUSTOMHUD_H
+#undef KDGETINFO_H
+#undef KDHUDELEMENT_H
+#undef KDJUNKTOOL_H
+#undef KDQUESTARROW_H
+#undef KDSHORTTEXT_H
+#undef KDSTATMETER_H
+#undef KDSUBTITLED_H
+#undef KDTOOLSIGHT_H
+#undef KDTRANSITIONTRAP_H
+#undef KDTRAPENVMAP_H
+#undef KDTRAPFOG_H
+#undef KDTRAPNEXTMISSION_H
+#undef KDTRAPWEATHER_H
 
 #if defined(SCR_GENSCRIPTFACTORY)
 

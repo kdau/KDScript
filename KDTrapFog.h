@@ -1,9 +1,7 @@
 /******************************************************************************
- *  Rendering.h: scripts affecting weather, precipitation, and textures
+ *  KDTrapFog.h: DarkFog, KDTrapFog, KDSyncGlobalFog
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
- *  Adapted in part from Public Scripts
- *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,67 +18,12 @@
  *
  *****************************************************************************/
 
-#ifndef RENDERING_H
-#define RENDERING_H
+#ifndef KDTRAPFOG_H
+#define KDTRAPFOG_H
 
 #if !SCR_GENSCRIPTS
-#include "BaseScript.h"
-#include "BaseTrap.h"
-#include "scriptvars.h"
-#include "utils.h"
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_TransitionTrap : public virtual cBaseTrap
-{
-public:
-	cScr_TransitionTrap (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
-
-	virtual bool OnPrepare (bool state);
-	void Begin ();
-	virtual bool OnIncrement ();
-
-	float GetProgress ();
-	float Interpolate (float start, float end);
-	ulong InterpolateColor (ulong start, ulong end);
-
-private:
-	static const int INCREMENT_TIME;
-	void Increment ();
-
-	script_handle<tScrTimer> timer;
-	script_int time_total, time_remaining;
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTransitionTrap","BaseTrap",cScr_TransitionTrap)
-#endif // SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_TrapEnvMap : public virtual cBaseTrap
-{
-public:
-	cScr_TrapEnvMap (const char* pszName, int iHostObjId);
-
-protected:
-	enum
-	{
-		GLOBAL_ZONE = 0,
-		MIN_ZONE = 0,
-		MAX_ZONE = 63
-	};
-
-	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapEnvMap","BaseTrap",cScr_TrapEnvMap)
+#include "KDTransitionTrap.h"
+#include "scriptvars.h" //FIXME
 #endif // SCR_GENSCRIPTS
 
 
@@ -163,56 +106,5 @@ GEN_FACTORY("KDSyncGlobalFog","KDTransitionTrap",cScr_SyncGlobalFog)
 
 
 
-#if !SCR_GENSCRIPTS
-struct DarkWeather
-{
-	DarkWeather ();
-	void GetFromMission ();
-	void SetInMission () const;
-
-	enum PrecipType
-	{
-		PRECIP_SNOW = 0,
-		PRECIP_RAIN = 1
-	} precip_type;
-	float precip_freq;
-	float precip_speed;
-	float vis_dist;
-	float rend_radius;
-	float alpha;
-	float brightness;
-	float snow_jitter;
-	float rain_length;
-	float splash_freq;
-	float splash_radius;
-	float splash_height;
-	float splash_duration;
-	cScrStr texture;
-	cScrVec wind;
-};
-#endif // !SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_TrapWeather : public cScr_TransitionTrap
-{
-public:
-	cScr_TrapWeather (const char* pszName, int iHostObjId);
-
-protected:
-	virtual bool OnPrepare (bool state);
-	virtual bool OnIncrement ();
-
-private:
-	script_float start_freq, end_freq,
-		start_speed, end_speed;
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapWeather","KDTransitionTrap",cScr_TrapWeather)
-#endif // SCR_GENSCRIPTS
-
-
-
-#endif // RENDERING_H
+#endif // KDTRAPFOG_H
 

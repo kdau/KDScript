@@ -1,9 +1,7 @@
 /******************************************************************************
- *  Other.cpp: miscellaneous useful scripts
+ *  KDSubtitled.cpp: HUDSubtitle, KDSubtitled, KDSubtitledAI, KDSubtitledVO
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
- *  Adapted in part from Public Scripts
- *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,58 +18,10 @@
  *
  *****************************************************************************/
 
-#include "Text.h"
+#include "KDSubtitled.h"
 #include <ScriptLib.h>
 #include <darkhook.h>
-
-
-
-/* KDShortText */
-
-cScr_ShortText::cScr_ShortText (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId)
-{}
-
-long
-cScr_ShortText::OnFrobWorldEnd (sFrobMsg*, cMultiParm&)
-{
-	if (GetObjectParamBool (ObjId (), "text_on_frob", true))
-		DisplayMessage ();
-	return S_OK;
-}
-
-long
-cScr_ShortText::OnWorldSelect (sScrMsg*, cMultiParm&)
-{
-	if (GetObjectParamBool (ObjId (), "text_on_focus", true))
-		DisplayMessage ();
-	return S_OK;
-}
-
-void
-cScr_ShortText::DisplayMessage ()
-{
-	SService<IPropertySrv> pPS (g_pScriptManager);
-	cMultiParm msgid;
-	if (pPS->Possessed (ObjId (), "Book"))
-		pPS->Get (msgid, ObjId (), "Book", NULL);
-	else if (char* _msgid = GetObjectParamString (ObjId (), "text"))
-	{
-		msgid = _msgid;
-		g_pMalloc->Free (_msgid);
-	}
-
-	if (msgid.type != kMT_String) return;
-
-	SService<IDataSrv> pDS (g_pScriptManager);
-	cScrStr msgstr;
-	pDS->GetString (msgstr, "short", msgid, "", "strings");
-	if (msgstr.IsEmpty ()) return;
-
-	ShowString (msgstr,
-		GetObjectParamTime (ObjId (), "text_time", CalcTextTime (msgstr)),
-		GetObjectParamColor (ObjId (), "text_color", 0));
-}
+#include "utils.h"
 
 
 
@@ -155,7 +105,7 @@ cScr_Subtitled::cScr_Subtitled (const char* pszName, int iHostObjId)
 
 cScr_Subtitled::~cScr_Subtitled ()
 {
-	EndSubtitle ();
+	EndSubtitle (Any);
 }
 
 long
@@ -190,7 +140,7 @@ cScr_Subtitled::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
 long
 cScr_Subtitled::OnEndScript (sScrMsg*, cMultiParm&)
 {
-	EndSubtitle ();
+	EndSubtitle (Any);
 	return S_OK;
 }
 
@@ -213,7 +163,7 @@ cScr_Subtitled::Subtitle (object host, object schema)
 	if (text.IsEmpty ()) return false;
 
 	// end any previous subtitle on this object
-	EndSubtitle ();
+	EndSubtitle (Any);
 
 	// get or calculate schema duration
 	SService<IPropertySrv> pPS (g_pScriptManager);

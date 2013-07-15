@@ -114,6 +114,22 @@ KDSCRIPT_HEADERS = \
 KDSCRIPT_OBJS1 = $(KDSCRIPT_HEADERS:%.h=$(bin1dir)/%.o)
 KDSCRIPT_OBJS2 = $(KDSCRIPT_HEADERS:%.h=$(bin2dir)/%.o)
 KDSCRIPT_INCLUDES = Script.h BaseScript.h BaseTrap.h scriptvars.h utils.h
+$(bin1dir)/KDCustomHUD.o: KDHUDElement.h
+$(bin2dir)/KDCustomHUD.o: KDHUDElement.h
+$(bin1dir)/KDHUDElement.o: KDCustomHUD.h
+$(bin2dir)/KDHUDElement.o: KDCustomHUD.h
+$(bin1dir)/KDQuestArrow.o: KDHUDElement.h
+$(bin2dir)/KDQuestArrow.o: KDHUDElement.h
+$(bin1dir)/KDStatMeter.o: KDHUDElement.h
+$(bin2dir)/KDStatMeter.o: KDHUDElement.h
+$(bin1dir)/KDSubtitled.o: KDHUDElement.h
+$(bin2dir)/KDSubtitled.o: KDHUDElement.h
+$(bin1dir)/KDToolSight.o: KDHUDElement.h
+$(bin2dir)/KDToolSight.o: KDHUDElement.h
+$(bin1dir)/KDTrapFog.o: KDTransitionTrap.h
+$(bin2dir)/KDTrapFog.o: KDTransitionTrap.h
+$(bin1dir)/KDTrapWeather.o: KDTransitionTrap.h
+$(bin2dir)/KDTrapWeather.o: KDTransitionTrap.h
 
 MODULE_OBJS = \
 	$(bindir)/Allocator.o \
@@ -161,14 +177,14 @@ $(bin1dir)/%_res.o: %.rc
 $(bin2dir)/%_res.o: %.rc
 	$(RC) $(DEFINES) $(DEFINES2) $(RCDEFINES) -o $@ -i $<
 
-$(MODULE_NAME)-t1.osm: $(BASE_OBJS) $(BASE_OBJS1) $(KDSCRIPT_OBJS1) $(MODULE_OBJS) $(MODULE_OBJS1)
+$(bin1dir)/$(MODULE_NAME).osm: $(BASE_OBJS) $(BASE_OBJS1) $(KDSCRIPT_OBJS1) $(MODULE_OBJS) $(MODULE_OBJS1)
 	$(LD) $(LDFLAGS) -Wl,--image-base=0x14700000 $(LIBDIRS) -o $@ script.def $^ $(LIBS1) $(LIBS)
 
-$(MODULE_NAME)-t2.osm: $(BASE_OBJS) $(BASE_OBJS2) $(KDSCRIPT_OBJS2) $(MODULE_OBJS) $(MODULE_OBJS2)
+$(bin2dir)/$(MODULE_NAME).osm: $(BASE_OBJS) $(BASE_OBJS2) $(KDSCRIPT_OBJS2) $(MODULE_OBJS) $(MODULE_OBJS2)
 	$(LD) $(LDFLAGS) -Wl,--image-base=0x14700000 $(LIBDIRS) -o $@ script.def $^ $(LIBS2) $(LIBS)
 
-all: $(bindir) $(bin1dir) $(bin2dir) $(MODULE_NAME)-t1.osm $(MODULE_NAME)-t2.osm
+all: $(bindir) $(bin1dir) $(bin2dir) $(bin1dir)/$(MODULE_NAME).osm $(bin2dir)/$(MODULE_NAME).osm
 
 clean:
-	$(RM) $(MODULE_NAME)-t1.osm $(MODULE_NAME)-t2.osm $(bindir)/*.o $(bin1dir)/*.o $(bin2dir)/*.o
+	$(RM) $(bindir)/*.o $(bin1dir)/*.o $(bin2dir)/*.o $(bin1dir)/*.osm $(bin2dir)/*.osm
 

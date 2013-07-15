@@ -1,8 +1,8 @@
 DH2
 ScriptLib
 lg
-KDScript-t1.osm
-KDScript-t2.osm
 bin-all/*.o
 bin-t1/*.o
+bin-t1/*.osm
 bin-t2/*.o
+bin-t2/*.osm
