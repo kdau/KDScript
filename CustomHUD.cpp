@@ -1249,10 +1249,10 @@ cScr_QuestArrow::SetEnabledFromObjective ()
 	char qvar[256];
 
 	snprintf (qvar, 256, "goal_state_%d", objective);
-	bool incomplete = pQS->Get (qvar) == 0;
+	bool incomplete = (pQS->Get (qvar) == kGoalIncomplete);
 
 	snprintf (qvar, 256, "goal_visible_%d", objective);
-	bool visible = pQS->Get (qvar) == 1;
+	bool visible = (pQS->Get (qvar) == true);
 
 	enabled = incomplete && visible;
 }

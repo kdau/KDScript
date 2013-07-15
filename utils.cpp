@@ -522,6 +522,19 @@ DestroyLink (link destroy)
 	pLS->Destroy (destroy);
 }
 
+/* DebugLinks */
+
+void
+DebugLinks (object target)
+{
+	if (!target) return;
+	DebugPrintf ("Dumping links for object %s...",
+		(const char*) FormatObjectName (target));
+	for (LinkIter link (target, Any, NULL); link; ++link)
+		DebugPrintf ("...%s link to %s.", link.FlavorName (),
+			(const char*) FormatObjectName (link.Destination ()));
+}
+
 /* GetObjectParamColor */
 
 ulong

@@ -33,10 +33,11 @@ cScr_Carried::cScr_Carried (const char* pszName, int iHostObjId)
 {}
 
 long
-cScr_Carried::OnSim (sSimMsg*, cMultiParm&)
+cScr_Carried::OnSim (sSimMsg* pMsg, cMultiParm&)
 {
 	// add FrobInert if requested
-	if (GetObjectParamBool (ObjId (), "inert_until_dropped", false))
+	if (pMsg->fStarting &&
+	    GetObjectParamBool (ObjId (), "inert_until_dropped", false))
 		AddSingleMetaProperty ("FrobInert", ObjId ());
 
 	return S_OK;
@@ -48,6 +49,10 @@ cScr_Carried::OnCreate (sScrMsg*, cMultiParm&)
 	// only proceed for objects created in-game
 	SService<IVersionSrv> pVS (g_pScriptManager);
 	if (pVS->IsEditor () == 1) return S_FALSE;
+
+	// don't affect any dropped clone
+	if (GetObjectParamBool (ObjId (), "dropped", false))
+		return S_FALSE;
 
 	// add FrobInert if requested
 	if (GetObjectParamBool (ObjId (), "inert_until_dropped", false))
@@ -97,33 +102,35 @@ cScr_Carried::Drop ()
 	SService<IPhysSrv> pPhS (g_pScriptManager);
 	SService<IQuestSrv> pQS (g_pScriptManager);
 
-	object drop = ObjId ();
-	cScrVec position; pOS->Position (position, drop);
-	cScrVec facing; pOS->Facing (facing, drop);
+	SetObjectParamBool (ObjId (), "dropped", true);
+
+	cScrVec position; pOS->Position (position, ObjId ());
+	cScrVec facing; pOS->Facing (facing, ObjId ());
 
 	// remove FrobInert if requested
-	if (GetObjectParamBool (drop, "inert_until_dropped", false))
-		RemoveSingleMetaProperty ("FrobInert", drop);
+	if (GetObjectParamBool (ObjId (), "inert_until_dropped", false))
+		RemoveSingleMetaProperty ("FrobInert", ObjId ());
 
 	// turn off the object and others if requested
-	if (GetObjectParamBool (drop, "off_when_dropped", false))
+	if (GetObjectParamBool (ObjId (), "off_when_dropped", false))
 	{
-		SimpleSend (drop, drop, "TurnOff");
-		CDSend ("TurnOff", drop);
+		SimpleSend (ObjId (), ObjId (), "TurnOff");
+		CDSend ("TurnOff", ObjId ());
 	}
 
 #if (_DARKGAME == 2)
 	// confirm that object would not drop out of world
 	true_bool position_valid;
-	pOS->IsPositionValid (position_valid, drop);
+	pOS->IsPositionValid (position_valid, ObjId ());
 	if (!position_valid)
 	{
-		DebugPrintf ("Not dropping %s at invalid position (%f,%f,%f).",
-			(const char*) FormatObjectName (drop),
+		DebugPrintf ("Not dropping from invalid position (%f,%f,%f).",
 			position.x, position.y, position.z);
 		return;
 	}
 #endif
+
+	object drop = ObjId ();
 
 	for (LinkIter container (Any, ObjId (), "Contains");
 	     container; ++container)
@@ -164,6 +171,10 @@ cScr_Carried::Drop ()
 		pOS->Create (drop, ObjId ());
 		CreateLink ("CulpableFor", ai, drop);
 		DebugPrintf ("Replacing self with clone %d.", int (drop));
+
+		// remove clone's FrobInert if requested (yes, this is needed)
+		if (GetObjectParamBool (drop, "inert_until_dropped", false))
+			RemoveSingleMetaProperty ("FrobInert", drop);
 	}
 
 	// ensure that the object is physical

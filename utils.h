@@ -181,6 +181,13 @@ link CreateLink (const char* flavor, object source, object destination,
 void DestroyLink (link destroy);
 
 /**
+ * DebugLinks
+ *
+ * Lists all links to and from an object on the monolog.
+ */
+void DebugLinks (object target);
+
+/**
  * GetObjectParamColor
  *
  * Read a parameter from the Editor/Design Note property, interprets it as a
