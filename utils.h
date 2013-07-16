@@ -222,6 +222,13 @@ bool CheckEngineVersion (int min_major, int min_minor);
  */
 bool HasPlayerTouched (object target, bool historic = true);
 
+/**
+ * ExecuteCommand
+ *
+ * Executes the specified Dark Engine command (including arguments).
+ */
+void ExecuteCommand (const char* command);
+
 
 
 /**

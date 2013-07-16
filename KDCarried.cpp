@@ -122,7 +122,7 @@ cScr_Carried::Drop ()
 			position.x, position.y, position.z);
 		return;
 	}
-#endif
+#endif // _DARKGAME == 2
 
 	object drop = ObjId ();
 

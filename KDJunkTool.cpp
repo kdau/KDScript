@@ -101,15 +101,13 @@ cScr_JunkTool::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
 {
 	if (!strcmp (pMsg->name, "BeginToolUse"))
 	{
-		SService<IDebugScrSrv> pDbS (g_pScriptManager);
-		pDbS->Command ("use_item", "0", "", "", "", "", "", "");
+		ExecuteCommand ("use_item 0");
 		return S_OK;
 	}
 
 	if (!strcmp (pMsg->name, "ClearWeapon") && GetAvatarContainer ())
 	{
-		SService<IDebugScrSrv> pDbS (g_pScriptManager);
-		pDbS->Command ("clear_weapon", "", "", "", "", "", "", "");
+		ExecuteCommand ("clear_weapon");
 		SetTimedMessage ("ClearWeapon", 100, kSTM_OneShot);
 		return S_OK;
 	}
@@ -129,8 +127,7 @@ cScr_JunkTool::OnSlain (sSlayMsg*, cMultiParm&)
 			pPS->Remove (ObjId (), "DeathStage");
 
 		// drop the tool
-		SService<IDebugScrSrv> pDbS (g_pScriptManager);
-		pDbS->Command ("drop_item", "", "", "", "", "", "", "");
+		ExecuteCommand ("drop_item");
 		return S_OK;
 	}
 	return S_FALSE;

@@ -613,6 +613,15 @@ HasPlayerTouched (object target, bool historic)
 	return false;
 }
 
+/* ExecuteCommand */
+
+void
+ExecuteCommand (const char* command)
+{
+	SService<IDebugScrSrv> pDbS (g_pScriptManager);
+	pDbS->Command (command, "", "", "", "", "", "", "");
+}
+
 
 
 /* LinkIter */

@@ -101,6 +101,7 @@ KDSCRIPT_HEADERS = \
 	KDGetInfo.h \
 	KDHUDElement.h \
 	KDJunkTool.h \
+	KDOptionalReverse.h \
 	KDQuestArrow.h \
 	KDShortText.h \
 	KDStatMeter.h \
