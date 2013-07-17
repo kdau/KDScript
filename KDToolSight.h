@@ -23,7 +23,6 @@
 
 #if !SCR_GENSCRIPTS
 #include "KDHUDElement.h"
-#include "scriptvars.h" //FIXME
 #endif // !SCR_GENSCRIPTS
 
 #if !SCR_GENSCRIPTS
@@ -48,7 +47,7 @@ private:
 
 	static const CanvasSize SYMBOL_SIZE;
 
-	script_int enabled; // bool
+	bool selected;
 
 	Symbol symbol;
 	HUDBitmapPtr bitmap;

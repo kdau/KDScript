@@ -303,7 +303,15 @@ cScr_QuestArrow::UpdateText ()
 
 	else if (!stricmp (__text, "@objective"))
 #if (_DARKGAME == 2)
-		GetTextFromObjective (_text);
+	{
+		SService<IVersionSrv> pVS (g_pScriptManager);
+		if (pVS->IsEditor () == 0)
+			GetTextFromObjective (_text);
+		else
+			DebugPrintf ("Note: The `@objective' value for "
+				"quest_arrow_text is not available in DromEd "
+				"game mode. Test this arrow in the real game.");
+	}
 #else
 		DebugPrintf ("Warning: quest_arrow_text cannot be `@objective' "
 			"in this game. No text will be shown.");

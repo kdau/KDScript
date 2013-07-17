@@ -23,7 +23,7 @@
 
 #if !SCR_GENSCRIPTS
 #include "KDTransitionTrap.h"
-#include "scriptvars.h" //FIXME
+#include "scriptvars.h"
 #endif // SCR_GENSCRIPTS
 
 

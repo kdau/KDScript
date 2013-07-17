@@ -89,7 +89,9 @@ cScr_GetInfo::UpdateVariables ()
 		pQS->Set ("info_has_weather", value, kQuestDataMission);
 
 #if (_DARKGAME == 2)
-	pQS->Set ("info_mission", pDGS->GetCurrentMission (), kQuestDataMission);
+	if (pVS->IsEditor () == 0)
+		pQS->Set ("info_mission", pDGS->GetCurrentMission (),
+			kQuestDataMission);
 #endif
 
 	pQS->Set ("info_mode", pVS->IsEditor (), kQuestDataMission);

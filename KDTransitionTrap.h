@@ -23,7 +23,7 @@
 
 #if !SCR_GENSCRIPTS
 #include "BaseTrap.h"
-#include "scriptvars.h" //FIXME
+#include "scriptvars.h"
 #endif // SCR_GENSCRIPTS
 
 #if !SCR_GENSCRIPTS

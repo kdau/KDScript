@@ -28,7 +28,7 @@ cScr_ToolSight::SYMBOL_SIZE = { 24, 24 };
 cScr_ToolSight::cScr_ToolSight (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
 	  cScr_HUDElement (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (ToolSight, enabled, iHostObjId),
+	  selected (false),
 	  symbol (SYMBOL_NONE), bitmap (), color (0), offset ()
 {}
 
@@ -36,7 +36,6 @@ bool
 cScr_ToolSight::Initialize ()
 {
 	if (!cScr_HUDElement::Initialize ()) return false;
-	enabled.Init (false);
 	OnPropertyChanged ("DesignNote");
 	SubscribeProperty ("DesignNote");
 	return true;
@@ -45,7 +44,7 @@ cScr_ToolSight::Initialize ()
 bool
 cScr_ToolSight::Prepare ()
 {
-	if (!enabled) return false;
+	if (!selected) return false;
 
 	// get canvas, image, and text size and calculate element size
 	CanvasSize canvas = GetCanvasSize (),
@@ -74,28 +73,28 @@ cScr_ToolSight::Redraw ()
 long
 cScr_ToolSight::OnInvSelect (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	enabled = true;
+	selected = true;
 	return cScr_HUDElement::OnInvSelect (pMsg, mpReply);
 }
 
 long
 cScr_ToolSight::OnInvFocus (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	enabled = true;
+	selected = true;
 	return cScr_HUDElement::OnInvFocus (pMsg, mpReply);
 }
 
 long
 cScr_ToolSight::OnInvDeSelect (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	enabled = false;
+	selected = false;
 	return cScr_HUDElement::OnInvDeSelect (pMsg, mpReply);
 }
 
 long
 cScr_ToolSight::OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply)
 {
-	enabled = false;
+	selected = false;
 	return cScr_HUDElement::OnInvDeFocus (pMsg, mpReply);
 }
 

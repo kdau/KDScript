@@ -24,7 +24,6 @@
 #if !SCR_GENSCRIPTS
 #include "BaseScript.h"
 #include "KDHUDElement.h"
-#include "scriptvars.h" //FIXME
 #endif // SCR_GENSCRIPTS
 
 
@@ -33,8 +32,10 @@
 class HUDSubtitle : public HUDElement
 {
 public:
-	HUDSubtitle (object host, const char* text, ulong color);
+	HUDSubtitle (object host, object schema, const char* text, ulong color);
 	virtual ~HUDSubtitle ();
+
+	object GetSchema ();
 
 protected:
 	virtual bool Prepare ();
@@ -43,6 +44,7 @@ protected:
 private:
 	static const int BORDER, PADDING;
 
+	object schema;
 	cAnsiStr text;
 	ulong color;
 	bool player;
@@ -69,7 +71,6 @@ protected:
 	static const float EARSHOT;
 
 private:
-	script_int last_schema; // object
 	HUDSubtitle* element;
 };
 #else // SCR_GENSCRIPTS
@@ -102,9 +103,6 @@ public:
 
 protected:
 	virtual long OnTurnOn (sScrMsg* pMsg, cMultiParm& mpReply);
-
-private:
-	script_int played; // bool
 };
 #else // SCR_GENSCRIPTS
 GEN_FACTORY("KDSubtitledVO","KDSubtitled",cScr_SubtitledVO)

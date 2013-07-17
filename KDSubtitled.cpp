@@ -33,8 +33,9 @@ HUDSubtitle::BORDER = 1;
 const int
 HUDSubtitle::PADDING = 8;
 
-HUDSubtitle::HUDSubtitle (object host, const char* _text, ulong _color)
-	: HUDElement (host), text (_text), color (_color),
+HUDSubtitle::HUDSubtitle (object host, object _schema,
+		const char* _text, ulong _color)
+	: HUDElement (host), schema (_schema), text (_text), color (_color),
 	  player (host == StrToObject ("Player"))
 {
 	Initialize ();
@@ -42,6 +43,12 @@ HUDSubtitle::HUDSubtitle (object host, const char* _text, ulong _color)
 
 HUDSubtitle::~HUDSubtitle ()
 {}
+
+object
+HUDSubtitle::GetSchema ()
+{
+	return schema;
+}
 
 bool
 HUDSubtitle::Prepare ()
@@ -98,9 +105,7 @@ const float
 cScr_Subtitled::EARSHOT = 80.0;
 
 cScr_Subtitled::cScr_Subtitled (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (Subtitled, last_schema, iHostObjId),
-	  element (NULL)
+	: cBaseScript (pszName, iHostObjId), element (NULL)
 {}
 
 cScr_Subtitled::~cScr_Subtitled ()
@@ -185,10 +190,9 @@ cScr_Subtitled::Subtitle (object host, object schema)
 			throw std::runtime_error ("nevermind");
 
 		// create a HUD subtitle element
-		element = new HUDSubtitle (host, text, color);
+		element = new HUDSubtitle (host, schema, text, color);
 
 		// schedule its deletion
-		last_schema = schema;
 		SetTimedMessage ("EndSubtitle", duration, kSTM_OneShot, schema);
 	}
 	catch (...) // go the old-fashioned way
@@ -203,19 +207,15 @@ cScr_Subtitled::Subtitle (object host, object schema)
 void
 cScr_Subtitled::EndSubtitle (object schema)
 {
-	// try to prevent early end of later subtitle
-	if (schema)
-	{
-		if (!last_schema.Valid () || last_schema != schema) return;
-		last_schema.Clear ();
-	}
+	// only applicable to HUD elements
+	if (!element) return;
 
-	// clear HUD subtitle element, if any
-	if (element)
-	{
-		delete element;
-		element = NULL;
-	}
+	// try to prevent early end of later subtitle
+	if (schema && element->GetSchema () != schema) return;
+
+	// destroy HUD element
+	delete element;
+	element = NULL;
 }
 
 
@@ -285,8 +285,7 @@ cScr_SubtitledAI::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
 
 cScr_SubtitledVO::cScr_SubtitledVO (const char* pszName, int iHostObjId)
 	: cBaseScript (pszName, iHostObjId),
-	  cScr_Subtitled (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (SubtitledVO, played, iHostObjId)
+	  cScr_Subtitled (pszName, iHostObjId)
 {}
 
 long
@@ -297,11 +296,16 @@ cScr_SubtitledVO::OnTurnOn (sScrMsg*, cMultiParm&)
 		LinkIter (ObjId (), Any, "SoundDescription").Destination ();
 	if (!schema) return S_FALSE;
 
-	// only display subtitle once (per object)
-	if (played.Valid () && bool (played))
+	// only display subtitle if schema hasn't been played
+	// use unrelated StimKO property as placeholder
+	SService<IPropertySrv> pPS (g_pScriptManager);
+	if (pPS->Possessed (schema, "StimKO"))
 		return S_FALSE;
 	else
-		played = true;
+	{
+		pPS->Add (schema, "StimKO");
+		pPS->SetSimple (schema, "StimKO", true);
+	}
 
 	// display the subtitle
 	Subtitle (StrToObject ("Player"), schema);
