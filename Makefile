@@ -103,6 +103,7 @@ KDSCRIPT_HEADERS = \
 	KDJunkTool.h \
 	KDOptionalReverse.h \
 	KDQuestArrow.h \
+	KDRenewable.h \
 	KDShortText.h \
 	KDStatMeter.h \
 	KDSubtitled.h \
@@ -119,14 +120,14 @@ $(bin1dir)/KDCustomHUD.o: KDHUDElement.h
 $(bin2dir)/KDCustomHUD.o: KDHUDElement.h
 $(bin1dir)/KDHUDElement.o: KDCustomHUD.h
 $(bin2dir)/KDHUDElement.o: KDCustomHUD.h
-$(bin1dir)/KDQuestArrow.o: KDHUDElement.h
-$(bin2dir)/KDQuestArrow.o: KDHUDElement.h
-$(bin1dir)/KDStatMeter.o: KDHUDElement.h
-$(bin2dir)/KDStatMeter.o: KDHUDElement.h
-$(bin1dir)/KDSubtitled.o: KDHUDElement.h
-$(bin2dir)/KDSubtitled.o: KDHUDElement.h
-$(bin1dir)/KDToolSight.o: KDHUDElement.h
-$(bin2dir)/KDToolSight.o: KDHUDElement.h
+$(bin1dir)/KDQuestArrow.o: KDHUDElement.h KDCustomHUD.h
+$(bin2dir)/KDQuestArrow.o: KDHUDElement.h KDCustomHUD.h
+$(bin1dir)/KDStatMeter.o: KDHUDElement.h KDCustomHUD.h
+$(bin2dir)/KDStatMeter.o: KDHUDElement.h KDCustomHUD.h
+$(bin1dir)/KDSubtitled.o: KDHUDElement.h KDCustomHUD.h
+$(bin2dir)/KDSubtitled.o: KDHUDElement.h KDCustomHUD.h
+$(bin1dir)/KDToolSight.o: KDHUDElement.h KDCustomHUD.h
+$(bin2dir)/KDToolSight.o: KDHUDElement.h KDCustomHUD.h
 $(bin1dir)/KDTrapFog.o: KDTransitionTrap.h
 $(bin2dir)/KDTrapFog.o: KDTransitionTrap.h
 $(bin1dir)/KDTrapWeather.o: KDTransitionTrap.h

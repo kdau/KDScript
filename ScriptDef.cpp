@@ -68,6 +68,7 @@
 #include "KDJunkTool.h"
 #include "KDOptionalReverse.h"
 #include "KDQuestArrow.h"
+#include "KDRenewable.h"
 #include "KDShortText.h"
 #include "KDStatMeter.h"
 #include "KDSubtitled.h"
@@ -89,6 +90,7 @@
 #undef KDJUNKTOOL_H
 #undef KDOPTIONALREVERSE_H
 #undef KDQUESTARROW_H
+#undef KDRENEWABLE_H
 #undef KDSHORTTEXT_H
 #undef KDSTATMETER_H
 #undef KDSUBTITLED_H

@@ -469,15 +469,20 @@ FormatObjectName (object target)
 /* InheritsFrom */
 
 bool
-InheritsFrom (const char* _ancestor, object target)
+InheritsFrom (object ancestor, object target)
 {
-	object ancestor = StrToObject (_ancestor);
 	if (!ancestor || !target) return false;
-
 	SService<IObjectSrv> pOS (g_pScriptManager);
 	true_bool result;
 	pOS->InheritsFrom (result, target, ancestor);
 	return result;
+}
+
+bool
+InheritsFrom (const char* ancestor, object target)
+{
+	if (!ancestor || !target) return false;
+	return InheritsFrom (StrToObject (ancestor), target);
 }
 
 /* DestroyObject */

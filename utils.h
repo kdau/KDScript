@@ -156,6 +156,7 @@ cAnsiStr FormatObjectName (object target);
  *
  * Returns whether the object inherits from the named archetype or metaproperty.
  */
+bool InheritsFrom (object ancestor, object target);
 bool InheritsFrom (const char* ancestor, object target);
 
 /**
