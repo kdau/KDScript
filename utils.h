@@ -250,7 +250,7 @@ public:
 
 	operator link () const;
 	linkkind Flavor () const;
-	const char* FlavorName () const;
+	cAnsiStr FlavorName () const;
 	object Source () const;
 	object Destination () const;
 

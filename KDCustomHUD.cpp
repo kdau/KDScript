@@ -344,7 +344,7 @@ HUDBitmapPtr
 CustomHUD::LoadBitmap (const char* path, bool animation)
 {
 	HUDBitmapPtr result;
-	if (!LockMutex ()) return result;
+	if (!path || !LockMutex ()) return result;
 
 	// try an existing bitmap
 	HUDBitmaps::iterator existing = bitmaps.find (path);

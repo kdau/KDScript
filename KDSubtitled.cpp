@@ -35,9 +35,15 @@ HUDSubtitle::PADDING = 8;
 
 HUDSubtitle::HUDSubtitle (object host, object _schema,
 		const char* _text, ulong _color)
-	: HUDElement (host), schema (_schema), text (_text), color (_color),
+	: HUDElement (host), schema (_schema), color (_color),
 	  player (host == StrToObject ("Player"))
 {
+	if (_text)
+		text = _text;
+	else
+		throw std::invalid_argument
+			("HUDSubtitle text must not be NULL");
+
 	Initialize ();
 }
 
@@ -165,7 +171,11 @@ cScr_Subtitled::Subtitle (object host, object schema)
 	SService<IDataSrv> pDS (g_pScriptManager);
 	cScrStr text;
 	pDS->GetString (text, "subtitles", ObjectToStr (schema), "", "strings");
-	if (text.IsEmpty ()) return false;
+	if (text.IsEmpty ())
+	{
+		//FIXME LGMM text.Free ();
+		return false;
+	}
 
 	// end any previous subtitle on this object
 	EndSubtitle (Any);
@@ -201,6 +211,7 @@ cScr_Subtitled::Subtitle (object host, object schema)
 		ShowString (text, duration, color);
 	}
 
+	//FIXME LGMM text.Free ();
 	return true;
 }
 
@@ -240,7 +251,7 @@ cScr_SubtitledAI::OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply)
 	}
 	catch (no_interface&)
 	{
-		DebugString ("Error: The DarkHook service could not be "
+		DebugPrintf ("Error: The DarkHook service could not be "
 			"located. This AI's speech will not be subtitled.");
 	}
 	return cScr_Subtitled::OnBeginScript (pMsg, mpReply);

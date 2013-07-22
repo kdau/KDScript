@@ -439,14 +439,14 @@ cScr_StatMeter::UpdateImage ()
 
 	if (style == STYLE_PROGRESS && bitmap)
 	{
-		DebugString ("Warning: Bitmap image `%s' will be ignored for "
+		DebugPrintf ("Warning: Bitmap image `%s' will be ignored for "
 			"a progress-style meter.", (const char*) image);
 		bitmap.reset ();
 	}
 
 	if (style != STYLE_UNITS && symbol != SYMBOL_NONE)
 	{
-		DebugString ("Warning: Symbol %s will be ignored for a "
+		DebugPrintf ("Warning: Symbol %s will be ignored for a "
 			"non-units-style meter.", (const char*) image);
 		symbol = SYMBOL_NONE;
 	}
@@ -482,7 +482,7 @@ cScr_StatMeter::UpdateText ()
 		if (prop_object)
 			pDS->GetObjString (_text, prop_object, "objdescs");
 		else
-			DebugString ("Warning: `@description' is not a valid "
+			DebugPrintf ("Warning: `@description' is not a valid "
 				"stat meter text source for a quest variable "
 				"statistic.");
 	}
@@ -499,6 +499,8 @@ cScr_StatMeter::UpdateText ()
 		text = _text;
 		ScheduleRedraw ();
 	}
+
+	//FIXME LGMM _text.Free ();
 }
 
 void

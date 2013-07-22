@@ -31,7 +31,7 @@ DarkWeather::DarkWeather ()
 	  vis_dist (0.0), rend_radius (0.0), alpha (0.0), brightness (0.0),
 	  snow_jitter (0.0), rain_length (0.0), splash_freq (0.0),
 	  splash_radius (0.0), splash_height (0.0), splash_duration (0.0),
-	  texture (), wind (0.0, 0.0, 0.0)
+	  wind (0.0, 0.0, 0.0), texture ()
 {
 	GetFromMission ();
 }

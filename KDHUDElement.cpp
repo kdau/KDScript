@@ -656,7 +656,7 @@ cScr_HUDElement::SubscribeProperty (const char* property)
 	}
 	catch (no_interface&)
 	{
-		DebugString ("Warning: The DarkHook service could not be "
+		DebugPrintf ("Warning: The DarkHook service could not be "
 			"located. This custom HUD element may work properly.");
 		return false;
 	}

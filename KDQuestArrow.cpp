@@ -329,6 +329,8 @@ cScr_QuestArrow::UpdateText ()
 		text = _text;
 		ScheduleRedraw ();
 	}
+
+	//FIXME LGMM _text.Free ();
 }
 
 void

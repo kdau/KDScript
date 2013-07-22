@@ -377,7 +377,7 @@ cAnsiStr GetBookText(object iObj)
 	{
 		cMultiParm mpBook;
 		pPS->Get(mpBook, iObj, "Book", NULL);
-		if (!cScrStr(mpBook).IsEmpty())
+		if (!cScrStr((const char*) mpBook).IsEmpty())
 		{
 			SService<IDataSrv> pDS(g_pScriptManager);
 			char* szBookFile = reinterpret_cast<char*>(alloca(10 + strlen(mpBook)));
@@ -443,8 +443,9 @@ cAnsiStr
 ObjectToStr (object target)
 {
 	SService<IObjectSrv> pOS (g_pScriptManager);
-	cScrStr result;
-	pOS->GetName (result, target);
+	cScrStr name; pOS->GetName (name, target);
+	cAnsiStr result = name;
+	//FIXME LGMM name.Free ();
 	return result;
 }
 
@@ -536,7 +537,8 @@ DebugLinks (object target)
 	DebugPrintf ("Dumping links for object %s...",
 		(const char*) FormatObjectName (target));
 	for (LinkIter link (target, Any, NULL); link; ++link)
-		DebugPrintf ("...%s link to %s.", link.FlavorName (),
+		DebugPrintf ("...%s link to %s.",
+			(const char*) link.FlavorName (),
 			(const char*) FormatObjectName (link.Destination ()));
 }
 
@@ -666,12 +668,13 @@ LinkIter::Flavor () const
 	return links.AnyLinksLeft () ? links.Get ().flavor : linkkind ();
 }
 
-const char*
+cAnsiStr
 LinkIter::FlavorName () const
 {
 	SService<ILinkToolsSrv> pLTS (g_pScriptManager);
-	cScrStr result;
-	pLTS->LinkKindName (result, Flavor ());
+	cScrStr name; pLTS->LinkKindName (name, Flavor ());
+	cAnsiStr result = name;
+	//FIXME LGMM name.Free ();
 	return result;
 }
 

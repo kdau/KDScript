@@ -80,7 +80,7 @@ cScr_TransitionTrap::Begin ()
 bool
 cScr_TransitionTrap::OnIncrement ()
 {
-	DebugString ("Error: OnIncrement unimplemented in script inheriting "
+	DebugPrintf ("Error: OnIncrement unimplemented in script inheriting "
 		"from TransitionTrap.");
 	return false;
 }

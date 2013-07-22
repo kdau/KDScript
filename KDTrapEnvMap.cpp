@@ -30,12 +30,6 @@ cScr_TrapEnvMap::cScr_TrapEnvMap (const char* pszName, int iHostObjId)
 long
 cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 {
-	int zone = GetObjectParamInt (ObjId (), "env_map_zone", GLOBAL_ZONE);
-	char* texture = GetObjectParamString (ObjId (),
-		bState ? "env_map_on" : "env_map_off", NULL);
-
-	if (zone < MIN_ZONE || zone > MAX_ZONE || !texture) return S_FALSE;
-
 	if (!CheckEngineVersion (1, 20))
 	{
 		DebugPrintf ("Error: This script cannot be used with this "
@@ -43,6 +37,13 @@ cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
 			"version 1.20 or higher.");
 		return S_FALSE;
 	}
+
+	int zone = GetObjectParamInt (ObjId (), "env_map_zone", GLOBAL_ZONE);
+	if (zone < MIN_ZONE || zone > MAX_ZONE) return S_FALSE;
+
+	char* texture = GetObjectParamString (ObjId (),
+		bState ? "env_map_on" : "env_map_off", NULL);
+	if (!texture) return S_FALSE;
 
 	SService<IEngineSrv> pES (g_pScriptManager);
 	pES->SetEnvMapZone (zone, texture);

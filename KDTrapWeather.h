@@ -52,8 +52,10 @@ struct DarkWeather
 	float splash_radius;
 	float splash_height;
 	float splash_duration;
-	cScrStr texture;
 	cScrVec wind;
+
+private:
+	cScrStr texture;
 };
 #endif // !SCR_GENSCRIPTS
 

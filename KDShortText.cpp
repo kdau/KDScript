@@ -54,16 +54,17 @@ cScr_ShortText::DisplayMessage ()
 		msgid = _msgid;
 		g_pMalloc->Free (_msgid);
 	}
-
 	if (msgid.type != kMT_String) return;
 
 	SService<IDataSrv> pDS (g_pScriptManager);
 	cScrStr msgstr;
 	pDS->GetString (msgstr, "short", msgid, "", "strings");
-	if (msgstr.IsEmpty ()) return;
 
-	ShowString (msgstr,
-		GetObjectParamTime (ObjId (), "text_time", CalcTextTime (msgstr)),
-		GetObjectParamColor (ObjId (), "text_color", 0));
+	if (!msgstr.IsEmpty ())
+		ShowString (msgstr, GetObjectParamTime
+			(ObjId (), "text_time", CalcTextTime (msgstr)),
+			GetObjectParamColor (ObjId (), "text_color", 0));
+
+	//FIXME LGMM msgstr.Free ();
 }
 
