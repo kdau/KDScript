@@ -1,7 +1,7 @@
 /******************************************************************************
- *  version.rc
+ *  script.rc
  *
- *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
+ *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
  *  Adapted from Public Scripts
  *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
  *
@@ -20,54 +20,10 @@
  *
  *****************************************************************************/
 
-#ifndef VERSION_NUMBER
-#define VERSION_NUMBER	1,0,0,0
-#endif
+#define PACKAGE_NAME		"KDScript"
+#define AUTHOR_NAME		"Kevin Daughtridge"
+#define VERSION_NUMBER		0,7,0,0
+#define VERSION_STRING		"0.7.0 beta"
 
-#ifndef AUTHOR_NAME
-#define AUTHOR_NAME	"<your name here>"
-#endif
-
-#ifndef WORKSHOP_INVOKED
-#include "windows.h"
-#endif
-
-VS_VERSION_INFO VERSIONINFO
-FILEVERSION		VERSION_NUMBER
-PRODUCTVERSION		VERSION_NUMBER
-#if DEBUG
-FILEFLAGS		VS_FF_DEBUG
-#else
-FILEFLAGS		0
-#endif
-FILEOS			VOS_NT_WINDOWS32
-FILETYPE		VFT_DLL
-BEGIN
-	BLOCK "StringFileInfo"
-	BEGIN
-		BLOCK "040904e4"
-		BEGIN
-			VALUE	"FileDescription", PACKAGE_NAME "\0"
-			VALUE	"FileVersion", VERSION_STRING "\0"
-			VALUE	"InternalName", MODULE_NAME "\0"
-			VALUE	"LegalCopyright", "Copyright (C) " AUTHOR_NAME "\0"
-			VALUE	"OriginalFilename", MODULE_NAME ".osm" "\0"
-			VALUE	"ProductName", PACKAGE_NAME "\0"
-			VALUE	"ProductVersion", VERSION_STRING "\0"
-#if  (_DARKGAME == 1)
-			VALUE	"DarkGameVersion", "Thief1" "\0"
-#elif (_DARKGAME == 2)
-			VALUE	"DarkGameVersion", "Thief2" "\0"
-#elif (_DARKGAME == 3)
-			VALUE	"DarkGameVersion", "SShock2" "\0"
-#else
-			VALUE	"DarkGameVersion", "All" "\0"
-#endif
-		END
-	END
-	BLOCK "VarFileInfo"
-	BEGIN
-		VALUE	"Translation", 1033, 1252
-	END
-END
+#include "version.rc"
 
