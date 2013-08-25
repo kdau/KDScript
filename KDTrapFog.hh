@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDTrapFog.h: DarkFog, KDTrapFog, KDSyncGlobalFog
+ *  KDTrapFog.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,93 +18,27 @@
  *
  *****************************************************************************/
 
-#ifndef KDTRAPFOG_H
-#define KDTRAPFOG_H
+#ifndef KDTRAPFOG_HH
+#define KDTRAPFOG_HH
 
-#if !SCR_GENSCRIPTS
-#include "KDTransitionTrap.h"
-#include "scriptvars.h"
-#endif // SCR_GENSCRIPTS
+#include "KDTransitionTrap.hh"
 
-
-
-#if !SCR_GENSCRIPTS
-class DarkFog
+class KDTrapFog : public KDTransitionTrap
 {
 public:
-	enum Zone
-	{
-		FOG_DISABLED = -1,
-		GLOBAL_ZONE = 0,
-		ZONE_1,
-		ZONE_2,
-		ZONE_3,
-		ZONE_4,
-		ZONE_5,
-		ZONE_6,
-		ZONE_7,
-		ZONE_8,
-		MIN_ZONE = 1,
-		MAX_ZONE = 8
-	};
-
-	static ulong GetColor (int zone);
-	static float GetDistance (int zone);
-	static void Set (int zone, ulong color, float distance);
-
-protected:
-	static float InterpolateDistance (float start, float end,
-		float progress);
-};
-#endif // !SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_TrapFog : public cScr_TransitionTrap, public DarkFog
-{
-public:
-	cScr_TrapFog (const char* pszName, int iHostObjId);
-
-protected:
-	virtual bool OnPrepare (bool state);
-	virtual bool OnIncrement ();
+	KDTrapFog (const String& name, const Object& host);
 
 private:
-	script_int zone; // Zone
-	script_int start_color, end_color; // ulong
-	script_float start_dist, end_dist;
+	virtual bool prepare (bool on);
+	virtual bool increment ();
+
+	Parameter<Fog::Zone> fog_zone;
+	Parameter<Color> fog_color_on, fog_color_off;
+	Parameter<float> fog_dist_on, fog_dist_off;
+
+	Persistent<Color> start_color, end_color;
+	Persistent<float> start_distance, end_distance;
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapFog","KDTransitionTrap",cScr_TrapFog)
-#endif // SCR_GENSCRIPTS
 
-
-
-#if !SCR_GENSCRIPTS
-class cScr_SyncGlobalFog : public cScr_TransitionTrap, public DarkFog
-{
-public:
-	cScr_SyncGlobalFog (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnObjRoomTransit (sRoomMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-
-	void Sync (ulong color, float distance, bool sync_color = true,
-		bool sync_distance = true);
-	virtual bool OnIncrement ();
-
-private:
-	script_int last_room_zone; // Zone
-	script_int start_color, end_color; // ulong
-	script_float start_dist, end_dist;
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDSyncGlobalFog","KDTransitionTrap",cScr_SyncGlobalFog)
-#endif // SCR_GENSCRIPTS
-
-
-
-#endif // KDTRAPFOG_H
+#endif // KDTRAPFOG_HH
 

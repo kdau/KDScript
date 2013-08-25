@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDJunkTool.h
+ *  KDJunkTool.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,41 +18,37 @@
  *
  *****************************************************************************/
 
-#ifndef KDJUNKTOOL_H
-#define KDJUNKTOOL_H
+#ifndef KDJUNKTOOL_HH
+#define KDJUNKTOOL_HH
 
-#if !SCR_GENSCRIPTS
-#include "BaseScript.h"
-#endif // SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-#if !SCR_GENSCRIPTS
-class cScr_JunkTool : public virtual cBaseScript
+class KDJunkTool : public Script
 {
 public:
-	cScr_JunkTool (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnInvDeSelect (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnFrobInvEnd (sFrobMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnFrobToolEnd (sFrobMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnSlain (sSlayMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnDestroy (sScrMsg* pMsg, cMultiParm& mpReply);
+	KDJunkTool (const String& name, const Object& host);
 
 private:
-	object GetAvatarContainer ();
+	Message::Result on_contained (ContainmentMessage&);
+	Message::Result on_destroy (GenericMessage&);
+	void start_carry ();
+	void finish_carry ();
 
-	void StartJunk (object avatar);
-	void EndJunk (object avatar);
+	Message::Result on_clear_weapon (TimerMessage&);
 
-	object CreateFrobbable (object avatar);
+	Message::Result on_needs_reselect (GenericMessage&);
+	Message::Result on_reselect (GenericMessage&);
+	Object create_frobbable ();
+
+	Message::Result on_needs_tool_use (GenericMessage&);
+	Message::Result on_start_tool_use (TimerMessage&);
+
+	Message::Result on_slain (SlayMessage&);
+
+	Parameter<bool> lugged, drop;
+	Persistent<Weapon> previous_weapon;
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDJunkTool","BaseScript",cScr_JunkTool)
-#endif // SCR_GENSCRIPTS
 
-#endif // KDJUNKTOOL_H
+#endif // KDJUNKTOOL_HH
 

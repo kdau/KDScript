@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDShortText.cpp
+ *  KDShortText.cc
  *
  *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,53 +18,44 @@
  *
  *****************************************************************************/
 
-#include "KDShortText.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDShortText.hh"
 
-cScr_ShortText::cScr_ShortText (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId)
-{}
-
-long
-cScr_ShortText::OnFrobWorldEnd (sFrobMsg*, cMultiParm&)
+KDShortText::KDShortText (const String& _name, const Object& _host)
+	: Script (_name, _host),
+	  PARAMETER (text),
+	  PARAMETER (text_color, Color (255, 255, 255)),
+	  PARAMETER (text_time),
+	  PARAMETER (text_on_focus, true),
+	  PARAMETER (text_on_frob, true)
 {
-	if (GetObjectParamBool (ObjId (), "text_on_frob", true))
-		DisplayMessage ();
-	return S_OK;
+	listen_message ("WorldSelect", &KDShortText::on_focus);
+	listen_message ("FrobWorldEnd", &KDShortText::on_frob);
 }
 
-long
-cScr_ShortText::OnWorldSelect (sScrMsg*, cMultiParm&)
+Message::Result
+KDShortText::on_focus (GenericMessage&)
 {
-	if (GetObjectParamBool (ObjId (), "text_on_focus", true))
-		DisplayMessage ();
-	return S_OK;
+	if (text_on_focus)
+		show_text ();
+	return Message::CONTINUE;
+}
+
+Message::Result
+KDShortText::on_frob (FrobMessage&)
+{
+	if (text_on_frob)
+		show_text ();
+	return Message::CONTINUE;
 }
 
 void
-cScr_ShortText::DisplayMessage ()
+KDShortText::show_text ()
 {
-	SService<IPropertySrv> pPS (g_pScriptManager);
-	cMultiParm msgid;
-	if (pPS->Possessed (ObjId (), "Book"))
-		pPS->Get (msgid, ObjId (), "Book", NULL);
-	else if (char* _msgid = GetObjectParamString (ObjId (), "text"))
-	{
-		msgid = _msgid;
-		g_pMalloc->Free (_msgid);
-	}
-	if (msgid.type != kMT_String) return;
+	String msgid = host_as<Readable> ().book_name;
+	if (msgid.empty ()) msgid = text;
 
-	SService<IDataSrv> pDS (g_pScriptManager);
-	cScrStr msgstr;
-	pDS->GetString (msgstr, "short", msgid, "", "strings");
-
-	if (!msgstr.IsEmpty ())
-		ShowString (msgstr, GetObjectParamTime
-			(ObjId (), "text_time", CalcTextTime (msgstr)),
-			GetObjectParamColor (ObjId (), "text_color", 0));
-
-	//FIXME LGMM msgstr.Free ();
+	String msgstr = Mission::get_text ("strings", "short", msgid);
+	if (!msgstr.empty ())
+		Mission::show_text (msgstr, text_time, text_color);
 }
 

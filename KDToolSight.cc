@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDToolSight.cpp
+ *  KDToolSight.cc
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,132 +18,86 @@
  *
  *****************************************************************************/
 
-#include "KDToolSight.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDToolSight.hh"
+
+const HUD::ZIndex
+KDToolSight::PRIORITY = 30;
 
 const CanvasSize
-cScr_ToolSight::SYMBOL_SIZE = { 24, 24 };
+KDToolSight::SYMBOL_SIZE = { 24, 24 };
 
-cScr_ToolSight::cScr_ToolSight (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  cScr_HUDElement (pszName, iHostObjId),
+KDToolSight::KDToolSight (const String& _name, const Object& _host)
+	: KDHUDElement (_name, _host, PRIORITY),
 	  selected (false),
-	  symbol (SYMBOL_NONE), bitmap (), color (0), offset ()
-{}
-
-bool
-cScr_ToolSight::Initialize ()
+	  PARAMETER_ (image, "tool_sight_image",
+	  	Symbol::CROSSHAIRS, false, false),
+	  PARAMETER_ (color, "tool_sight_color", Color (128, 128, 128)),
+	  PARAMETER_ (offset_x, "tool_sight_offset_x", 0),
+	  PARAMETER_ (offset_y, "tool_sight_offset_y", 0)
 {
-	if (!cScr_HUDElement::Initialize ()) return false;
-	OnPropertyChanged ("DesignNote");
-	SubscribeProperty ("DesignNote");
-	return true;
+	listen_message ("InvSelect", &KDToolSight::on_inv_select);
+	listen_message ("InvFocus", &KDToolSight::on_inv_select);
+	listen_message ("InvDeSelect", &KDToolSight::on_inv_deselect);
+	listen_message ("InvDeFocus", &KDToolSight::on_inv_deselect);
+	listen_message ("PropertyChange", &KDToolSight::on_property_change);
+}
+
+void
+KDToolSight::initialize ()
+{
+	KDHUDElement::initialize ();
+	Property (host (), "DesignNote").subscribe (Object::SELF);
 }
 
 bool
-cScr_ToolSight::Prepare ()
+KDToolSight::prepare ()
 {
 	if (!selected) return false;
 
-	// get canvas, image, and text size and calculate element size
-	CanvasSize canvas = GetCanvasSize (),
-		elem_size = bitmap ? bitmap->GetSize () : SYMBOL_SIZE;
+	// Get canvas, image, and text sizes and calculate the element size.
+	CanvasSize canvas = Engine::get_canvas_size (),
+		elem_size = image->bitmap
+			? image->bitmap->get_size () : SYMBOL_SIZE;
 
-	// calculate center of canvas and position of element
+	// Calculate the center of the canvas and the position of the element.
 	CanvasPoint canvas_center (canvas.w / 2, canvas.h / 2),
-		elem_pos (canvas_center.x - elem_size.w / 2 + offset.x,
-			canvas_center.y - elem_size.h / 2 + offset.y);
+		elem_pos (canvas_center.x - elem_size.w / 2 + offset_x,
+			canvas_center.y - elem_size.h / 2 + offset_y);
 
-	SetPosition (elem_pos);
-	SetSize (elem_size);
+	set_position (elem_pos);
+	set_size (elem_size);
 	return true;
 }
 
 void
-cScr_ToolSight::Redraw ()
+KDToolSight::redraw ()
 {
-	SetDrawingColor (color);
-	if (bitmap)
-		DrawBitmap (bitmap, HUDBitmap::STATIC);
-	else if (symbol != SYMBOL_NONE)
-		DrawSymbol (symbol, SYMBOL_SIZE);
+	set_drawing_color (color);
+	if (image->bitmap)
+		draw_bitmap (image->bitmap, HUDBitmap::STATIC);
+	else if (image->symbol != Symbol::NONE)
+		draw_symbol (image->symbol, SYMBOL_SIZE);
 }
 
-long
-cScr_ToolSight::OnInvSelect (sScrMsg* pMsg, cMultiParm& mpReply)
+Message::Result
+KDToolSight::on_inv_select (GenericMessage&)
 {
 	selected = true;
-	return cScr_HUDElement::OnInvSelect (pMsg, mpReply);
+	return Message::CONTINUE;
 }
 
-long
-cScr_ToolSight::OnInvFocus (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	selected = true;
-	return cScr_HUDElement::OnInvFocus (pMsg, mpReply);
-}
-
-long
-cScr_ToolSight::OnInvDeSelect (sScrMsg* pMsg, cMultiParm& mpReply)
+Message::Result
+KDToolSight::on_inv_deselect (GenericMessage&)
 {
 	selected = false;
-	return cScr_HUDElement::OnInvDeSelect (pMsg, mpReply);
+	return Message::CONTINUE;
 }
 
-long
-cScr_ToolSight::OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply)
+Message::Result
+KDToolSight::on_property_change (PropertyChangeMessage& message)
 {
-	selected = false;
-	return cScr_HUDElement::OnInvDeFocus (pMsg, mpReply);
-}
-
-void
-cScr_ToolSight::OnPropertyChanged (const char* property)
-{
-	if (!!strcmp (property, "DesignNote")) return;
-
-	UpdateImage ();
-
-	ulong _color = GetParamColor ("tool_sight_color", 0x808080);
-	if (color != _color)
-	{
-		color = _color;
-		ScheduleRedraw ();
-	}
-
-	CanvasPoint _offset (GetParamInt ("tool_sight_offset_x", 0),
-		GetParamInt ("tool_sight_offset_y", 0));
-	if (offset != _offset)
-	{
-		offset = _offset;
-		ScheduleRedraw ();
-	}
-}
-
-void
-cScr_ToolSight::UpdateImage ()
-{
-	// hold local reference to old bitmap in case it is unchanged
-	HUDBitmapPtr old_bitmap = bitmap;
-	bitmap.reset ();
-
-	cAnsiStr image = GetParamString ("tool_sight_image", "@crosshairs");
-	Symbol _symbol = SYMBOL_NONE;
-
-	if (image.GetAt (0) == '@')
-		_symbol = InterpretSymbol (image, false);
-	else
-	{
-		bitmap = LoadBitmap (image);
-		if (!bitmap)
-			_symbol = SYMBOL_CROSSHAIRS;
-	}
-
-	if (symbol != _symbol || bitmap != old_bitmap)
-	{
-		symbol = _symbol;
-		ScheduleRedraw ();
-	}
+	if (message.get_prop_name () == "DesignNote")
+		schedule_redraw ();
+	return Message::CONTINUE;
 }
 

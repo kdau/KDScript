@@ -1,9 +1,7 @@
 /******************************************************************************
- *  ScriptDef.cpp
+ *  module.cc
  *
  *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
- *  Adapted from Public Scripts
- *  Copyright (C) 2005-2011 Tom N Harris <telliamed@whoopdedo.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,103 +17,46 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  *****************************************************************************/
-#include "genscripts.h"
 
-#if !SCR_GENSCRIPTS
-#include "ScriptModule.h"
-#endif // SCR_GENSCRIPTS
+#include "KDCarried.hh"
+#include "KDCarrier.hh"
+#include "KDGetInfo.hh"
+#include "KDHUDElement.hh"
+#include "KDJunkTool.hh"
+#include "KDOptionalReverse.hh"
+#include "KDQuestArrow.hh"
+#include "KDRenewable.hh"
+#include "KDShortText.hh"
+#include "KDStatMeter.hh"
+#include "KDSubtitled.hh"
+#include "KDSyncGlobalFog.hh"
+#include "KDToolSight.hh"
+#include "KDTransitionTrap.hh"
+#include "KDTrapEnvMap.hh"
+#include "KDTrapFog.hh"
+#include "KDTrapNextMission.hh"
+#include "KDTrapWeather.hh"
 
-/**************************
- * This interesting little mess of nested includes is used to auto-magically
- * create the script factory functions and script array for cScriptModule.
- *
- * It will parse your script class headers three times:
- *     - Once to get all the class declarations. No special macros.
- *     - Second with the macro SCR_GENSCRIPTFACTORY defined to create the
- *       factory functions.
- *     - Third with the macro SCR_GENSCRIPTARRAY defined to fill the array.
- *
- * The macro SCR_GENSCRIPTS will be set to the pass number, starting at 0.
- * Use this to bracket your class declarations. When SCR_GENSCRIPTS is
- * defined and non-zero, you _ONLY_ want to use the macro GEN_FACTORY.
- * It takes three arguments, the name of a script, the base class for
- * the script, and the C++ class of the script. There's also a GEN_ALIAS
- * macro for giving a script an additional name. It has the same arguments
- * as GEN_FACTORY, plus an extra tag to distinguish the alias from the
- * original. (Because of a quirk in how the scripts are instantiated,
- * aliases each have to use a different factory function.)
- *
- * Customize this file by inserting any extra includes in the area that is
- * guarded with SCR_GENSCRIPTS. Then include any extra script headers just below
- * here. And by the magic of recursion, everything will be automatically
- * generated.
- *
- * Note that the factories this generates are static non-member functions.
- * This is because GCC doesn't like to ## a class name to a member definition.
- * A little annoying. But there's no compelling reason that the factory has
- * to be a member. Plus, it frees you from having to write the factory into your
- * class definition.
- */
+#include "version.rc"
+#include <Thief/module.hh>
 
-#include "BaseScript.h"
-#include "BaseTrap.h"
+THIEF_MODULE_BEGIN (MODULE_NAME)
+	THIEF_SCRIPT ("KDCarried", "Script", KDCarried)
+	THIEF_SCRIPT ("KDCarrier", "Script", KDCarrier)
+	THIEF_SCRIPT ("KDGetInfo", "Script", KDGetInfo)
+	THIEF_SCRIPT ("KDJunkTool", "Script", KDJunkTool)
+	THIEF_SCRIPT ("KDOptionalReverse", "Script", KDOptionalReverse)
+	THIEF_SCRIPT ("KDQuestArrow", "KDHUDElement", KDQuestArrow)
+	THIEF_SCRIPT ("KDRenewable", "Script", KDRenewable)
+	THIEF_SCRIPT ("KDShortText", "Script", KDShortText)
+	THIEF_SCRIPT ("KDStatMeter", "KDHUDElement", KDStatMeter)
+	THIEF_SCRIPT ("KDSubtitledAI", "KDSubtitled", KDSubtitledAI)
+	THIEF_SCRIPT ("KDSubtitledVO", "KDSubtitled", KDSubtitledVO)
+	THIEF_SCRIPT ("KDSyncGlobalFog", "KDTransitionTrap", KDSyncGlobalFog)
+	THIEF_SCRIPT ("KDToolSight", "KDHUDElement", KDToolSight)
+	THIEF_SCRIPT ("KDTrapEnvMap", "TrapTrigger", KDTrapEnvMap)
+	THIEF_SCRIPT ("KDTrapFog", "KDTransitionTrap", KDTrapFog)
+	THIEF_SCRIPT ("KDTrapNextMission", "TrapTrigger", KDTrapNextMission)
+	THIEF_SCRIPT ("KDTrapWeather", "KDTransitionTrap", KDTrapWeather)
+THIEF_MODULE_END
 
-#include "KDCarried.h"
-#include "KDCarrier.h"
-#include "KDCustomHUD.h"
-#include "KDGetInfo.h"
-#include "KDHUDElement.h"
-#include "KDJunkTool.h"
-#include "KDOptionalReverse.h"
-#include "KDQuestArrow.h"
-#include "KDRenewable.h"
-#include "KDShortText.h"
-#include "KDStatMeter.h"
-#include "KDSubtitled.h"
-#include "KDToolSight.h"
-#include "KDTransitionTrap.h"
-#include "KDTrapEnvMap.h"
-#include "KDTrapFog.h"
-#include "KDTrapNextMission.h"
-#include "KDTrapWeather.h"
-
-#undef BASESCRIPT_H
-#undef BASETRAP_H
-
-#undef KDCARRIED_H
-#undef KDCARRIER_H
-#undef KDCUSTOMHUD_H
-#undef KDGETINFO_H
-#undef KDHUDELEMENT_H
-#undef KDJUNKTOOL_H
-#undef KDOPTIONALREVERSE_H
-#undef KDQUESTARROW_H
-#undef KDRENEWABLE_H
-#undef KDSHORTTEXT_H
-#undef KDSTATMETER_H
-#undef KDSUBTITLED_H
-#undef KDTOOLSIGHT_H
-#undef KDTRANSITIONTRAP_H
-#undef KDTRAPENVMAP_H
-#undef KDTRAPFOG_H
-#undef KDTRAPNEXTMISSION_H
-#undef KDTRAPWEATHER_H
-
-#if defined(SCR_GENSCRIPTFACTORY)
-
-#undef SCR_GENSCRIPTFACTORY
-#define SCR_GENSCRIPTARRAY
-
-const char* cScriptModule::sm_ScriptModuleName = MODULE_NAME;
-const sScrClassDesc cScriptModule::sm_ScriptsArray[] = {
-#include __FILE__
-#elif defined(SCR_GENSCRIPTARRAY)
-};
-const unsigned int cScriptModule::sm_ScriptsArraySize = sizeof(sm_ScriptsArray)/sizeof(sm_ScriptsArray[0]);
-
-#else // First-time through
-#define SCR_GENSCRIPTFACTORY
-
-#include __FILE__
-
-#endif

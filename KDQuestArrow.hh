@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDQuestArrow.h
+ *  KDQuestArrow.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,63 +18,51 @@
  *
  *****************************************************************************/
 
-#ifndef KDQUESTARROW_H
-#define KDQUESTARROW_H
+#ifndef KDQUESTARROW_HH
+#define KDQUESTARROW_HH
 
-#if !SCR_GENSCRIPTS
-#include "KDHUDElement.h"
-#include "scriptvars.h"
-#endif // !SCR_GENSCRIPTS
+#include "KDHUDElement.hh"
 
-#if !SCR_GENSCRIPTS
-class cScr_QuestArrow : public cScr_HUDElement
+class KDQuestArrow : public KDHUDElement
 {
 public:
-	cScr_QuestArrow (const char* pszName, int iHostObjId);
-
-protected:
-	virtual bool Initialize ();
-	virtual bool Prepare ();
-	virtual void Redraw ();
-
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual void OnPropertyChanged (const char* property);
-	virtual long OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnSlain (sSlayMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnQuestChange (sQuestMsg* pMsg, cMultiParm& mpReply);
+	KDQuestArrow (const String& name, const Object& host);
 
 private:
+	virtual void initialize ();
+	virtual bool prepare ();
+	virtual void redraw ();
+
+	Message::Result on_on (GenericMessage&);
+	Message::Result on_off (GenericMessage&);
+	Message::Result on_contained (ContainmentMessage&);
+	Message::Result on_ai_mode_change (AIModeChangeMessage&);
+
+	Message::Result on_property_change (PropertyChangeMessage&);
+	Message::Result on_quest_change (QuestChangeMessage&);
+
+	void update_image ();
+	void update_objective ();
+	void update_text ();
+
+	static const HUD::ZIndex PRIORITY;
 	static const CanvasSize SYMBOL_SIZE;
 	static const int PADDING;
 
-	script_int enabled; // bool
-	bool obscured;
+	Persistent<bool> enabled;
+	Persistent<Objective::Number> old_objective;
 
-	enum { OBJECTIVE_NONE = -1 };
-	int objective;
-	void UpdateObjective ();
-	void SetEnabledFromObjective ();
-#if (_DARKGAME == 2)
-	void GetTextFromObjective (cScrStr& msgstr);
-#endif
+	Parameter<bool> obscured;
+	Parameter<Objective> objective;
+	Parameter<Image> image;
+	Parameter<String> _text; String text;
+	Parameter<Color> color;
+	Parameter<bool> shadow;
 
-	Symbol symbol;
-	Direction symbol_dirn;
-	HUDBitmapPtr bitmap;
+	Direction direction;
 	CanvasPoint image_pos;
-	void UpdateImage ();
-
-	cAnsiStr text;
 	CanvasPoint text_pos;
-	void UpdateText ();
-
-	ulong color;
-	bool shadow;
-	void UpdateColor ();
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDQuestArrow","KDHUDElement",cScr_QuestArrow)
-#endif // SCR_GENSCRIPTS
 
-#endif // KDQUESTARROW_H
+#endif // KDQUESTARROW_HH
 

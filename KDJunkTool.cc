@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDJunkTool.cpp
+ *  KDJunkTool.cc
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,208 +18,198 @@
  *
  *****************************************************************************/
 
-#include "KDJunkTool.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDJunkTool.hh"
 
-cScr_JunkTool::cScr_JunkTool (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId)
-{}
-
-long
-cScr_JunkTool::OnContained (sContainedScrMsg* pMsg, cMultiParm&)
+KDJunkTool::KDJunkTool (const String& _name, const Object& _host)
+	: Script (_name, _host),
+	  PARAMETER_ (lugged, "junk_tool_lugged", true),
+	  PARAMETER_ (drop, "junk_tool_drop", false),
+	  PERSISTENT (previous_weapon)
 {
-	if (!InheritsFrom ("Avatar", pMsg->container))
-		return S_FALSE;
+	listen_message ("Contained", &KDJunkTool::on_contained);
+	listen_message ("Destroy", &KDJunkTool::on_destroy);
 
-	switch (pMsg->event)
-	{
-	case kContainAdd:
-		StartJunk (pMsg->container);
-		return S_OK;
-	case kContainRemove:
-		EndJunk (pMsg->container);
-		return S_OK;
-	default:
-		return S_FALSE;
-	}
+	listen_timer ("ClearWeapon", &KDJunkTool::on_clear_weapon);
+
+	listen_message ("InvDeSelect", &KDJunkTool::on_needs_reselect);
+	listen_message ("FrobInvEnd", &KDJunkTool::on_needs_reselect);
+	listen_message ("FrobToolEnd", &KDJunkTool::on_needs_reselect);
+	listen_message ("Reselect", &KDJunkTool::on_reselect);
+
+	listen_message ("InvDeFocus", &KDJunkTool::on_needs_tool_use);
+	listen_timer ("StartToolUse", &KDJunkTool::on_start_tool_use);
+
+	listen_message ("Slain", &KDJunkTool::on_slain);
+
 }
 
-long
-cScr_JunkTool::OnInvDeSelect (sScrMsg*, cMultiParm&)
+
+
+Message::Result
+KDJunkTool::on_contained (ContainmentMessage& message)
 {
-	// reselect the tool in the next cycle; won't work in this one
-	SimplePost (ObjId (), ObjId (), "ReselectMe");
-	return S_OK;
+	if (message.get_container ().inherits_from (Object ("Avatar")))
+		switch (message.get_event ())
+		{
+		case ContainmentMessage::ADD: start_carry (); break;
+		case ContainmentMessage::REMOVE: finish_carry (); break;
+		default: break;
+		}
+	return Message::CONTINUE;
 }
 
-long
-cScr_JunkTool::OnInvDeFocus (sScrMsg*, cMultiParm&)
+Message::Result
+KDJunkTool::on_destroy (GenericMessage&)
 {
-	SetTimedMessage ("BeginToolUse", 1, kSTM_OneShot);
-	return S_OK;
-}
-
-long
-cScr_JunkTool::OnFrobInvEnd (sFrobMsg*, cMultiParm&)
-{
-	// resume tool use
-	SimplePost (ObjId (), ObjId (), "ReselectMe");
-	return S_OK;
-}
-
-long
-cScr_JunkTool::OnFrobToolEnd (sFrobMsg*, cMultiParm&)
-{
-	// resume tool use
-	SimplePost (ObjId (), ObjId (), "ReselectMe");
-	return S_OK;
-}
-
-long
-cScr_JunkTool::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
-{
-	if (!strcmp (pMsg->message, "ReselectMe"))
-	{
-		object avatar = GetAvatarContainer ();
-		if (!avatar) return S_FALSE;
-
-		// (re)select the object
-		SService<IDarkUISrv> pDUIS (g_pScriptManager);
-		pDUIS->InvSelect (ObjId ());
-
-		// create a fake frobbable and schedule to begin tool use
-		CreateFrobbable (avatar);
-		SetTimedMessage ("BeginToolUse", 50, kSTM_OneShot);
-		return S_OK;
-	}
-	return cBaseScript::OnMessage (pMsg, mpReply);
-}
-
-long
-cScr_JunkTool::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
-{
-	if (!strcmp (pMsg->name, "BeginToolUse"))
-	{
-		ExecuteCommand ("use_item 0");
-		return S_OK;
-	}
-
-	if (!strcmp (pMsg->name, "ClearWeapon") && GetAvatarContainer ())
-	{
-		ExecuteCommand ("clear_weapon");
-		SetTimedMessage ("ClearWeapon", 100, kSTM_OneShot);
-		return S_OK;
-	}
-
-	return cBaseScript::OnTimer (pMsg, mpReply);
-}
-
-long
-cScr_JunkTool::OnSlain (sSlayMsg*, cMultiParm&)
-{
-	object avatar = GetAvatarContainer ();
-	if (avatar && GetObjectParamBool (ObjId (), "junk_tool_drop", false))
-	{
-		// forget the slaying so we can drop again later
-		SService<IPropertySrv> pPS (g_pScriptManager);
-		if (pPS->Possessed (ObjId (), "DeathStage"))
-			pPS->Remove (ObjId (), "DeathStage");
-
-		// drop the tool
-		ExecuteCommand ("drop_item");
-		return S_OK;
-	}
-	return S_FALSE;
-}
-
-long
-cScr_JunkTool::OnDestroy (sScrMsg*, cMultiParm&)
-{
-	if (object avatar = GetAvatarContainer ())
-		EndJunk (avatar);
-	return S_OK;
-}
-
-object
-cScr_JunkTool::GetAvatarContainer ()
-{
-	LinkIter container (Any, ObjId (), "Contains");
-	return (container && InheritsFrom ("Avatar", container.Source ()))
-		? container.Source () : None;
+	if (Player ().is_in_inventory (host ()))
+		finish_carry ();
+	return Message::CONTINUE;
 }
 
 void
-cScr_JunkTool::StartJunk (object avatar)
+KDJunkTool::start_carry ()
 {
-	// keep clearing any weapon while we are in inventory
-	SetTimedMessage ("ClearWeapon", 1, kSTM_OneShot);
+	Player player;
+	if (!player.is_in_inventory (host ())) return;
 
-	// for lugged tool, slow down player and play lifting grunt
-	if (GetObjectParamBool (ObjId (), "junk_tool_lugged", true))
+	// Keep clearing any weapon while the tool is in inventory.
+	start_timer ("ClearWeapon", 1, false);
+
+	// If lugged: slow down the player, show limb model if any, and grunt.
+	if (lugged)
 	{
-		SService<IDarkInvSrv> pDIS (g_pScriptManager);
-		pDIS->AddSpeedControl ("JunkTool", 0.6, 0.6);
-		PlayVoiceOver (avatar, StrToObject ("garlift"));
+		player.add_speed_control ("JunkTool", 0.6f);
+		if (Property (host (), "InvLimbModel").exists ())
+			player.show_arm ();
+		SoundSchema ("garlift").play_voiceover ();
 	}
 
-	// select the object and begin tool use
-	SimplePost (ObjId (), ObjId (), "ReselectMe");
+	// Select the tool and start tool use.
+	GenericMessage ("Reselect").post (host (), host ());
 }
 
 void
-cScr_JunkTool::EndJunk (object avatar)
+KDJunkTool::finish_carry ()
 {
-	// for lugged tool, restore player speed and play dropping grunt
-	if (GetObjectParamBool (ObjId (), "junk_tool_lugged", true))
+	Player player;
+
+	// If a weapon had been selected, reselect it.
+	if (previous_weapon.valid () && previous_weapon != Object::NONE)
+		player.select_weapon (previous_weapon);
+
+	// For a lugged tool, restore player speed, hide carry model, and grunt.
+	if (lugged)
 	{
-		SService<IDarkInvSrv> pDIS (g_pScriptManager);
-		pDIS->RemoveSpeedControl ("JunkTool");
-		PlayVoiceOver (avatar, StrToObject ("gardrop"));
+		player.remove_speed_control ("JunkTool");
+		player.hide_arm ();
+		SoundSchema ("gardrop").play_voiceover ();
 	}
 }
 
-object
-cScr_JunkTool::CreateFrobbable (object avatar)
+
+
+Message::Result
+KDJunkTool::on_clear_weapon (TimerMessage&)
 {
-	// The "use_item 0" command (to begin tool use) sometimes only works 
-	// when there is a frobbable item currently focused in the world. (I
-	// have no idea when, or why it's variable.) To make the command always
+	Player player;
+	if (player.is_in_inventory (host ()))
+	{
+		Weapon weapon = player.get_selected_weapon ();
+		if (weapon != Object::NONE)
+		{
+			previous_weapon = weapon;
+			player.clear_weapon ();
+		}
+		start_timer ("ClearWeapon", 100, false);
+	}
+	return Message::HALT;
+}
+
+
+
+Message::Result
+KDJunkTool::on_needs_reselect (GenericMessage&)
+{
+	// Reselect the tool in the next cycle (won't work in this one).
+	GenericMessage ("Reselect").post (host (), host ());
+	return Message::CONTINUE;
+}
+
+Message::Result
+KDJunkTool::on_reselect (GenericMessage&)
+{
+	Player player;
+	if (player.is_in_inventory (host ()))
+	{
+		// (Re)select the tool.
+		player.select_item (host ());
+
+		// Create a fake frobbable and schedule to start tool use.
+		create_frobbable ();
+		start_timer ("StartToolUse", 50, false);
+	}
+
+	return Message::HALT;
+}
+
+Object
+KDJunkTool::create_frobbable ()
+{
+	// The command for starting tool use does not work consistently. In some
+	// cases, it does not work unless there is a frobbable item currently 
+	// focused in the world. (I can't tell why.) To make the command always
 	// be effective, this method creates a fake frobbable object in front of
 	// the player that will destroy itself instantly, temporarily creating
-	// the conditions required by "use_item 0".
+	// the conditions required by the command.
 
-	SService<IObjectSrv> pOS (g_pScriptManager);
-	SService<IPropertySrv> pPS (g_pScriptManager);
+	// Create the object and make it frobbable.
+	Rendered frobbable = Object::create_temp_fnord (100ul);
+	Interactive (frobbable).frob_world_action =
+		Interactive::FrobAction::FROB_SCRIPTS;
 
-	// create the fake frobbable object
-	object frobbable;
-	pOS->Create (frobbable, StrToObject ("Marker"));
+	// Move and enlarge it to fill the player's view.
+	frobbable.set_position ({ 2.0f, 0.0f, 0.0f }, Vector (), Player ());
+	frobbable.model_scale = { 10.0f, 10.0f, 20.0f };
 
-	// make it frobbable
-	pPS->Add (frobbable, "FrobInfo");
-	pPS->Set (frobbable, "FrobInfo", "World Action", 2); // Script
-
-	// fill the player's view
-	pOS->Teleport (frobbable, { 2.0, 0.0, 0.0 }, cScrVec (), avatar);
-	pPS->Add (frobbable, "Scale");
-	pPS->SetSimple (frobbable, "Scale", cScrVec (10.0, 10.0, 20.0));
-
-	// make it technically but not actually visible
-	pPS->Add (frobbable, "RenderType");
-	pPS->SetSimple (frobbable, "RenderType", 0); // Normal
-	pPS->Add (frobbable, "RenderAlpha");
-	pPS->SetSimple (frobbable, "RenderAlpha", 0.0);
-
-	// ensure it will be destroyed
-	pOS->SetTransience (frobbable, true);
-	pPS->Add (frobbable, "CfgTweqDelete");
-	pPS->Set (frobbable, "CfgTweqDelete", "Halt", 0); // Destroy Obj
-	pPS->Set (frobbable, "CfgTweqDelete", "AnimC", 2); // Sim
-	pPS->Set (frobbable, "CfgTweqDelete", "Rate", 100);
-	pPS->Add (frobbable, "StTweqDelete");
-	pPS->Set (frobbable, "StTweqDelete", "AnimS", 1); // On
+	// Make it technically, but not actually, visible.
+	frobbable.render_type = Rendered::RenderType::NORMAL;
+	frobbable.opacity = 0.01f;
 
 	return frobbable;
 }
+
+
+
+Message::Result
+KDJunkTool::on_needs_tool_use (GenericMessage&)
+{
+	start_timer ("StartToolUse", 1, false);
+	return Message::CONTINUE;
+}
+
+Message::Result
+KDJunkTool::on_start_tool_use (TimerMessage&)
+{
+	Player ().start_tool_use ();
+	return Message::HALT;
+}
+
+
+
+Message::Result
+KDJunkTool::on_slain (SlayMessage&)
+{
+	Player player;
+	if (drop && player.is_in_inventory (host ()))
+	{
+		// Forget the slaying so the tool can be dropped again later.
+		host_as<Damageable> ().resurrect (host ());
+
+		// Drop the tool.
+		player.drop_item ();
+	}
+	return Message::CONTINUE;
+}
+
+
 

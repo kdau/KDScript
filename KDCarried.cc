@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDCarried.cpp
+ *  KDCarried.cc
  *
  *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,194 +18,168 @@
  *
  *****************************************************************************/
 
-#include "KDCarried.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDCarried.hh"
 
-cScr_Carried::cScr_Carried (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId)
-{}
-
-long
-cScr_Carried::OnSim (sSimMsg* pMsg, cMultiParm&)
+KDCarried::KDCarried (const String& _name, const Object& _host)
+	: Script (_name, _host),
+	  PARAMETER (drop_on_alert, AI::Alert::NONE),
+	  PARAMETER (was_dropped, false),
+	  PARAMETER (inert_until_dropped, false),
+	  PARAMETER (off_when_dropped, false)
 {
-	// add FrobInert if requested
-	if (pMsg->fStarting &&
-	    GetObjectParamBool (ObjId (), "inert_until_dropped", false))
-		AddSingleMetaProperty ("FrobInert", ObjId ());
-
-	return S_OK;
+	listen_message ("Sim", &KDCarried::on_sim);
+	listen_message ("Create", &KDCarried::on_create);
+	listen_message ("CarrierAlerted", &KDCarried::on_carrier_alerted);
+	listen_message ("CarrierBrainDead", &KDCarried::on_drop);
+	listen_message ("CarrierSlain", &KDCarried::on_drop);
+	listen_message ("Drop", &KDCarried::on_drop);
+	listen_message ("FixPhysics", &KDCarried::on_fix_physics);
 }
 
-long
-cScr_Carried::OnCreate (sScrMsg*, cMultiParm&)
+Message::Result
+KDCarried::on_sim (SimMessage& message)
 {
-	// only proceed for objects created in-game
-	SService<IVersionSrv> pVS (g_pScriptManager);
-	if (pVS->IsEditor () == 1) return S_FALSE;
+	// Add the FrobInert metaproperty, if requested.
+	if (message.is_starting () && inert_until_dropped)
+		host ().add_metaprop (Object ("FrobInert"));
 
-	// don't affect any dropped clone
-	if (GetObjectParamBool (ObjId (), "dropped", false))
-		return S_FALSE;
-
-	// add FrobInert if requested
-	if (GetObjectParamBool (ObjId (), "inert_until_dropped", false))
-		AddSingleMetaProperty ("FrobInert", ObjId ());
-
-	return S_OK;
+	return Message::CONTINUE;
 }
 
-long
-cScr_Carried::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
+Message::Result
+KDCarried::on_create (GenericMessage&)
 {
-	if (!stricmp (pMsg->message, "Drop") ||
-	    !stricmp (pMsg->message, "CarrierBrainDead"))
+	// Only proceed for objects created in-game.
+	if (Engine::get_mode () != Engine::Mode::GAME)
+		return Message::HALT;
+
+	// Don't affect any already-dropped clone.
+	if (was_dropped)
+		return Message::HALT;
+
+	// Add the FrobInert metaproperty, if requested.
+	if (inert_until_dropped)
+		host ().add_metaprop (Object ("FrobInert"));
+
+	return Message::CONTINUE;
+}
+
+Message::Result
+KDCarried::on_carrier_alerted (GenericMessage& message)
+{
+	AI::Alert new_alert = message.get_data<AI::Alert> (Message::DATA1);
+	if (drop_on_alert > AI::Alert::NONE && drop_on_alert <= new_alert)
+		return on_drop (message);
+	else
+		return Message::CONTINUE;
+}
+
+Message::Result
+KDCarried::on_drop (GenericMessage&)
+{
+	Physical dropped = host ();
+	was_dropped = true;
+
+	Vector location = dropped.get_location (),
+		rotation = dropped.get_rotation ();
+
+	// Remove the FrobInert metaproperty, if requested.
+	if (inert_until_dropped)
+		dropped.remove_metaprop (Object ("FrobInert"));
+
+	// Turn off the object and ControlDevice-linked objects, if requested.
+	if (off_when_dropped)
 	{
-		Drop ();
-		return S_OK;
+		GenericMessage ("TurnOff").send (dropped, dropped);
+		GenericMessage ("TurnOff").broadcast (dropped, "ControlDevice");
 	}
 
-	if (!stricmp (pMsg->message, "CarrierAlerted") &&
-	    pMsg->data.type == kMT_Int) // new alert level
+#ifdef IS_THIEF2
+	// Confirm that the object would not fall out of the world if dropped.
+	Physical position_test;
+	if (dropped.is_physical ())
+		position_test = dropped;
+	else
 	{
-		int new_alert = int (pMsg->data), min_alert =
-			GetObjectParamInt (ObjId (), "drop_on_alert", kNoAlert);
-		if (min_alert > kNoAlert && min_alert <= new_alert)
+		position_test = Object::create_temp_fnord ();
+		position_test.set_position (location, rotation);
+		position_test.physics_type = Physical::PhysicsType::OBB;
+	}
+	if (!position_test.is_position_valid ())
+	{
+		mono () << "Not dropping from invalid location " << location
+			<< "." << std::endl;
+		return Message::HALT;
+	}
+#endif // IS_THIEF2
+
+	ContainsLink container = Link::get_one ("~Contains", dropped);
+	if (container != Link::NONE)
+	{
+		if (container.get_type () != Container::Type::GENERIC)
 		{
-			Drop ();
-			return S_OK;
-		}
-		else
-			return S_FALSE;
-	}
-
-	if (!stricmp (pMsg->message, "FixPhysics"))
-	{
-		FixPhysics ();
-		return S_OK;
-	}
-
-	return cBaseScript::OnMessage (pMsg, mpReply);
-}
-
-void
-cScr_Carried::Drop ()
-{
-	SService<IObjectSrv> pOS (g_pScriptManager);
-	SService<IPropertySrv> pPS (g_pScriptManager);
-	SService<IPhysSrv> pPhS (g_pScriptManager);
-	SService<IQuestSrv> pQS (g_pScriptManager);
-
-	SetObjectParamBool (ObjId (), "dropped", true);
-
-	cScrVec position; pOS->Position (position, ObjId ());
-	cScrVec facing; pOS->Facing (facing, ObjId ());
-
-	// remove FrobInert if requested
-	if (GetObjectParamBool (ObjId (), "inert_until_dropped", false))
-		RemoveSingleMetaProperty ("FrobInert", ObjId ());
-
-	// turn off the object and others if requested
-	if (GetObjectParamBool (ObjId (), "off_when_dropped", false))
-	{
-		SimpleSend (ObjId (), ObjId (), "TurnOff");
-		CDSend ("TurnOff", ObjId ());
-	}
-
-#if (_DARKGAME == 2)
-	// confirm that object would not drop out of world
-	true_bool position_valid;
-	pOS->IsPositionValid (position_valid, ObjId ());
-	if (!position_valid)
-	{
-		DebugPrintf ("Not dropping from invalid position (%f,%f,%f).",
-			position.x, position.y, position.z);
-		return;
-	}
-#endif // _DARKGAME == 2
-
-	object drop = ObjId ();
-
-	for (LinkIter container (Any, ObjId (), "Contains");
-	     container; ++container)
-	{
-		switch (*(const int*) container.GetData ())
-		{
-		case kContainTypeAlternate:
-		case kContainTypeHand:
-		case kContainTypeBelt:
-			// decrease pickable pocket count
-			pQS->Set ("DrSPocketCnt",
-				pQS->Get ("DrSPocketCnt") - 1,
-				kQuestDataMission);
-			break;
-		case kContainTypeGeneric:
-		default:
-			// generic contents don't count as pickable pockets
-			break;
+			// Decrease the pickable pocket count.
+			QuestVar pockets ("DrSPocketCnt");
+			pockets.set (pockets.get () - 1);
 		}
 
-		// unlink from Contains carrier
-		DestroyLink (container);
+		container.destroy ();
 	}
 
-	for (LinkIter creature (Any, ObjId (), "CreatureAttachment");
-	     creature; ++creature)
-		// unlink from CreatureAttachment carrier
-		DestroyLink (creature);
+	Link creature = Link::get_one ("~CreatureAttachment", dropped);
+	if (creature != Link::NONE)
+		creature.destroy ();
 
-	LinkIter dattach (ObjId (), Any, "DetailAttachement");
-	if (dattach)
+	Link detail = Link::get_one ("DetailAttachement", dropped);
+	if (detail != Link::NONE)
 	{
-		// unlink from DetailAttachement carrier, destroying this object
-		object ai = dattach.Destination ();
-		DestroyLink (dattach);
+		dropped = dropped.clone ();
+		mono () << "Replacing self with clone:"
+			<< dropped.get_editor_name () << std::endl;
 
-		// clone self and add reference link to AI
-		pOS->Create (drop, ObjId ());
-		CreateLink ("CulpableFor", ai, drop);
-		DebugPrintf ("Replacing self with clone %d.", int (drop));
+		// Add a reference link to the ex-carrying AI.
+		Link::create ("CulpableFor", detail.get_dest (), dropped);
 
-		// remove clone's FrobInert if requested (yes, this is needed)
-		if (GetObjectParamBool (drop, "inert_until_dropped", false))
-			RemoveSingleMetaProperty ("FrobInert", drop);
+		// Unlink from the carrier, which will destroy this object.
+		detail.destroy ();
+
+		// Remove the clone's FrobInert if requested. Yes, again.
+		if (inert_until_dropped)
+			dropped.remove_metaprop (Object ("FrobInert"));
 	}
 
-	// ensure that the object is physical
-	if (!pPS->Possessed (drop, "PhysType"))
+	// Ensure that the object is physical.
+	if (!dropped.is_physical ())
 	{
-		// create an OBB model to allow check of object dimensions
-		pPS->Add (drop, "PhysType");
-		pPS->Set (drop, "PhysType", "Type", kPMT_OBB);
+		// Create an OBB model to allow check of object dimensions.
+		dropped.physics_type = Physical::PhysicsType::OBB;
 
-		// schedule to switch to correctly sized sphere
-		SimplePost (drop, drop, "FixPhysics");
+		// Schedule a switch to a correctly sized sphere model.
+		GenericMessage ("FixPhysics").post (host (), dropped);
 	}
 
-	// teleport object to own position to avoid winding up at origin (?!)
-	pOS->Teleport (drop, position, facing, None);
+	// Teleport the object to its original position. Yes, this is needed.
+	dropped.set_position (location, rotation);
 
-	// give object a push to cause it to drop
-	pPhS->SetVelocity (drop, {0.0, 0.0, -0.1});
+	// Give the object a small push to cause it to drop.
+	dropped.velocity = { 0.0f, 0.0f, -0.1f };
+
+	return Message::HALT;
 }
 
-void
-cScr_Carried::FixPhysics ()
+Message::Result
+KDCarried::on_fix_physics (GenericMessage&)
 {
-	// get object dimensions
-	SService<IPropertySrv> pPS (g_pScriptManager);
-	cMultiParm _dims;
-	pPS->Get (_dims, ObjId (), "PhysDims", "Size");
+	// Get the object dimensions based on the temporary OBB model.
+	Vector dims = host_as<OBBPhysical> ().physics_size;
+	float radius = std::max ({ dims.x, dims.y, dims.z }) / 2.0f;
 
-	// switch to sphere model and set appropriate radius
-	pPS->Set (ObjId (), "PhysType", "Type", kPMT_Sphere);
-	pPS->Set (ObjId (), "PhysType", "# Submodels", 1);
-	if (_dims.type == kMT_Vector)
-	{
-		cScrVec dims = cScrVec (_dims);
-		float radius =
-			std::max (dims.x, std::max (dims.y, dims.z)) / 2.0;
-		pPS->Set (ObjId (), "PhysDims", "Radius 1", radius);
-	}
+	// Switch to a sphere model and set the appropriate radius.
+	SpherePhysical sphere = host ();
+	sphere.physics_type = Physical::PhysicsType::SPHERE;
+	sphere.submodel_count = 1;
+	if (radius > 0.0f) sphere.physics_radius_1 = radius;
+
+	return Message::HALT;
 }
 

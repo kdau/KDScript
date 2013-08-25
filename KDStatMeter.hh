@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDStatMeter.h
+ *  KDStatMeter.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,97 +18,80 @@
  *
  *****************************************************************************/
 
-#ifndef KDSTATMETER_H
-#define KDSTATMETER_H
+#ifndef KDSTATMETER_HH
+#define KDSTATMETER_HH
 
-#if !SCR_GENSCRIPTS
-#include "KDHUDElement.h"
-#include "scriptvars.h"
-#endif // !SCR_GENSCRIPTS
+#include "KDHUDElement.hh"
 
-#if !SCR_GENSCRIPTS
-class cScr_StatMeter : public cScr_HUDElement
+class KDStatMeter : public KDHUDElement
 {
 public:
-	cScr_StatMeter (const char* pszName, int iHostObjId);
+	KDStatMeter (const String& name, const Object& host);
 
-protected:
-	virtual bool Initialize ();
-	virtual bool Prepare ();
-	virtual void Redraw ();
+	enum class Style { PROGRESS, UNITS, GEM };
 
-	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual void OnPropertyChanged (const char* property);
+	enum class Position
+	{
+		NW,   NORTH,  NE,
+		WEST, CENTER, EAST,
+		SW,   SOUTH,  SE
+	};
+
+	enum class Orient { HORIZ, VERT };
+
+	enum class Component { NONE, X, Y, Z };
 
 private:
-	void UpdateImage ();
-	void UpdateText ();
-	void UpdateObject ();
+	virtual void initialize ();
+	virtual bool prepare ();
+	virtual void redraw ();
 
+	CanvasSize get_request_size () const;
+
+	Message::Result on_post_sim (GenericMessage&);
+
+	Message::Result on_on (GenericMessage&);
+	Message::Result on_off (GenericMessage&);
+
+	Message::Result on_property_change (PropertyChangeMessage&);
+	void update_text ();
+	void update_range ();
+
+	static const HUD::ZIndex PRIORITY;
 	static const int MARGIN;
 
-	script_int enabled; // bool
+	Persistent<bool> enabled;
 
-	enum Style
-	{
-		STYLE_PROGRESS,
-		STYLE_UNITS,
-		STYLE_GEM
-	} style;
+	// parameters
 
-	Symbol symbol;
-	HUDBitmapPtr bitmap;
-	CanvasPoint meter_pos;
-	int spacing;
+	Parameter<Style> style;
+	Parameter<Image> image;
+	Parameter<int> spacing;
+	Parameter<String> _text; String text;
 
-	cAnsiStr text;
-	CanvasPoint text_pos;
+	Parameter<Position> position;
+	Parameter<int> offset_x, offset_y;
+	Parameter<Orient> orient;
+	Parameter<int> request_w, request_h;
 
-	enum Position
-	{
-		POS_CENTER,
-		POS_NORTH,
-		POS_NE,
-		POS_EAST,
-		POS_SE,
-		POS_SOUTH,
-		POS_SW,
-		POS_WEST,
-		POS_NW
-	} position;
-	CanvasPoint offset;
+	Parameter<String> quest_var, prop_name, prop_field;
+	Parameter<Component> prop_comp;
+	Parameter<Object> prop_obj;
 
-	enum Orient
-	{
-		ORIENT_HORIZ,
-		ORIENT_VERT
-	} orient;
+	Parameter<float> _min, _max; float min, max;
+	Parameter<int> low, high;
 
-	CanvasSize request_size;
+	Parameter<Color> color_bg, color_low, color_med, color_high;
 
-	cAnsiStr qvar, prop_name, prop_field;
-	enum Component { COMP_NONE, COMP_X, COMP_Y, COMP_Z } prop_comp;
-
-	object prop_object;
-	bool post_sim_fix;
-
-	float min, max; int low, high;
-
-	ulong color_bg, color_low, color_med, color_high;
+	// temporary data
 
 	float value, value_pct;
 	int value_int;
-	enum ValueTier
-	{
-		VALUE_LOW,
-		VALUE_MED,
-		VALUE_HIGH
-	} value_tier;
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDStatMeter","KDHUDElement",cScr_StatMeter)
-#endif // SCR_GENSCRIPTS
+	enum class Tier { LOW, MEDIUM, HIGH } value_tier;
 
-#endif // KDSTATMETER_H
+	CanvasPoint meter_pos;
+	CanvasPoint text_pos;
+};
+
+#endif // KDSTATMETER_HH
 

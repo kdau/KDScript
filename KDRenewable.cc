@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDRenewable.cpp
+ *  KDRenewable.cc
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,109 +18,99 @@
  *
  *****************************************************************************/
 
-#include "KDRenewable.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDRenewable.hh"
 
-const int
-cScr_Renewable::DEFAULT_TIMING = 180; // seconds = three minutes
+const Time
+KDRenewable::DEFAULT_TIMING = 180000ul; // = three minutes
 
-cScr_Renewable::cScr_Renewable (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId)
-{}
-
-long
-cScr_Renewable::OnSim (sSimMsg* pMsg, cMultiParm&)
+KDRenewable::KDRenewable (const String& _name, const Object& _host)
+	: Script (_name, _host)
 {
-	if (!pMsg->fStarting) return S_FALSE;
-
-	SService<IPropertySrv> pPS (g_pScriptManager);
-	cMultiParm _timing; pPS->Get (_timing, ObjId (), "ScriptTiming", NULL);
-	ulong timing = 1000ul *
-		((_timing.type == kMT_Int) ? int (_timing) : DEFAULT_TIMING);
-
-	Renew ();
-	SetTimedMessage ("Renew", timing, kSTM_Periodic);
-	return S_OK;
+	listen_message ("Sim", &KDRenewable::on_sim);
+	listen_timer ("Renew", &KDRenewable::on_renew);
 }
 
-long
-cScr_Renewable::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
+Message::Result
+KDRenewable::on_sim (SimMessage& message)
 {
-	if (!strcmp (pMsg->name, "Renew"))
-		return Renew () ? S_OK : S_FALSE;
-	else
-		return cBaseScript::OnTimer (pMsg, mpReply);
+	if (!message.is_starting ()) return Message::CONTINUE;
+
+	// This is a non-standard use of the Script\Timing property.
+	Property _timing (host (), "ScriptTiming");
+	Time timing = _timing.exists ()
+		? Time (1000ul * _timing.get<int> ())
+		: DEFAULT_TIMING;
+
+	TimerMessage ("Renew").send (host (), host ());
+	start_timer ("Renew", timing, true);
+	return Message::CONTINUE;
 }
 
-bool
-cScr_Renewable::Renew ()
+Message::Result
+KDRenewable::on_renew (TimerMessage&)
 {
-	SService<IObjectSrv> pOS (g_pScriptManager);
-	SService<IPropertySrv> pPS (g_pScriptManager);
+	Player player;
 
 	// Check for a previously created instance.
-	LinkIter previous (ObjId (), Any, "Owns");
-	if (HasPlayerTouched (previous.Destination ()))
-		DestroyLink (previous);
-	else if (previous)
-		return false;
+	Link previous = Link::get_one ("Owns", host ());
+	if (previous != Link::NONE)
+	{
+		if (player.has_touched (previous.get_dest ()))
+			previous.destroy ();
+		else
+			return Message::HALT;
+	}
 
 	// Identify the resource archetype and stack count threshold.
-	object archetype;
-	int threshold = -1;
-	for (LinkIter script_params (ObjId (), Any, "ScriptParams");
-	     script_params; ++script_params)
+	Object archetype;
+	size_t threshold = 0;
+	for (auto& script_param : ScriptParamsLink::get_all (host ()))
 	{
-		const char* data = (const char*) script_params.GetData ();
-		if (data && sscanf (data, "%d", &threshold) == 1)
+		String data = script_param.get_data ();
+		char* end = nullptr;
+		threshold = strtol (data.data (), &end, 10);
+		if (end != data.data ())
 		{
-			archetype = script_params.Destination ();
+			archetype = script_param.get_dest ();
 			break;
 		}
 	}
-	if (!archetype || threshold < 0)
-		return false;
+	if (archetype == Object::NONE)
+		return Message::HALT;
 
 	// Transmogrify the archetype for the inventory check.
-	object inv_type = archetype;
-	sLink transmute;
-	if (GetOneLinkInherited ("Transmute", archetype, Any, &transmute))
-		inv_type = transmute.dest;
+	Object inv_type = archetype;
+	Links transmute = Link::get_all ("Transmute", archetype, Object::ANY,
+		Link::Inheritance::SOURCE);
+	if (!transmute.empty ())
+		inv_type = transmute.front ().get_dest ();
 	else
 	{
-		cAnsiStr archetype_name = ObjectToStr (archetype);
-		if (!strcmp (archetype_name, "EarthCrystal"))
-			inv_type = StrToObject ("EarthArrow");
-		else if (!strcmp (archetype_name, "WaterCrystal"))
-			inv_type = StrToObject ("water");
-		else if (!strcmp (archetype_name, "FireCrystal"))
-			inv_type = StrToObject ("firearr");
-		else if (!strcmp (archetype_name, "AirCrystal"))
-			inv_type = StrToObject ("GasArrow");
+		String archetype_name = archetype.get_name ();
+		if (archetype_name == "EarthCrystal")
+			inv_type = Object ("EarthArrow");
+		else if (archetype_name == "WaterCrystal")
+			inv_type = Object ("water");
+		else if (archetype_name == "FireCrystal")
+			inv_type = Object ("firearr");
+		else if (archetype_name == "AirCrystal")
+			inv_type = Object ("GasArrow");
 	}
 
 	// Check the inventory count.
-	int inventory = 0;
-	cMultiParm stack;
-	for (LinkIter contains (StrToObject ("Player"), Any, "Contains");
-	     contains; ++contains)
-	{
-		if (!InheritsFrom (inv_type, contains.Destination ())) continue;
-		pPS->Get (stack, contains.Destination (), "StackCount", NULL);
-		inventory += (stack.type == kMT_Int) ? int (stack) : 1;
-	}
-	if (inventory >= threshold)
-		return false;
+	size_t inv_count = 0;
+	for (auto& content : player.get_inventory ())
+		if (content.object.inherits_from (inv_type))
+			inv_count += content.object.stack_count;
+	if (inv_count >= threshold)
+		return Message::HALT;
 
 	// Create new instance.
-	object instance;
-	pOS->Create (instance, archetype);
-	pOS->Teleport (instance, cScrVec (), cScrVec (), ObjId ());
-	pPS->Remove (instance, "PhysType");
-	pPS->Remove (instance, "PhysInitVel");
-	CreateLink ("Owns", ObjId (), instance);
+	Physical instance = Object::create (archetype);
+	instance.set_position (Vector (), Vector (), host ());
+	instance.remove_physics ();
+	Link::create ("Owns", host (), instance);
 
-	return true;
+	return Message::CONTINUE;
 }
 

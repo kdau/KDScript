@@ -1,7 +1,4 @@
-DH2
-ScriptLib
-lg
-bin-all/*.o
+ThiefLib
 bin-t1/*.o
 bin-t1/*.osm
 bin-t2/*.o

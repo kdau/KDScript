@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDOptionalReverse.cpp: DarkObjectives, KDOptionalReverse
+ *  KDOptionalReverse.cc
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,265 +18,100 @@
  *
  *****************************************************************************/
 
-#include "KDOptionalReverse.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDOptionalReverse.hh"
 
-
-
-/* DarkObjectives */
-
-#define MAX_QVAR 32
-#define NO_OBJECTIVE UINT_MAX
-
-bool
-DarkObjectives::Exists (uint objective)
+KDOptionalReverse::KDOptionalReverse (const String& _name, const Object& _host)
+	: Script (_name, _host)
 {
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_state_%d", objective);
-	return pQS->Exists (qvar);
+	listen_message ("PostSim", &KDOptionalReverse::on_post_sim);
+#ifdef IS_THIEF2
+	listen_message ("QuestChange", &KDOptionalReverse::on_quest_change);
+	listen_message ("EndScript", &KDOptionalReverse::on_end_script);
+#endif // IS_THIEF2
 }
 
-eGoalState
-DarkObjectives::GetState (uint objective)
+#ifdef IS_THIEF2
+
+Message::Result
+KDOptionalReverse::on_post_sim (GenericMessage&)
 {
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_state_%u", objective);
-	int result = pQS->Get (qvar);
-	return (result >= kGoalIncomplete && result <= kGoalFailed)
-		? eGoalState (result) : kGoalInactive;
+	// Subscribe to objectives with negations.
+	for (Objective objective = 0; objective.exists (); ++objective.number)
+		if (get_negation (objective).number != Objective::NONE)
+			objective.subscribe (host (), Objective::Field::STATE);
+
+	return Message::CONTINUE;
 }
 
-void
-DarkObjectives::SetState (uint objective, eGoalState state)
+Message::Result
+KDOptionalReverse::on_quest_change (QuestChangeMessage& message)
 {
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_state_%u", objective);
-	pQS->Set (qvar, state, kQuestDataMission);
+	if (message.get_old_value () == message.get_new_value ())
+		return Message::HALT;
+
+	// Translate from the objective to its negation.
+	auto objective =
+		Objective::parse_quest_var (message.get_quest_var ());
+	if (objective.field == Objective::Field::STATE)
+		update_negation (objective.number, false);
+
+	return Message::CONTINUE;
 }
 
-bool
-DarkObjectives::IsVisible (uint objective)
+Message::Result
+KDOptionalReverse::on_end_script (GenericMessage&)
 {
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_visible_%u", objective);
-	return pQS->Get (qvar);
+	// Fix anything that VictoryCheck did incorrectly.
+	for (Objective objective = 0; objective.exists (); ++objective.number)
+		update_negation (objective, true);
+
+	return Message::CONTINUE;
 }
 
-void
-DarkObjectives::SetVisible (uint objective, bool visible)
+Objective
+KDOptionalReverse::get_negation (Objective objective)
 {
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_visible_%u", objective);
-	pQS->Set (qvar, visible, kQuestDataMission);
-}
-
-bool
-DarkObjectives::IsFinal (uint objective)
-{
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_final_%u", objective);
-	return pQS->Get (qvar);
-}
-
-bool
-DarkObjectives::IsIrreversible (uint objective)
-{
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_irreversible_%u", objective);
-	return pQS->Get (qvar);
-}
-
-bool
-DarkObjectives::IsReverse (uint objective)
-{
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_reverse_%u", objective);
-	return pQS->Get (qvar);
-}
-
-#if (_DARKGAME == 2)
-
-bool
-DarkObjectives::IsOptional (uint objective)
-{
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_optional_%u", objective);
-	return pQS->Get (qvar);
-}
-
-bool
-DarkObjectives::IsBonus (uint objective)
-{
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_bonus_%u", objective);
-	return pQS->Get (qvar);
-}
-
-#endif // _DARKGAME == 2
-
-eGoalType
-DarkObjectives::GetType (uint objective)
-{
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_type_%u", objective);
-	int result = pQS->Get (qvar);
-	return (result >= kGoalNone && result <= kGoalGoTo)
-		? eGoalType (result) : kGoalNone;
+	std::ostringstream _negation;
+	_negation << "goal_negation_" << objective.number;
+	QuestVar negation (_negation.str ());
+	return negation.get (Objective::NONE);
 }
 
 void
-DarkObjectives::Subscribe (object host, uint objective, const char* field)
+KDOptionalReverse::update_negation (Objective objective, bool final)
 {
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_%s_%u", field, objective);
-	pQS->SubscribeMsg (host, qvar, kQuestDataMission);
-}
+	Objective negation = get_negation (objective);
+	if (negation.number == Objective::NONE) return;
 
-void
-DarkObjectives::Unsubscribe (object host, uint objective, const char* field)
-{
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_%s_%u", field, objective);
-	pQS->UnsubscribeMsg (host, qvar);
-}
-
-void
-DarkObjectives::DebugObjectives ()
-{
-	DebugPrintf ("Dumping objectives...");
-	DebugPrintf ("###  State Vis  Fin Irr Rev Opt Bon  Type");
-	DebugPrintf ("===  ===== ===  === === === === ===  ========");
-	for (uint objective = 0; Exists (objective); ++objective)
-	{
-		char state = '?';
-		switch (GetState (objective))
-		{
-		case kGoalIncomplete: state = '-'; break;
-		case kGoalComplete: state = '+'; break;
-		case kGoalInactive: state = '/'; break;
-		case kGoalFailed: state = 'X'; break;
-		}
-
-		const char* type = "????";
-		switch (GetType (objective))
-		{
-		case kGoalNone: type = "none"; break;
-		case kGoalTake: type = "take"; break;
-		case kGoalSlay: type = "slay"; break;
-		case kGoalLoot: type = "loot"; break;
-		case kGoalGoTo: type = "goto"; break;
-		}
-
-		DebugPrintf ("%03u  %d (%c)  %c    %c   %c   %c   %c   %c   %d (%s)",
-			objective,
-			GetState (objective), state,
-			IsVisible (objective) ? '+' : '-',
-			IsFinal (objective) ? '+' : '-',
-			IsIrreversible (objective) ? '+' : '-',
-			IsReverse (objective) ? '+' : '-',
-#if (_DARKGAME == 2)
-			IsOptional (objective) ? '+' : '-',
-			IsBonus (objective) ? '+' : '-',
-#else
-			'/', '/',
-#endif
-			GetType (objective), type
-		);
-	}
-}
-
-
-
-/* KDOptionalReverse */
-
-cScr_OptionalReverse::cScr_OptionalReverse (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId)
-{}
-
-#if (_DARKGAME == 2)
-
-long
-cScr_OptionalReverse::OnSim (sSimMsg* pMsg, cMultiParm&)
-{
-	if (!pMsg->fStarting) return S_FALSE;
-
-	// subscribe to negations
-	for (uint objective = 0; Exists (objective); ++objective)
-		if (GetNegation (objective) != NO_OBJECTIVE)
-			Subscribe (ObjId (), objective, "state");
-
-	return S_OK;
-}
-
-long
-cScr_OptionalReverse::OnQuestChange (sQuestMsg* pMsg, cMultiParm&)
-{
-	if (pMsg->m_oldValue == pMsg->m_newValue)
-		return S_FALSE;
-
-	uint objective = NO_OBJECTIVE;
-	if (sscanf (pMsg->m_pName, "goal_state_%u", &objective) != 1)
-		return S_FALSE;
-
-	return UpdateNegation (objective, false) ? S_OK : S_FALSE;
-}
-
-long
-cScr_OptionalReverse::OnEndScript (sScrMsg*, cMultiParm&)
-{
-	// fix what VictoryCheck did
-	for (uint objective = 0; Exists (objective); ++objective)
-		UpdateNegation (objective, true);
-
-	return S_OK;
-}
-
-uint
-cScr_OptionalReverse::GetNegation (uint objective)
-{
-	SService<IQuestSrv> pQS (g_pScriptManager); char qvar[MAX_QVAR];
-	snprintf (qvar, MAX_QVAR, "goal_negation_%u", objective);
-	return pQS->Exists (qvar) ? pQS->Get (qvar) : NO_OBJECTIVE;
-}
-
-bool
-cScr_OptionalReverse::UpdateNegation (uint objective, bool final)
-{
-	uint negation = GetNegation (objective);
-	if (negation == NO_OBJECTIVE)
-		return false;
-
-	eGoalState obj_state = GetState (objective), neg_state;
+	Objective::State obj_state = objective.get_state (), neg_state;
 	switch (obj_state)
 	{
-	case kGoalIncomplete:
+	case Objective::State::INCOMPLETE:
 		neg_state = final
-			? kGoalComplete // conditions were never met
-			: kGoalIncomplete; // still waiting for result
+			? Objective::State::COMPLETE // conditions never met
+			: Objective::State::INCOMPLETE; // still awaiting result
 		break;
-	case kGoalComplete: // conditions were met, so objective breached
-	case kGoalInactive: // cancelled by something other than VictoryCheck
-		neg_state = kGoalInactive;
+	case Objective::State::COMPLETE: // conditions were met, so breached
+	case Objective::State::CANCELLED: // cancelled but not by VictoryCheck
+		neg_state = Objective::State::CANCELLED;
 		break;
-	case kGoalFailed: // this shouldn't happen, but hey
+	case Objective::State::FAILED: // this shouldn't happen, but hey
 	default: // neither should this, of course
-		neg_state = kGoalFailed;
+		neg_state = Objective::State::FAILED;
 		break;
 	}
 
-	SetState (negation, neg_state);
-	return true;
+	negation.set_state (neg_state);
 }
 
-#else // _DARKGAME != 2
+#else // !IS_THIEF2
 
-long
-cScr_OptionalReverse::OnSim (sSimMsg*, cMultiParm&)
+Message::Result
+KDOptionalReverse::on_post_sim (GenericMessage&)
 {
-	DebugPrintf ("Error: This script is not available for this game.");
-	return S_FALSE;
+	mono () << "Error: This script is not available for this game." << std::endl;
+	return Message::ERROR;
 }
 
-#endif // _DARKGAME == 2
+#endif // IS_THIEF2
 

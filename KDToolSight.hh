@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDToolSight.h
+ *  KDToolSight.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,45 +18,35 @@
  *
  *****************************************************************************/
 
-#ifndef KDTOOLSIGHT_H
-#define KDTOOLSIGHT_H
+#ifndef KDTOOLSIGHT_HH
+#define KDTOOLSIGHT_HH
 
-#if !SCR_GENSCRIPTS
-#include "KDHUDElement.h"
-#endif // !SCR_GENSCRIPTS
+#include "KDHUDElement.hh"
 
-#if !SCR_GENSCRIPTS
-class cScr_ToolSight : public cScr_HUDElement
+class KDToolSight : public KDHUDElement
 {
 public:
-	cScr_ToolSight (const char* pszName, int iHostObjId);
-
-protected:
-	virtual bool Initialize ();
-	virtual bool Prepare ();
-	virtual void Redraw ();
-
-	virtual long OnInvSelect (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnInvFocus (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnInvDeSelect (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnInvDeFocus (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual void OnPropertyChanged (const char* property);
+	KDToolSight (const String& name, const Object& host);
 
 private:
-	void UpdateImage ();
+	virtual void initialize ();
+	virtual bool prepare ();
+	virtual void redraw ();
 
+	Message::Result on_inv_select (GenericMessage&);
+	Message::Result on_inv_deselect (GenericMessage&);
+
+	Message::Result on_property_change (PropertyChangeMessage&);
+
+	static const HUD::ZIndex PRIORITY;
 	static const CanvasSize SYMBOL_SIZE;
 
-	bool selected;
+	bool selected; // not persistent because selection isn't
 
-	Symbol symbol;
-	HUDBitmapPtr bitmap;
-	ulong color;
-	CanvasPoint offset;
+	Parameter<Image> image;
+	Parameter<Color> color;
+	Parameter<int> offset_x, offset_y;
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDToolSight","KDHUDElement",cScr_ToolSight)
-#endif // SCR_GENSCRIPTS
 
-#endif // KDTOOLSIGHT_H
+#endif // KDTOOLSIGHT_HH
 

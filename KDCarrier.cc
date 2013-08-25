@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDCarrier.cpp
+ *  KDCarrier.cc
  *
  *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,109 +18,91 @@
  *
  *****************************************************************************/
 
-#include "KDCarrier.h"
-#include <lg/objects.h>
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDCarrier.hh"
 
-cScr_Carrier::cScr_Carrier (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  cBaseAIScript (pszName, iHostObjId)
-{}
-
-long
-cScr_Carrier::OnSim (sSimMsg* pMsg, cMultiParm&)
+KDCarrier::KDCarrier (const String& _name, const Object& _host)
+	: Script (_name, _host),
+	  PARAMETER (create_attachments, true)
 {
-	if (pMsg->fStarting) CreateAttachments ();
-	return S_OK;
+	listen_message ("Sim", &KDCarrier::on_sim);
+	listen_message ("Create", &KDCarrier::on_create);
+	listen_message ("AIModeChange", &KDCarrier::on_ai_mode_change);
+	listen_message ("Alertness", &KDCarrier::on_alertness);
+	listen_message ("Slain", &KDCarrier::on_slain);
 }
 
-long
-cScr_Carrier::OnCreate (sScrMsg*, cMultiParm&)
+Message::Result
+KDCarrier::on_sim (SimMessage& message)
 {
-	CreateAttachments ();
-	return S_OK;
+	if (message.is_starting ())
+		do_create_attachments ();
+	return Message::CONTINUE;
 }
 
-long
-cScr_Carrier::OnAIModeChange (sAIModeChangeMsg* pMsg, cMultiParm&)
+Message::Result
+KDCarrier::on_create (GenericMessage&)
 {
-	if (pMsg->mode == kAIM_Dead) // slain or knocked out
-		NotifyCarried ("CarrierBrainDead");
-	return S_OK;
-}
-
-long
-cScr_Carrier::OnAlertness (sAIAlertnessMsg* pMsg, cMultiParm&)
-{
-	if (pMsg->level > kNoAlert)
-		NotifyCarried ("CarrierAlerted", pMsg->level);
-	return S_OK;
+	do_create_attachments ();
+	return Message::CONTINUE;
 }
 
 void
-cScr_Carrier::NotifyCarried (const char* message, const cMultiParm& data)
+KDCarrier::do_create_attachments ()
 {
-	// notify Contains objects
-	for (LinkIter contents (ObjId (), Any, "Contains");
-	     contents; ++contents)
-		SimpleSend (ObjId (), contents.Destination (),
-			message, data);
+	if (!create_attachments) return;
 
-	// notify CreatureAttachment objects
-	for (LinkIter attachment (ObjId (), Any, "CreatureAttachment");
-	     attachment; ++attachment)
-		SimpleSend (ObjId (), attachment.Destination (),
-			message, data);
+	for (auto& attachment : CreatureAttachmentLink::get_all
+		(host (), Object::ANY, Link::Inheritance::SOURCE))
+	{
+		// Don't attach two objects to the same joint.
+		bool has_existing = false;
+		for (auto& existing : CreatureAttachmentLink::get_all (host ()))
+			if (attachment.get_joint () == existing.get_joint ())
+				{ has_existing = true; break; }
+		if (has_existing) continue;
 
-	// notify ~DetailAttachement objects
-	for (LinkIter attachment (Any, ObjId (), "DetailAttachement");
-	     attachment; ++attachment)
-		SimpleSend (ObjId (), attachment.Source (),
-			message, data);
+		mono () << "Attaching a new "
+			<< attachment.get_dest ().get_editor_name ()
+			<< " to joint " << int (attachment.get_joint ()) << "."
+			<< std::endl;
+
+		CreatureAttachmentLink::create (host (),
+			Object::create (attachment.get_dest ()),
+			attachment.get_joint ());
+	}
+}
+
+Message::Result
+KDCarrier::on_ai_mode_change (AIModeChangeMessage& message)
+{
+	if (message.get_new_mode () == AI::Mode::DEAD) // killed or knocked out
+		notify_carried ("CarrierBrainDead");
+	return Message::CONTINUE;
+}
+
+Message::Result
+KDCarrier::on_slain (SlayMessage&)
+{
+	notify_carried ("CarrierSlain");
+	return Message::CONTINUE;
+}
+
+Message::Result
+KDCarrier::on_alertness (AIAlertnessMessage& message)
+{
+	AI::Alert level = message.get_new_level ();
+	if (level > AI::Alert::NONE)
+		notify_carried ("CarrierAlerted", int (level));
+	return Message::CONTINUE;
 }
 
 void
-cScr_Carrier::CreateAttachments ()
+KDCarrier::notify_carried (const char* _message, int data)
 {
-	if (!GetObjectParamBool (ObjId (), "create_attachments", true)) return;
-
-	SInterface<ITraitManager> pTM (g_pScriptManager);
-	SInterface<IObjectQuery> tree;
-
-	tree = pTM->Query (ObjId (), kTraitQueryMetaProps | kTraitQueryFull);
-	if (!tree) return;
-
-	for (; ! tree->Done (); tree->Next ())
-		for (LinkIter archetypes (tree->Object (), Any,
-			"CreatureAttachment"); archetypes; ++archetypes)
-		{
-			cMultiParm joint;
-			archetypes.GetDataField ("Joint", joint);
-			CreateAttachment (archetypes.Destination (), joint);
-		}
-}
-
-void
-cScr_Carrier::CreateAttachment (object archetype, int joint)
-{
-	SService<IObjectSrv> pOS (g_pScriptManager);
-	SService<ILinkToolsSrv> pLTS (g_pScriptManager);
-
-	if (GetOneLinkByDataDest ("CreatureAttachment", ObjId (),
-			&joint, sizeof (joint)) != None)
-		return; // don't attach a second object to the same joint
-
-	DebugPrintf ("Attaching a new %s to joint %d.",
-		(const char*) FormatObjectName (archetype), joint);
-
-	object attachment;
-	pOS->Create (attachment, archetype);
-	if (!attachment) return;
-
-	link attach_link =
-		CreateLink ("CreatureAttachment", ObjId (), attachment);
-	if (attach_link)
-		pLTS->LinkSetData (attach_link, "Joint", joint);
+	GenericMessage message (_message);
+	message.set_data (Message::DATA1, data);
+	message.broadcast (host (), "Contains");
+	message.broadcast (host (), "CreatureAttachment");
+	message.broadcast (host (), "~DetailAttachement");
 }
 

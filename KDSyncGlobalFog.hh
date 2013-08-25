@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDRenewable.hh
+ *  KDSyncGlobalFog.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,23 +18,32 @@
  *
  *****************************************************************************/
 
-#ifndef KDRENEWABLE_HH
-#define KDRENEWABLE_HH
+#ifndef KDSYNCGLOBALFOG_HH
+#define KDSYNCGLOBALFOG_HH
 
-#include <Thief/Thief.hh>
-using namespace Thief;
+#include "KDTransitionTrap.hh"
 
-class KDRenewable : public Script
+class KDSyncGlobalFog : public KDTransitionTrap
 {
 public:
-	KDRenewable (const String& name, const Object& host);
+	KDSyncGlobalFog (const String& name, const Object& host);
 
 private:
-	static const Time DEFAULT_TIMING;
+	void sync (const Color& color, float distance, bool sync_color = true,
+		bool sync_distance = true);
 
-	Message::Result on_sim (SimMessage&);
-	Message::Result on_renew (TimerMessage&);
+	virtual bool increment ();
+
+	Message::Result on_room_transit (RoomMessage&);
+	Message::Result on_fog_zone_change (GenericMessage&);
+
+	Parameter<bool> sync_fog_color, sync_fog_dist, sync_fog_disabled;
+	Parameter<float> fog_dist_mult, fog_dist_add;
+
+	Persistent<Fog::Zone> last_room_zone;
+	Persistent<Color> start_color, end_color;
+	Persistent<float> start_distance, end_distance;
 };
 
-#endif // KDRENEWABLE_HH
+#endif // KDSYNCGLOBALFOG_HH
 

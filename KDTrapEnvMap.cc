@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDTrapEnvMap.cpp
+ *  KDTrapEnvMap.cc
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,37 +18,34 @@
  *
  *****************************************************************************/
 
-#include "KDTrapEnvMap.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDTrapEnvMap.hh"
 
-cScr_TrapEnvMap::cScr_TrapEnvMap (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  cBaseTrap (pszName, iHostObjId)
+KDTrapEnvMap::KDTrapEnvMap (const String& _name, const Object& _host)
+	: TrapTrigger (_name, _host),
+	  PARAMETER (env_map_zone, EnvironmentMapZone::GLOBAL),
+	  PARAMETER (env_map_on),
+	  PARAMETER (env_map_off)
 {}
 
-long
-cScr_TrapEnvMap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
+Message::Result
+KDTrapEnvMap::on_trap (bool on, Message&)
 {
-	if (!CheckEngineVersion (1, 20))
+	if (Engine::get_version () < Version (1, 20))
 	{
-		DebugPrintf ("Error: This script cannot be used with this "
-			"version of the Dark Engine. Upgrade to NewDark "
-			"version 1.20 or higher.");
-		return S_FALSE;
+		mono () << "Error: This script cannot be used with this version "
+			"of the Dark Engine. Upgrade to NewDark version 1.20 or "
+			"higher." << std::endl;
+		return Message::ERROR;
 	}
 
-	int zone = GetObjectParamInt (ObjId (), "env_map_zone", GLOBAL_ZONE);
-	if (zone < MIN_ZONE || zone > MAX_ZONE) return S_FALSE;
+	if (env_map_zone < EnvironmentMapZone::GLOBAL ||
+	    env_map_zone > EnvironmentMapZone::_MAX_ZONE)
+		return Message::ERROR;
 
-	char* texture = GetObjectParamString (ObjId (),
-		bState ? "env_map_on" : "env_map_off", NULL);
-	if (!texture) return S_FALSE;
+	const String& texture = on ? env_map_on : env_map_off;
+	if (!texture.empty ())
+		Mission::set_envmap_texture (env_map_zone, texture);
 
-	SService<IEngineSrv> pES (g_pScriptManager);
-	pES->SetEnvMapZone (zone, texture);
-	g_pMalloc->Free (texture);
-
-	return S_OK;
+	return Message::CONTINUE;
 }
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDTrapNextMission.cpp
+ *  KDTrapNextMission.cc
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,30 +18,27 @@
  *
  *****************************************************************************/
 
-#include "KDTrapNextMission.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDTrapNextMission.hh"
 
-cScr_TrapNextMission::cScr_TrapNextMission (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  cBaseTrap (pszName, iHostObjId)
+KDTrapNextMission::KDTrapNextMission (const String& _name, const Object& _host)
+	: TrapTrigger (_name, _host),
+	  PARAMETER (next_mission_on, 0),
+	  PARAMETER (next_mission_off, 0)
 {}
 
-long
-cScr_TrapNextMission::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
+Message::Result
+KDTrapNextMission::on_trap (bool on, Message&)
 {
-	int next_mission = GetObjectParamInt (ObjId (),
-		bState ? "next_mission_on" : "next_mission_off", 0);
+	int next_mission = on ? next_mission_on : next_mission_off;
+	if (next_mission < 1) return Message::HALT;
 
-	if (next_mission < 1) return S_FALSE;
-
-#if (_DARKGAME == 2)
-	SService<IDarkGameSrv> pDGS (g_pScriptManager);
-	pDGS->SetNextMission (next_mission);
-	return S_OK;
-#else
-	DebugPrintf ("Error: This script is not available for this game.");
-	return S_FALSE;
-#endif
+#ifdef IS_THIEF2
+	Mission::set_next (next_mission);
+	return Message::CONTINUE;
+#else // !IS_THIEF2
+	mono () << "Error: This script is not available for this game."
+		<< std::endl;
+	return Message::ERROR;
+#endif // IS_THIEF2
 }
 

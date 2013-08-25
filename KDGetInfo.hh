@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDGetInfo.h
+ *  KDGetInfo.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,33 +18,23 @@
  *
  *****************************************************************************/
 
-#ifndef KDGETINFO_H
-#define KDGETINFO_H
+#ifndef KDGETINFO_HH
+#define KDGETINFO_HH
 
-#if !SCR_GENSCRIPTS
-#include "BaseScript.h"
-#endif // SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-#if !SCR_GENSCRIPTS
-class cScr_GetInfo : public virtual cBaseScript
+class KDGetInfo : public Script
 {
 public:
-	cScr_GetInfo (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg,
-		cMultiParm& mpReply);
-	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	KDGetInfo (const String& name, const Object& host);
 
 private:
-	void UpdateVariables ();
-	void DeleteVariables ();
+	Message::Result on_begin_script (GenericMessage&);
+	Message::Result on_mode_change (GameModeChangeMessage&);
+	Message::Result on_update_variables (GenericMessage&);
+	Message::Result on_end_script (GenericMessage&);
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDGetInfo","BaseScript",cScr_GetInfo)
-#endif // SCR_GENSCRIPTS
 
-#endif // KDGETINFO_H
+#endif // KDGETINFO_HH
 

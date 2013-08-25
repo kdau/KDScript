@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDTrapNextMission.h
+ *  KDTrapNextMission.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,25 +18,22 @@
  *
  *****************************************************************************/
 
-#ifndef KDTRAPNEXTMISSION_H
-#define KDTRAPNEXTMISSION_H
+#ifndef KDTRAPNEXTMISSION_HH
+#define KDTRAPNEXTMISSION_HH
 
-#if !SCR_GENSCRIPTS
-#include "BaseTrap.h"
-#endif // SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-#if !SCR_GENSCRIPTS
-class cScr_TrapNextMission : public virtual cBaseTrap
+class KDTrapNextMission : public TrapTrigger
 {
 public:
-	cScr_TrapNextMission (const char* pszName, int iHostObjId);
+	KDTrapNextMission (const String& name, const Object& host);
 
-protected:
-	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
+private:
+	virtual Message::Result on_trap (bool on, Message&);
+
+	Parameter<int> next_mission_on, next_mission_off;
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapNextMission","BaseTrap",cScr_TrapNextMission)
-#endif // SCR_GENSCRIPTS
 
-#endif // KDTRAPNEXTMISSION_H
+#endif // KDTRAPNEXTMISSION_HH
 

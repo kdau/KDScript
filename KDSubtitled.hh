@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDSubtitled.h: HUDSubtitle, KDSubtitled, KDSubtitledAI, KDSubtitledVO
+ *  KDSubtitled.hh: HUDSubtitle, KDSubtitled, KDSubtitledAI, KDSubtitledVO
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,97 +18,85 @@
  *
  *****************************************************************************/
 
-#ifndef KDSUBTITLED_H
-#define KDSUBTITLED_H
+#ifndef KDSUBTITLED_HH
+#define KDSUBTITLED_HH
 
-#if !SCR_GENSCRIPTS
-#include "BaseScript.h"
-#include "KDHUDElement.h"
-#endif // SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
 
 
-#if !SCR_GENSCRIPTS
 class HUDSubtitle : public HUDElement
 {
 public:
-	HUDSubtitle (object host, object schema, const char* text, ulong color);
+	HUDSubtitle (const Object& speaker, const Object& schema,
+		const String& text, Color color);
 	virtual ~HUDSubtitle ();
 
-	object GetSchema ();
-
-protected:
-	virtual bool Prepare ();
-	virtual void Redraw ();
+	Object get_schema () const { return schema; }
 
 private:
+	virtual bool prepare ();
+	virtual void redraw ();
+
+	static const HUD::ZIndex PRIORITY;
 	static const int BORDER, PADDING;
+	static const Color BACKGROUND_COLOR;
 
-	object schema;
-	cAnsiStr text;
-	ulong color;
-	bool player;
+	Object speaker;
+	Object schema;
+	String text;
+	Color color;
 };
-#endif // !SCR_GENSCRIPTS
 
 
 
-#if !SCR_GENSCRIPTS
-class cScr_Subtitled : public virtual cBaseScript
+class KDSubtitled : public Script
 {
 public:
-	cScr_Subtitled (const char* pszName, int iHostObjId);
-	virtual ~cScr_Subtitled ();
+	virtual ~KDSubtitled ();
 
 protected:
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
-
-	bool Subtitle (object host, object schema);
-	void EndSubtitle (object schema);
+	KDSubtitled (const String& name, const Object& host);
 
 	static const float EARSHOT;
+	static const Color DEFAULT_COLOR;
+
+	bool start_subtitle (const Object& speaker, const Object& schema);
+	void finish_subtitle (const Object& schema = Object::ANY);
 
 private:
+	Message::Result on_subtitle (GenericMessage&);
+	Message::Result on_finish_subtitle (TimerMessage&);
+	Message::Result on_end_script (GenericMessage&);
+
 	HUDSubtitle* element;
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDSubtitled","BaseScript",cScr_Subtitled)
-#endif // SCR_GENSCRIPTS
 
 
 
-#if !SCR_GENSCRIPTS
-class cScr_SubtitledAI : public cScr_Subtitled
+class KDSubtitledAI : public KDSubtitled
 {
 public:
-	cScr_SubtitledAI (const char* pszName, int iHostObjId);
+	KDSubtitledAI (const String& name, const Object& host);
 
-protected:
-	virtual long OnBeginScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+private:
+	virtual void initialize ();
+	Message::Result on_property_change (PropertyChangeMessage&);
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDSubtitledAI","KDSubtitled",cScr_SubtitledAI)
-#endif // SCR_GENSCRIPTS
 
 
 
-#if !SCR_GENSCRIPTS
-class cScr_SubtitledVO : public cScr_Subtitled
+class KDSubtitledVO : public KDSubtitled
 {
 public:
-	cScr_SubtitledVO (const char* pszName, int iHostObjId);
+	KDSubtitledVO (const String& name, const Object& host);
 
-protected:
-	virtual long OnTurnOn (sScrMsg* pMsg, cMultiParm& mpReply);
+private:
+	Message::Result on_turn_on (GenericMessage&);
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDSubtitledVO","KDSubtitled",cScr_SubtitledVO)
-#endif // SCR_GENSCRIPTS
 
 
 
-#endif // KDSUBTITLED_H
+#endif // KDSUBTITLED_HH
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDHUDElement.h: HUDElement, KDHUDElement
+ *  KDHUDElement.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,154 +18,87 @@
  *
  *****************************************************************************/
 
-#ifndef KDHUDELEMENT_H
-#define KDHUDELEMENT_H
+#ifndef KDHUDELEMENT_HH
+#define KDHUDELEMENT_HH
 
-#if !SCR_GENSCRIPTS
-#include <lg/interface.h>
-#include <lg/scrservices.h>
-#include "BaseScript.h"
-#include "KDCustomHUD.h"
-#endif // !SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-
-
-#if !SCR_GENSCRIPTS
-class HUDElement
+class KDHUDElement : public Script, public HUDElement
 {
 public:
-	HUDElement (object host);
-	virtual ~HUDElement ();
+	enum class Symbol
+	{
+		NONE,
+		ARROW,
+		CROSSHAIRS,
+		RETICULE,
+		SQUARE
+	};
 
-	void DrawStage1 ();
-	void DrawStage2 ();
-	virtual void EnterGameMode ();
+	enum class Direction
+	{
+		NONE,
+		LEFT,
+		RIGHT,
+	};
+
+	struct Image
+	{
+		Image (Symbol symbol = Symbol::NONE,
+			HUDBitmap::Ptr bitmap = nullptr);
+		Symbol symbol;
+		HUDBitmap::Ptr bitmap;
+	};
 
 protected:
-	virtual bool Initialize ();
-	void Deinitialize ();
-	object GetHost ();
+	KDHUDElement (const String& name, const Object& host,
+		HUD::ZIndex priority);
 
-	bool GetParamBool (const char* param, bool default_value);
-	ulong GetParamColor (const char* param, ulong default_value);
-	float GetParamFloat (const char* param, float default_value);
-	int GetParamInt (const char* param, int default_value);
-	object GetParamObject (const char* param, object default_value);
-	cAnsiStr GetParamString (const char* param, const char* default_value);
+	virtual void initialize ();
 
-	void SetParamBool (const char* param, bool value);
-	// no support for setting a color parameter
-	void SetParamFloat (const char* param, float value);
-	void SetParamInt (const char* param, int value);
-	// no support for setting an object parameter
-	void SetParamString (const char* param, const char* value);
+	static const Color SHADOW_COLOR;
+	static const CanvasPoint SHADOW_OFFSET;
 
-	virtual bool Prepare ();
-	virtual void Redraw ();
-	bool NeedsRedraw ();
-	void ScheduleRedraw ();
+	void draw_text_shadowed (const String& text, CanvasPoint position);
 
-	bool IsOverlay ();
-	bool CreateOverlay ();
-	void DestroyOverlay ();
-	void SetOpacity (int opacity);
-
-	CanvasSize GetCanvasSize ();
-	void SetPosition (CanvasPoint position);
-	CanvasSize GetSize ();
-	void SetSize (CanvasSize size);
-	void SetScale (float scale);
-
-	void SetDrawingColor (ulong color);
-	void SetDrawingOffset (CanvasPoint offset = CanvasPoint::ORIGIN);
-
-	void FillBackground (int color, int opacity);
-	void FillArea (CanvasRect area = CanvasRect::NOCLIP);
-	void DrawBox (CanvasRect area = CanvasRect::NOCLIP);
-	void DrawLine (CanvasPoint from, CanvasPoint to);
-
-	CanvasSize GetTextSize (const char* text);
-	void DrawText (const char* text,
+	void draw_symbol (Symbol symbol, CanvasSize size,
 		CanvasPoint position = CanvasPoint::ORIGIN,
+		Direction direction = Direction::NONE,
 		bool shadowed = false);
 
-	HUDBitmapPtr LoadBitmap (const char* path, bool animation = false);
-	void DrawBitmap (HUDBitmapPtr& bitmap, std::size_t frame,
-		CanvasPoint position = CanvasPoint::ORIGIN,
-		CanvasRect clip = CanvasRect::NOCLIP);
-
-	CanvasPoint LocationToCanvas (const cScrVec& location);
-	CanvasRect ObjectToCanvas (object target);
-	CanvasPoint ObjectCentroidToCanvas (object target);
-
-	enum Symbol
-	{
-		SYMBOL_NONE,
-		SYMBOL_ARROW,
-		SYMBOL_CROSSHAIRS,
-		SYMBOL_RETICULE,
-		SYMBOL_SQUARE
-	};
-	enum Direction
-	{
-		DIRN_NONE,
-		DIRN_LEFT,
-		DIRN_RIGHT,
-	};
-	void DrawSymbol (Symbol symbol, CanvasSize size,
-		CanvasPoint position = CanvasPoint::ORIGIN,
-		Direction direction = DIRN_NONE,
-		bool shadowed = false);
-	CanvasPoint GetSymbolCenter (Symbol symbol, CanvasSize size,
-		Direction direction = DIRN_NONE);
-	Symbol InterpretSymbol (const char* symbol, bool directional = false);
+	CanvasPoint get_symbol_hotspot (Symbol symbol, CanvasSize size,
+		Direction direction = Direction::NONE) const;
 
 private:
-	void Offset (CanvasPoint& point);
-	void Offset (CanvasRect& area);
+	Message::Result on_end_script (GenericMessage&);
 
-	__attribute__((format (printf,2,3)))
-		void _DebugPrintf (const char* format, ...);
-
-	SService<IDarkOverlaySrv> pDOS;
-	CustomHUDPtr hud;
-	object host;
-
-	bool draw, redraw, drawing;
-
-	int overlay;
-	int opacity;
-
-	CanvasPoint position;
-	CanvasSize size;
-	float scale;
-
-	ulong drawing_color;
-	CanvasPoint drawing_offset;
+	HUD::ZIndex priority;
 };
-#endif // !SCR_GENSCRIPTS
 
+namespace Thief {
 
-
-#if !SCR_GENSCRIPTS
-class cScr_HUDElement : public virtual cBaseScript, public HUDElement
+template<>
+struct ParameterConfig<KDHUDElement::Image> : public ParameterBase::Config
 {
-public:
-	cScr_HUDElement (const char* pszName, int iHostObjId);
+	ParameterConfig (KDHUDElement::Symbol _default_value
+				= KDHUDElement::Symbol::NONE,
+			bool _animated = false, bool _directional = false,
+			bool _inheritable = true)
+		: ParameterBase::Config (_inheritable),
+		  default_value (_default_value),
+		  animated (_animated), directional (_directional)
+	{}
 
-protected:
-	virtual void OnAnyMessage (sScrMsg* pMsg);
-	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
-
-	bool SubscribeProperty (const char* property);
-	virtual void OnPropertyChanged (const char* property);
+	KDHUDElement::Symbol default_value;
+	bool animated;
+	bool directional;
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDHUDElement","BaseScript",cScr_HUDElement)
-#endif // SCR_GENSCRIPTS
 
+template<> bool Parameter<KDHUDElement::Image>::decode (const String& raw) const;
+template<> String Parameter<KDHUDElement::Image>::encode () const;
 
+} // namespace Thief
 
-#endif // KDHUDELEMENT_H
+#endif // KDHUDELEMENT_HH
 

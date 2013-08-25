@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDTrapWeather.h: DarkWeather, KDTrapWeather
+ *  KDTrapWeather.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,68 +18,26 @@
  *
  *****************************************************************************/
 
-#ifndef KDTRAPWEATHER_H
-#define KDTRAPWEATHER_H
+#ifndef KDTRAPWEATHER_HH
+#define KDTRAPWEATHER_HH
 
-#if !SCR_GENSCRIPTS
-#include "KDTransitionTrap.h"
-#include "scriptvars.h"
-#endif // SCR_GENSCRIPTS
+#include "KDTransitionTrap.hh"
 
-
-
-#if !SCR_GENSCRIPTS
-struct DarkWeather
-{
-	DarkWeather ();
-	void GetFromMission ();
-	void SetInMission () const;
-
-	enum PrecipType
-	{
-		PRECIP_SNOW = 0,
-		PRECIP_RAIN = 1
-	} precip_type;
-	float precip_freq;
-	float precip_speed;
-	float vis_dist;
-	float rend_radius;
-	float alpha;
-	float brightness;
-	float snow_jitter;
-	float rain_length;
-	float splash_freq;
-	float splash_radius;
-	float splash_height;
-	float splash_duration;
-	cScrVec wind;
-
-private:
-	cScrStr texture;
-};
-#endif // !SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_TrapWeather : public cScr_TransitionTrap
+class KDTrapWeather : public KDTransitionTrap
 {
 public:
-	cScr_TrapWeather (const char* pszName, int iHostObjId);
-
-protected:
-	virtual bool OnPrepare (bool state);
-	virtual bool OnIncrement ();
+	KDTrapWeather (const String& name, const Object& host);
 
 private:
-	script_float start_freq, end_freq,
-		start_speed, end_speed;
+	virtual bool prepare (bool on);
+	virtual bool increment ();
+
+	Parameter<float> precip_freq_on, precip_freq_off;
+	Parameter<float> precip_speed_on, precip_speed_off;
+
+	Persistent<float> start_freq, end_freq;
+	Persistent<float> start_speed, end_speed;
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapWeather","KDTransitionTrap",cScr_TrapWeather)
-#endif // SCR_GENSCRIPTS
 
-
-
-#endif // KDTRAPWEATHER_H
+#endif // KDTRAPWEATHER_HH
 

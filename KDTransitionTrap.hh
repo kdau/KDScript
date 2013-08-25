@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDTransitionTrap.h
+ *  KDTransitionTrap.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,43 +18,59 @@
  *
  *****************************************************************************/
 
-#ifndef KDTRANSITIONTRAP_H
-#define KDTRANSITIONTRAP_H
+#ifndef KDTRANSITIONTRAP_HH
+#define KDTRANSITIONTRAP_HH
 
-#if !SCR_GENSCRIPTS
-#include "BaseTrap.h"
-#include "scriptvars.h"
-#endif // SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-#if !SCR_GENSCRIPTS
-class cScr_TransitionTrap : public virtual cBaseTrap
+class KDTransitionTrap : public TrapTrigger
 {
-public:
-	cScr_TransitionTrap (const char* pszName, int iHostObjId);
-
 protected:
-	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply);
+	KDTransitionTrap (const String& name, const Object& host);
 
-	virtual bool OnPrepare (bool state);
-	void Begin ();
-	virtual bool OnIncrement ();
+	void start ();
 
-	float GetProgress ();
-	float Interpolate (float start, float end);
-	ulong InterpolateColor (ulong start, ulong end);
+	bool incomplete () const;
+	float get_progress () const;
+
+	template <typename T> THIEF_INTERPOLATE_RESULT (T)
+	interpolate (const T& from, const T& to) const;
+
+	template <typename T>
+	T interpolate (const Persistent<T>& from, const Persistent<T>& to) const;
+
+	Parameter<Time> transition;
+	Parameter<Curve> curve;
 
 private:
-	static const int INCREMENT_TIME;
-	void Increment ();
+	virtual bool prepare (bool on);
+	virtual bool increment () = 0;
 
-	script_handle<tScrTimer> timer;
-	script_int time_total, time_remaining;
+	virtual Message::Result on_trap (bool on, Message&);
+	Message::Result on_increment (TimerMessage&);
+	void do_increment ();
+
+	static const Time INCREMENT_TIME;
+
+	Persistent<Timer> timer;
+	Persistent<Time> time_remaining;
 };
-#else // SCR_GENSCRIPTS
-// Included for hierarchy only. KDTransitionTrap should not be instantiated.
-GEN_FACTORY("KDTransitionTrap","BaseTrap",cScr_TransitionTrap)
-#endif // SCR_GENSCRIPTS
 
-#endif // KDTRANSITIONTRAP_H
+template <typename T>
+inline THIEF_INTERPOLATE_RESULT (T)
+KDTransitionTrap::interpolate (const T& from, const T& to) const
+{
+	return Thief::interpolate (from, to, get_progress (), curve);
+}
+
+template <typename T>
+inline T
+KDTransitionTrap::interpolate (const Persistent<T>& from,
+	const Persistent<T>& to) const
+{
+	return Thief::interpolate (T (from), T (to), get_progress (), curve);
+}
+
+#endif // KDTRANSITIONTRAP_HH
 

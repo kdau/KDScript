@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDTrapEnvMap.h
+ *  KDTrapEnvMap.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,32 +18,23 @@
  *
  *****************************************************************************/
 
-#ifndef KDTRAPENVMAP_H
-#define KDTRAPENVMAP_H
+#ifndef KDTRAPENVMAP_HH
+#define KDTRAPENVMAP_HH
 
-#if !SCR_GENSCRIPTS
-#include "BaseTrap.h"
-#endif // SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-#if !SCR_GENSCRIPTS
-class cScr_TrapEnvMap : public virtual cBaseTrap
+class KDTrapEnvMap : public TrapTrigger
 {
 public:
-	cScr_TrapEnvMap (const char* pszName, int iHostObjId);
+	KDTrapEnvMap (const String& name, const Object& host);
 
-protected:
-	enum
-	{
-		GLOBAL_ZONE = 0,
-		MIN_ZONE = 0,
-		MAX_ZONE = 63
-	};
+private:
+	virtual Message::Result on_trap (bool on, Message&);
 
-	virtual long OnSwitch (bool bState, sScrMsg* pMsg, cMultiParm& mpReply);
+	Parameter<EnvironmentMapZone> env_map_zone;
+	Parameter<String> env_map_on, env_map_off;
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDTrapEnvMap","BaseTrap",cScr_TrapEnvMap)
-#endif // SCR_GENSCRIPTS
 
-#endif // KDTRAPENVMAP_H
+#endif // KDTRAPENVMAP_HH
 

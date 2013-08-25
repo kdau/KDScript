@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDOptionalReverse.h: DarkObjectives, KDOptionalReverse
+ *  KDOptionalReverse.hh
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,68 +18,27 @@
  *
  *****************************************************************************/
 
-#ifndef KDOPTIONALREVERSE_H
-#define KDOPTIONALREVERSE_H
+#ifndef KDOPTIONALREVERSE_HH
+#define KDOPTIONALREVERSE_HH
 
-#if !SCR_GENSCRIPTS
-#include "BaseScript.h"
-#endif // SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-
-
-#if !SCR_GENSCRIPTS
-class DarkObjectives
+class KDOptionalReverse : public Script
 {
 public:
-	bool Exists (uint objective);
-
-	eGoalState GetState (uint objective);
-	void SetState (uint objective, eGoalState state);
-
-	bool IsVisible (uint objective);
-	void SetVisible (uint objective, bool visible);
-
-	bool IsFinal (uint objective);
-	bool IsIrreversible (uint objective);
-	bool IsReverse (uint objective);
-#if (_DARKGAME == 2)
-	bool IsOptional (uint objective);
-	bool IsBonus (uint objective);
-#endif
-
-	eGoalType GetType (uint objective);
-
-	void Subscribe (object host, uint objective, const char* field);
-	void Unsubscribe (object host, uint objective, const char* field);
-
-	void DebugObjectives ();
-};
-#endif // !SCR_GENSCRIPTS
-
-
-
-#if !SCR_GENSCRIPTS
-class cScr_OptionalReverse : public virtual cBaseScript, public DarkObjectives
-{
-public:
-	cScr_OptionalReverse (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
-#if (_DARKGAME == 2)
-	virtual long OnQuestChange (sQuestMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnEndScript (sScrMsg* pMsg, cMultiParm& mpReply);
+	KDOptionalReverse (const String& name, const Object& host);
 
 private:
-	uint GetNegation (uint objective);
-	bool UpdateNegation (uint objective, bool final);
-#endif // _DARKGAME == 2
+	Message::Result on_post_sim (GenericMessage&);
+#ifdef IS_THIEF2
+	Message::Result on_quest_change (QuestChangeMessage&);
+	Message::Result on_end_script (GenericMessage&);
+
+	Objective get_negation (Objective objective);
+	void update_negation (Objective objective, bool final);
+#endif // IS_THIEF2
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDOptionalReverse","BaseScript",cScr_OptionalReverse)
-#endif // SCR_GENSCRIPTS
 
-
-
-#endif // KDOPTIONALREVERSE_H
+#endif // KDOPTIONALREVERSE_HH
 

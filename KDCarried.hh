@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDCarried.h
+ *  KDCarried.hh
  *
  *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,31 +18,27 @@
  *
  *****************************************************************************/
 
-#ifndef KDCARRIED_H
-#define KDCARRIED_H
+#ifndef KDCARRIED_HH
+#define KDCARRIED_HH
 
-#if !SCR_GENSCRIPTS
-#include "BaseScript.h"
-#endif // SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-#if !SCR_GENSCRIPTS
-class cScr_Carried : public virtual cBaseScript
+class KDCarried : public Script
 {
 public:
-	cScr_Carried (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnCreate (sScrMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnMessage (sScrMsg* pMsg, cMultiParm& mpReply);
+	KDCarried (const String& name, const Object& host);
 
 private:
-	void Drop ();
-	void FixPhysics ();
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDCarried","BaseScript",cScr_Carried)
-#endif // SCR_GENSCRIPTS
+	Message::Result on_sim (SimMessage&);
+	Message::Result on_create (GenericMessage&);
+	Message::Result on_carrier_alerted (GenericMessage&);
+	Message::Result on_drop (GenericMessage&);
+	Message::Result on_fix_physics (GenericMessage&);
 
-#endif // KDCARRIED_H
+	Parameter<AI::Alert> drop_on_alert;
+	Parameter<bool> was_dropped, inert_until_dropped, off_when_dropped;
+};
+
+#endif // KDCARRIED_HH
 

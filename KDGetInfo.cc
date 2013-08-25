@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDGetInfo.cpp
+ *  KDGetInfo.cc
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,105 +18,92 @@
  *
  *****************************************************************************/
 
-#include "KDGetInfo.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDGetInfo.hh"
 
-cScr_GetInfo::cScr_GetInfo (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId)
-{}
-
-long
-cScr_GetInfo::OnBeginScript (sScrMsg*, cMultiParm&)
+KDGetInfo::KDGetInfo (const String& _name, const Object& _host)
+	: Script (_name, _host)
 {
-	// not everything is available yet, so wait for next message cycle
-	SimplePost (ObjId (), ObjId (), "UpdateVariables");
-	return S_OK;
+	listen_message ("BeginScript", &KDGetInfo::on_begin_script);
+	listen_message ("DarkGameModeChange", &KDGetInfo::on_mode_change);
+	listen_message ("UpdateVariables", &KDGetInfo::on_update_variables);
+	listen_message ("EndScript", &KDGetInfo::on_end_script);
 }
 
-long
-cScr_GetInfo::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
+Message::Result
+KDGetInfo::on_begin_script (GenericMessage&)
 {
-	if (!strcmp (pMsg->message, "UpdateVariables"))
-	{
-		UpdateVariables ();
-		return S_OK;
-	}
-	return cBaseScript::OnMessage (pMsg, mpReply);
+	// Some settings aren't available yet, so wait for next message cycle.
+	GenericMessage ("UpdateVariables").post (host (), host ());
+	return Message::CONTINUE;
 }
 
-long
-cScr_GetInfo::OnDarkGameModeChange (sDarkGameModeScrMsg* pMsg, cMultiParm&)
+Message::Result
+KDGetInfo::on_mode_change (GameModeChangeMessage& message)
 {
-	if (pMsg->fResuming)
-		UpdateVariables ();
-	return S_OK;
+	if (message.is_resuming ())
+		GenericMessage ("UpdateVariables").send (host (), host ());
+	return Message::CONTINUE;
 }
 
-long
-cScr_GetInfo::OnEndScript (sScrMsg*, cMultiParm&)
+Message::Result
+KDGetInfo::on_update_variables (GenericMessage&)
 {
-	DeleteVariables ();
-	return S_OK;
+	QuestVar ("info_directx_version").set (Engine::get_directx_version ());
+
+	CanvasSize canvas = Engine::get_canvas_size ();
+	QuestVar ("info_display_height").set (canvas.h);
+	QuestVar ("info_display_width").set (canvas.w);
+
+	if (Engine::has_config ("sfx_eax"))
+		QuestVar ("info_has_eax").set
+			(Engine::get_config<int> ("sfx_eax"));
+
+	if (Engine::has_config ("fogging"))
+		QuestVar ("info_has_fog").set
+			(Engine::get_config<int> ("fogging"));
+
+	if (Engine::has_config ("game_hardware"))
+		QuestVar ("info_has_hw3d").set
+			(Engine::get_config<int> ("game_hardware"));
+
+	if (Engine::has_config ("enhanced_sky"))
+		QuestVar ("info_has_sky").set
+			(Engine::get_config<int> ("enhanced_sky"));
+
+	if (Engine::has_config ("render_weather"))
+		QuestVar ("info_has_weather").set
+			(Engine::get_config<int> ("render_weather"));
+
+#ifdef IS_THIEF2
+	if (Engine::get_mode () == Engine::Mode::GAME)
+		QuestVar ("info_mission").set (Mission::get_number ());
+#endif // IS_THIEF2
+
+	QuestVar ("info_mode").set ((Engine::get_mode () == Engine::Mode::EDIT)
+		? 1 : Engine::is_editor () ? 2 : 0);
+
+	Version version = Engine::get_version ();
+	QuestVar ("info_version_major").set (version.major);
+	QuestVar ("info_version_minor").set (version.minor);
+
+	return Message::CONTINUE;
 }
 
-void
-cScr_GetInfo::UpdateVariables ()
+Message::Result
+KDGetInfo::on_end_script (GenericMessage&)
 {
-	SService<IDarkGameSrv> pDGS (g_pScriptManager);
-	SService<IEngineSrv> pES (g_pScriptManager);
-	SService<IQuestSrv> pQS (g_pScriptManager);
-	SService<IVersionSrv> pVS (g_pScriptManager);
-
-	pQS->Set ("info_directx_version", pES->IsRunningDX6 () ? 6 : 9,
-		kQuestDataMission);
-
-	int display_height = 0, display_width = 0;
-	pES->GetCanvasSize (display_width, display_height);
-	pQS->Set ("info_display_height", display_height, kQuestDataMission);
-	pQS->Set ("info_display_width", display_width, kQuestDataMission);
-
-	int value = 0;
-	if (pES->ConfigGetInt ("sfx_eax", value))
-		pQS->Set ("info_has_eax", value, kQuestDataMission);
-	if (pES->ConfigGetInt ("fogging", value))
-		pQS->Set ("info_has_fog", value, kQuestDataMission);
-	if (pES->ConfigGetInt ("game_hardware", value))
-		pQS->Set ("info_has_hw3d", value, kQuestDataMission);
-	if (pES->ConfigGetInt ("enhanced_sky", value))
-		pQS->Set ("info_has_sky", value, kQuestDataMission);
-	if (pES->ConfigGetInt ("render_weather", value))
-		pQS->Set ("info_has_weather", value, kQuestDataMission);
-
-#if (_DARKGAME == 2)
-	if (pVS->IsEditor () == 0)
-		pQS->Set ("info_mission", pDGS->GetCurrentMission (),
-			kQuestDataMission);
-#endif
-
-	pQS->Set ("info_mode", pVS->IsEditor (), kQuestDataMission);
-
-	int version_major = 0, version_minor = 0;
-	pVS->GetVersion (version_major, version_minor);
-	pQS->Set ("info_version_major", version_major, kQuestDataMission);
-	pQS->Set ("info_version_minor", version_minor, kQuestDataMission);
-}
-
-void
-cScr_GetInfo::DeleteVariables ()
-{
-	SService<IQuestSrv> pQS (g_pScriptManager);
-	pQS->Delete ("info_directx_version");
-	pQS->Delete ("info_display_height");
-	pQS->Delete ("info_display_width");
-	pQS->Delete ("info_has_eax");
-	pQS->Delete ("info_has_fog");
-	pQS->Delete ("info_has_hw3d");
-	pQS->Delete ("info_has_sky");
-	pQS->Delete ("info_has_weather");
-	pQS->Delete ("info_mission");
-	pQS->Delete ("info_mode");
-	pQS->Delete ("info_version_major");
-	pQS->Delete ("info_version_minor");
+	QuestVar ("info_directx_version").unset ();
+	QuestVar ("info_display_height").unset ();
+	QuestVar ("info_display_width").unset ();
+	QuestVar ("info_has_eax").unset ();
+	QuestVar ("info_has_fog").unset ();
+	QuestVar ("info_has_hw3d").unset ();
+	QuestVar ("info_has_sky").unset ();
+	QuestVar ("info_has_weather").unset ();
+	QuestVar ("info_mission").unset ();
+	QuestVar ("info_mode").unset ();
+	QuestVar ("info_version_major").unset ();
+	QuestVar ("info_version_minor").unset ();
+	return Message::CONTINUE;
 }
 

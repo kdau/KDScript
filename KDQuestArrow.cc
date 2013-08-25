@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDQuestArrow.cpp
+ *  KDQuestArrow.cc
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,331 +18,280 @@
  *
  *****************************************************************************/
 
-#include "KDQuestArrow.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDQuestArrow.hh"
+
+
+
+const HUD::ZIndex
+KDQuestArrow::PRIORITY = 10;
 
 const CanvasSize
-cScr_QuestArrow::SYMBOL_SIZE = { 32, 32 };
+KDQuestArrow::SYMBOL_SIZE = { 32, 32 };
 
 const int
-cScr_QuestArrow::PADDING = 8;
+KDQuestArrow::PADDING = 8;
 
-cScr_QuestArrow::cScr_QuestArrow (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  cScr_HUDElement (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (QuestArrow, enabled, iHostObjId),
-	  obscured (false), objective (OBJECTIVE_NONE),
-	  symbol (SYMBOL_NONE), symbol_dirn (DIRN_NONE),
-	  bitmap (), image_pos (), text (), text_pos (),
-	  color (0), shadow (true)
-{}
 
-bool
-cScr_QuestArrow::Initialize ()
+
+KDQuestArrow::KDQuestArrow (const String& _name, const Object& _host)
+	: KDHUDElement (_name, _host, PRIORITY),
+	  PERSISTENT (enabled),
+	  PERSISTENT (old_objective),
+	  PARAMETER_ (obscured, "quest_arrow_obscured", false),
+	  PARAMETER_ (objective, "quest_arrow_goal"),
+	  PARAMETER_ (image, "quest_arrow_image", Symbol::ARROW, false, true),
+	  PARAMETER_ (_text, "quest_arrow_text", "@name"),
+	  PARAMETER_ (color, "quest_arrow_color", Color (255, 255, 255)),
+	  PARAMETER_ (shadow, "quest_arrow_shadow", true),
+	  direction (Direction::NONE),
+	  image_pos (),
+	  text_pos ()
 {
-	if (!cScr_HUDElement::Initialize ()) return false;
+	listen_message ("QuestArrowOn", &KDQuestArrow::on_on);
+	listen_message ("QuestArrowOff", &KDQuestArrow::on_off);
+	listen_message ("Contained", &KDQuestArrow::on_contained);
+	listen_message ("Slain", &KDQuestArrow::on_off);
+	listen_message ("AIModeChange", &KDQuestArrow::on_ai_mode_change);
 
-	enabled.Init (GetParamBool ("quest_arrow",
-		!HasPlayerTouched (ObjId ())));
+	listen_message ("PropertyChange", &KDQuestArrow::on_property_change);
+	listen_message ("QuestChange", &KDQuestArrow::on_quest_change);
+}
 
-	OnPropertyChanged ("DesignNote"); // update all cached params
 
-	SubscribeProperty ("DesignNote");
-	SubscribeProperty ("GameName"); // for quest_arrow_text == "@name"
 
-	return true;
+void
+KDQuestArrow::initialize ()
+{
+	KDHUDElement::initialize ();
+
+	enabled.init (Parameter<bool>
+		(host (), "quest_arrow", !Player ().has_touched (host ())));
+	old_objective.init (Objective::NONE);
+
+	Property (host (), "DesignNote").subscribe (Object::SELF);
+	update_objective ();
+	update_text ();
+
+	// for quest_arrow_text == "@name"
+	Property (host (), "GameName").subscribe (Object::SELF);
 }
 
 bool
-cScr_QuestArrow::Prepare ()
+KDQuestArrow::prepare ()
 {
 	if (!enabled) return false;
 
-	// confirm object is actually visible, if required
-	if (!obscured)
-	{
-		SService<IObjectSrv> pOS (g_pScriptManager);
-		true_bool rendered; pOS->RenderedThisFrame (rendered, ObjId ());
-		if (!rendered) return false;
-	}
+	// Confirm that he object is actually visible, if required.
+	if (!obscured && !Engine::rendered_this_frame (host ()))
+		return false;
 
-	// get canvas, image, and text size and calculate element size
-	CanvasSize canvas = GetCanvasSize (),
-		image_size = bitmap ? bitmap->GetSize () : SYMBOL_SIZE,
-		text_size = GetTextSize (text),
+	// Get the canvas, image, and text size and calculate the element size.
+	CanvasSize canvas = Engine::get_canvas_size (),
+		image_size = image->bitmap
+			? image->bitmap->get_size () : SYMBOL_SIZE,
+		text_size = get_text_size (text),
 		elem_size;
 	elem_size.w = image_size.w + PADDING + text_size.w;
 	elem_size.h = std::max (image_size.h, text_size.h);
 
-	// get object's position in canvas coordinates
-	CanvasPoint obj_pos = ObjectCentroidToCanvas (ObjId ());
-	if (!obj_pos.Valid ()) return false;
+	// Get the object's position in canvas coordinates.
+	CanvasPoint obj_pos = centroid_to_canvas (host ());
+	if (!obj_pos.valid ()) return false;
 
-	// choose alignment of image and text
-	symbol_dirn = (obj_pos.x > canvas.w / 2)
-		? DIRN_RIGHT // text on left, image on right
-		: DIRN_LEFT; // text on right, image on left
+	// Choose the alignment of image and text.
+	direction = (obj_pos.x > canvas.w / 2)
+		? Direction::RIGHT // text on the left, image on the right
+		: Direction::LEFT; // text on the right, image on the left
 
-	// calculate absolute position of image
-	CanvasPoint image_center, image_apos;
-	image_center = bitmap ? CanvasPoint (image_size.w / 2, image_size.h / 2)
-		: GetSymbolCenter (symbol, SYMBOL_SIZE, symbol_dirn);
-	image_apos.x = obj_pos.x - image_center.x;
-	image_apos.y = obj_pos.y - image_center.y;
+	// Calculate the absolute position of the image.
+	CanvasPoint image_hotspot = image->bitmap
+		? CanvasPoint (image_size.w / 2, image_size.h / 2)
+		: get_symbol_hotspot (image->symbol, SYMBOL_SIZE, direction);
+	CanvasPoint image_apos = obj_pos - image_hotspot;
 
-	// calculate absolute position of text
-	CanvasPoint text_apos;
-	if (symbol_dirn == DIRN_RIGHT) // text on left
-		text_apos.x = image_apos.x - PADDING - text_size.w;
-	else // text on right
-		text_apos.x = image_apos.x + image_size.w + PADDING;
-	text_apos.y = obj_pos.y - text_size.h / 2;
+	// Calculate the absolute position of the text.
+	CanvasPoint text_apos = {
+		(direction == Direction::RIGHT)
+			? (image_apos.x - PADDING - text_size.w)
+			: (image_apos.x + image_size.w + PADDING),
+		obj_pos.y - text_size.h / 2 };
 
-	// calculate element position
-	CanvasPoint elem_pos;
-	elem_pos.x = std::min (image_apos.x, text_apos.x);
-	elem_pos.y = std::min (image_apos.y, text_apos.y);
+	// Calculate the element position.
+	CanvasPoint elem_pos = { std::min (image_apos.x, text_apos.x),
+		std::min (image_apos.y, text_apos.y) };
 
-	// update relative position of image, if needed
+	// Update the relative position of the image, if needed.
 	if (image_pos != image_apos - elem_pos)
 	{
 		image_pos = image_apos - elem_pos;
-		ScheduleRedraw ();
+		schedule_redraw ();
 	}
 
-	// update relative position of text, if needed
+	// Update the relative position of the text, if needed.
 	if (text_pos != text_apos - elem_pos)
 	{
 		text_pos = text_apos - elem_pos;
-		ScheduleRedraw ();
+		schedule_redraw ();
 	}
 
-	SetPosition (elem_pos);
-	SetSize (elem_size);
+	set_position (elem_pos);
+	set_size (elem_size);
+
 	return true;
 }
 
 void
-cScr_QuestArrow::Redraw ()
+KDQuestArrow::redraw ()
 {
-	SetDrawingColor (color);
+	set_drawing_color (color);
 
-	if (bitmap)
-		DrawBitmap (bitmap, HUDBitmap::STATIC, image_pos);
-	else if (symbol != SYMBOL_NONE)
-		DrawSymbol (symbol, SYMBOL_SIZE, image_pos, symbol_dirn, shadow);
+	if (image->bitmap)
+		draw_bitmap (image->bitmap, HUDBitmap::STATIC, image_pos);
+	else if (image->symbol != Symbol::NONE)
+		draw_symbol (image->symbol, SYMBOL_SIZE, image_pos,
+			direction, shadow);
 
-	DrawText (text, text_pos, shadow);
+	if (shadow)
+		draw_text_shadowed (text, text_pos);
+	else
+		draw_text (text, text_pos);
 }
 
-long
-cScr_QuestArrow::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
+
+
+Message::Result
+KDQuestArrow::on_on (GenericMessage&)
 {
-	if (!stricmp (pMsg->message, "QuestArrowOn"))
-	{
-		enabled = true;
-		return S_OK;
-	}
-
-	if (!stricmp (pMsg->message, "QuestArrowOff") ||
-	    (!stricmp (pMsg->message, "AIModeChange") &&
-	        static_cast<sAIModeChangeMsg*> (pMsg)->mode == kAIM_Dead))
-	{
-		enabled = false;
-		return S_OK;
-	}
-
-	return cScr_HUDElement::OnMessage (pMsg, mpReply);
+	enabled = true;
+	return Message::CONTINUE;
 }
 
-void
-cScr_QuestArrow::OnPropertyChanged (const char* property)
-{
-	if (!strcmp (property, "DesignNote"))
-	{
-		obscured = GetParamBool ("quest_arrow_obscured", false);
-		UpdateObjective ();
-		UpdateImage ();
-		UpdateText ();
-		UpdateColor ();
-	}
-	else if (!strcmp (property, "GameName"))
-		UpdateText ();
-}
 
-long
-cScr_QuestArrow::OnContained (sContainedScrMsg* pMsg, cMultiParm& mpReply)
-{
-	if (pMsg->event == kContainAdd &&
-	    InheritsFrom ("Avatar", pMsg->container))
-		enabled = false;
-	return cScr_HUDElement::OnContained (pMsg, mpReply);
-}
-
-long
-cScr_QuestArrow::OnSlain (sSlayMsg* pMsg, cMultiParm& mpReply)
+Message::Result
+KDQuestArrow::on_off (GenericMessage&)
 {
 	enabled = false;
-	return cScr_HUDElement::OnSlain (pMsg, mpReply);
+	return Message::CONTINUE;
 }
 
-long
-cScr_QuestArrow::OnQuestChange (sQuestMsg* pMsg, cMultiParm& mpReply)
+Message::Result
+KDQuestArrow::on_contained (ContainmentMessage& message)
 {
-	SetEnabledFromObjective ();
-	return cScr_HUDElement::OnQuestChange (pMsg, mpReply);
+	if (message.get_event () == ContainmentMessage::ADD &&
+	    message.get_container () == Player ())
+		enabled = false;
+	return Message::CONTINUE;
 }
+
+Message::Result
+KDQuestArrow::on_ai_mode_change (AIModeChangeMessage& message)
+{
+	if (message.get_new_mode () == AI::Mode::DEAD)
+		enabled = false;
+	return Message::CONTINUE;
+}
+
+
+
+Message::Result
+KDQuestArrow::on_property_change (PropertyChangeMessage& message)
+{
+	if (message.get_prop_name () == "DesignNote")
+	{
+		schedule_redraw ();
+		update_objective ();
+		update_text ();
+	}
+	else if (message.get_prop_name () == "GameName")
+	{
+		schedule_redraw ();
+		update_text ();
+	}
+	return Message::CONTINUE;
+}
+
+Message::Result
+KDQuestArrow::on_quest_change (QuestChangeMessage&)
+{
+	if (objective->number != Objective::NONE)
+		enabled = (objective->is_visible () &&
+			objective->get_state () == Objective::State::INCOMPLETE);
+	return Message::CONTINUE;
+}
+
+
 
 void
-cScr_QuestArrow::UpdateObjective ()
+KDQuestArrow::update_objective ()
 {
-	SService<IQuestSrv> pQS (g_pScriptManager);
-	char qvar[256];
+	// Don't update if the objective has not changed.
+	if (objective->number == old_objective) return;
 
-	// unsubscribe from old objective
-	if (objective > OBJECTIVE_NONE)
+	// Unsubscribe from any old objective.
+	if (old_objective != Objective::NONE)
 	{
-		snprintf (qvar, 256, "goal_state_%d", objective);
-		pQS->UnsubscribeMsg (ObjId (), qvar);
-		snprintf (qvar, 256, "goal_visible_%d", objective);
-		pQS->UnsubscribeMsg (ObjId (), qvar);
+		Objective old (old_objective);
+		old.unsubscribe (host (), Objective::Field::STATE);
+		old.unsubscribe (host (), Objective::Field::VISIBLE);
 	}
 
-	objective = GetParamInt ("quest_arrow_goal", OBJECTIVE_NONE);
-	if (objective <= OBJECTIVE_NONE) return;
+	// Identify the new objective, if any.
+	old_objective = objective->number;
+	if (objective->number == Objective::NONE) return;
 
-	SetEnabledFromObjective ();
+	// Update the enabled state.
+	enabled = (objective->is_visible () &&
+		objective->get_state () == Objective::State::INCOMPLETE);
 
-	// subscribe to new objective
-	snprintf (qvar, 256, "goal_state_%d", objective);
-	pQS->SubscribeMsg (ObjId (), qvar, kQuestDataAny);
-	snprintf (qvar, 256, "goal_visible_%d", objective);
-	pQS->SubscribeMsg (ObjId (), qvar, kQuestDataAny);
+	// Subscribe to the new objective.
+	objective->subscribe (host (), Objective::Field::STATE);
+	objective->subscribe (host (), Objective::Field::VISIBLE);
+
+	// In case text == "@objective", update it.
+	update_text ();
 }
 
 void
-cScr_QuestArrow::SetEnabledFromObjective ()
+KDQuestArrow::update_text ()
 {
-	if (objective <= OBJECTIVE_NONE) return;
+	text.clear ();
 
-	SService<IQuestSrv> pQS (g_pScriptManager);
-	char qvar[256];
-
-	snprintf (qvar, 256, "goal_state_%d", objective);
-	bool incomplete = (pQS->Get (qvar) == kGoalIncomplete);
-
-	snprintf (qvar, 256, "goal_visible_%d", objective);
-	bool visible = (pQS->Get (qvar) == true);
-
-	enabled = incomplete && visible;
-}
-
-#if (_DARKGAME == 2)
-void
-cScr_QuestArrow::GetTextFromObjective (cScrStr& msgstr)
-{
-	if (objective <= OBJECTIVE_NONE)
-	{
-		msgstr = NULL;
-		return;
-	}
-
-	char msgid[256], path[256];
-	snprintf (msgid, 256, "text_%d", objective);
-
-	SService<IDarkGameSrv> pDGS (g_pScriptManager);
-	snprintf (path, 256, "intrface\\miss%d", pDGS->GetCurrentMission ());
-
-	SService<IDataSrv> pDS (g_pScriptManager);
-	pDS->GetString (msgstr, "goals", msgid, "", path);
-}
-#endif // _DARKGAME == 2
-
-void
-cScr_QuestArrow::UpdateImage ()
-{
-	// hold local reference to old bitmap in case it is unchanged
-	HUDBitmapPtr old_bitmap = bitmap;
-	bitmap.reset ();
-
-	cAnsiStr image = GetParamString ("quest_arrow_image", "@arrow");
-	Symbol _symbol = SYMBOL_NONE;
-
-	if (image.GetAt (0) == '@')
-		_symbol = InterpretSymbol (image, true);
-	else
-	{
-		bitmap = LoadBitmap (image);
-		if (!bitmap)
-			_symbol = SYMBOL_ARROW;
-	}
-
-	if (symbol != _symbol || bitmap != old_bitmap)
-	{
-		symbol = _symbol;
-		ScheduleRedraw ();
-	}
-}
-
-void
-cScr_QuestArrow::UpdateText ()
-{
-	cAnsiStr __text = GetParamString ("quest_arrow_text", "@name");
-	SService<IDataSrv> pDS (g_pScriptManager);
-	cScrStr _text;
-
-	if (__text.IsEmpty () || !stricmp (__text, "@none"))
+	if (_text->empty () || _text == "@none")
 		{}
 
-	else if (!stricmp (__text, "@name"))
-		pDS->GetObjString (_text, ObjId (), "objnames");
+	else if (_text->front () != '@')
+		text = Mission::get_text ("strings", "hud", _text);
 
-	else if (!stricmp (__text, "@description"))
-		pDS->GetObjString (_text, ObjId (), "objdescs");
+	else if (_text == "@name")
+		text = host ().get_display_name ();
 
-	else if (!stricmp (__text, "@objective"))
-#if (_DARKGAME == 2)
+	else if (_text == "@description")
+		text = host ().get_description ();
+
+	else if (_text == "@objective")
+#ifdef IS_THIEF2
 	{
-		SService<IVersionSrv> pVS (g_pScriptManager);
-		if (pVS->IsEditor () == 0)
-			GetTextFromObjective (_text);
-		else
-			DebugPrintf ("Note: The `@objective' value for "
-				"quest_arrow_text is not available in DromEd "
-				"game mode. Test this arrow in the real game.");
+		if (Engine::is_editor ())
+			mono () << "Note: The \"@objective\" value for "
+				"quest_arrow_text is not available in DromEd. "
+				"Test this arrow in the real game."
+				<< std::endl;
+		else if (objective->number != Objective::NONE)
+		{
+			std::ostringstream dir, msgid;
+			dir << "intrface\\miss" << Mission::get_number ();
+			msgid << "text_" << objective->number;
+			text = Mission::get_text
+				(dir.str (), "goals", msgid.str ());
+		}
 	}
-#else
-		DebugPrintf ("Warning: quest_arrow_text cannot be `@objective' "
-			"in this game. No text will be shown.");
-#endif // _DARKGAME == 2
-
-	else if (__text.GetAt (0) == '@')
-		DebugPrintf ("Warning: `%s' is not a valid quest arrow text "
-			"source.", (const char*) __text);
+#else // !IS_THIEF2
+		mono () << "Warning: quest_arrow_text cannot be \"@objective\" "
+			"in this game. No text will be shown." << std::endl;
+#endif // IS_THIEF2
 
 	else
-		pDS->GetString (_text, "hud", __text, "", "strings");
-
-	if (!!strcmp (text, _text))
-	{
-		text = _text;
-		ScheduleRedraw ();
-	}
-
-	//FIXME LGMM _text.Free ();
-}
-
-void
-cScr_QuestArrow::UpdateColor ()
-{
-	ulong _color = GetParamColor ("quest_arrow_color", 0xffffff);
-	bool _shadow = GetParamBool ("quest_arrow_shadow", true);
-	if (color != _color || shadow != _shadow)
-	{
-		color = _color;
-		shadow = _shadow;
-		ScheduleRedraw ();
-	}
+		mono () << "Warning: \"" << _text << "\" is not a valid quest "
+			"arrow text source." << std::endl;
 }
 

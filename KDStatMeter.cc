@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDStatMeter.cpp
+ *  KDStatMeter.cc
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,140 +18,223 @@
  *
  *****************************************************************************/
 
-#include "KDStatMeter.h"
-#include <cmath>
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDStatMeter.hh"
+
+
+
+namespace Thief {
+
+THIEF_ENUM_CODING (KDStatMeter::Style, CODE, CODE,
+	THIEF_ENUM_VALUE (PROGRESS, "progress"),
+	THIEF_ENUM_VALUE (UNITS, "units"),
+	THIEF_ENUM_VALUE (GEM, "gem"),
+)
+
+THIEF_ENUM_CODING (KDStatMeter::Position, CODE, CODE,
+	THIEF_ENUM_VALUE (NW, "nw"),
+	THIEF_ENUM_VALUE (NORTH, "north", "n"),
+	THIEF_ENUM_VALUE (NE, "ne"),
+	THIEF_ENUM_VALUE (WEST, "west", "w"),
+	THIEF_ENUM_VALUE (CENTER, "center", "c"),
+	THIEF_ENUM_VALUE (EAST, "east", "e"),
+	THIEF_ENUM_VALUE (SW, "sw"),
+	THIEF_ENUM_VALUE (SOUTH, "south", "s"),
+	THIEF_ENUM_VALUE (SE, "se"),
+)
+
+THIEF_ENUM_CODING (KDStatMeter::Orient, CODE, CODE,
+	THIEF_ENUM_VALUE (HORIZ, "horiz"),
+	THIEF_ENUM_VALUE (VERT, "vert"),
+)
+
+THIEF_ENUM_CODING (KDStatMeter::Component, CODE, CODE,
+	THIEF_ENUM_VALUE (NONE),
+	THIEF_ENUM_VALUE (X, "x"),
+	THIEF_ENUM_VALUE (Y, "y"),
+	THIEF_ENUM_VALUE (Z, "z"),
+)
+
+} // namespace Thief
+
+
+
+const HUD::ZIndex
+KDStatMeter::PRIORITY = 0;
 
 const int
-cScr_StatMeter::MARGIN = 16;
+KDStatMeter::MARGIN = 16;
 
-cScr_StatMeter::cScr_StatMeter (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  cScr_HUDElement (pszName, iHostObjId),
-	  SCRIPT_VAROBJ (StatMeter, enabled, iHostObjId),
-	  style (STYLE_PROGRESS), symbol (SYMBOL_NONE), spacing (0),
-	  position (POS_NW), orient (ORIENT_HORIZ), prop_comp (COMP_NONE),
-	  prop_object (iHostObjId), post_sim_fix (false),
-	  min (0.0), max (0.0), low (0), high (0),
-	  color_bg (0), color_low (0), color_med (0), color_high (0),
-	  value (0.0), value_pct (0.0), value_tier (VALUE_MED)
-{}
 
-bool
-cScr_StatMeter::Initialize ()
+
+KDStatMeter::KDStatMeter (const String& _name, const Object& _host)
+	: KDHUDElement (_name, _host, PRIORITY),
+
+	  PERSISTENT (enabled),
+	  PARAMETER_ (style, "stat_meter_style", Style::PROGRESS),
+	  PARAMETER_ (image, "stat_meter_image", Symbol::NONE, true, false),
+	  PARAMETER_ (spacing, "stat_meter_spacing", 8),
+	  PARAMETER_ (_text, "stat_meter_text"),
+
+	  PARAMETER_ (position, "stat_meter_position", Position::NW),
+	  PARAMETER_ (offset_x, "stat_meter_offset_x", 0),
+	  PARAMETER_ (offset_y, "stat_meter_offset_y", 0),
+	  PARAMETER_ (orient, "stat_meter_orient", Orient::HORIZ),
+	  PARAMETER_ (request_w, "stat_meter_width", -1),
+	  PARAMETER_ (request_h, "stat_meter_height", -1),
+
+	  PARAMETER_ (quest_var, "stat_source_qvar"),
+	  PARAMETER_ (prop_name, "stat_source_property"),
+	  PARAMETER_ (prop_field, "stat_source_field"),
+	  PARAMETER_ (prop_comp, "stat_source_component", Component::NONE),
+	  PARAMETER_ (prop_obj, "stat_source_object", host ()),
+
+	  PARAMETER_ (_min, "stat_range_min", 0.0f),
+	  PARAMETER_ (_max, "stat_range_max", 1.0f),
+	  min (0.0f), max (1.0f),
+	  PARAMETER_ (low, "stat_range_low", 25),
+	  PARAMETER_ (high, "stat_range_high", 75),
+
+	  PARAMETER_ (color_bg, "stat_color_bg", Color (0, 0, 0)),
+	  PARAMETER_ (color_low, "stat_color_low", Color (255, 0, 0)),
+	  PARAMETER_ (color_med, "stat_color_med", Color (255, 255, 0)),
+	  PARAMETER_ (color_high, "stat_color_high", Color (0, 255, 0)),
+
+	  value (0.0f),
+	  value_pct (0.0f),
+	  value_int (0),
+	  value_tier (Tier::MEDIUM)
 {
-	if (!cScr_HUDElement::Initialize ()) return false;
-	enabled.Init (GetParamBool ("stat_meter", true));
-	OnPropertyChanged ("DesignNote"); // update all cached params
-	SubscribeProperty ("DesignNote");
-	return true;
+	listen_message ("PostSim", &KDStatMeter::on_post_sim);
+	listen_message ("StatMeterOn", &KDStatMeter::on_on);
+	listen_message ("StatMeterOff", &KDStatMeter::on_off);
+	listen_message ("PropertyChange", &KDStatMeter::on_property_change);
+}
+
+
+
+void
+KDStatMeter::initialize ()
+{
+	KDHUDElement::initialize ();
+
+	enabled.init (Parameter<bool> (host (), "stat_meter", true));
+
+	Property (host (), "DesignNote").subscribe (Object::SELF);
+	update_text ();
+	update_range ();
 }
 
 bool
-cScr_StatMeter::Prepare ()
+KDStatMeter::prepare ()
 {
 	if (!enabled) return false;
 
-	if (post_sim_fix)
-		// re-resolve any target object that may have been absent
-		UpdateObject ();
-
-	// get the current value
-	if (!qvar.IsEmpty ())
+	// Get the current value.
+	QuestVar qvar (quest_var->data ());
+	Property property (prop_obj, prop_name);
+	if (qvar.exists ())
+		value = qvar.get ();
+	else if (property.exists ())
 	{
-		SService<IQuestSrv> pQS (g_pScriptManager);
-		value = pQS->Get (qvar);
-	}
-	else if (!prop_name.IsEmpty () && prop_object)
-	{
-		SService<IPropertySrv> pPS (g_pScriptManager);
-		if (!pPS->Possessed (prop_object, prop_name)) return false;
+		bool have_value = false;
 
-		cMultiParm value_mp;
-		pPS->Get (value_mp, prop_object, prop_name,
-			prop_field.IsEmpty () ? NULL : (const char*) prop_field);
-
-		switch (value_mp.type)
+		try
 		{
-		case kMT_Int: value = int (value_mp); break;
-		case kMT_Float: value = float (value_mp); break;
-		case kMT_Vector:
+			value = property.get_field<int> (prop_field);
+			have_value = true;
+		}
+		catch (...) {} // not an int
+
+		if (!have_value)
+		try
+		{
+			value = property.get_field<float> (prop_field);
+			have_value = true;
+		}
+		catch (...) {} // not a float
+
+		if (!have_value && prop_comp != Component::NONE)
+		try
+		{
+			Vector _value = property.get_field<Vector> (prop_field);
 			switch (prop_comp)
 			{
-			case COMP_X: value = cScrVec (value_mp).x; break;
-			case COMP_Y: value = cScrVec (value_mp).y; break;
-			case COMP_Z: value = cScrVec (value_mp).z; break;
-			case COMP_NONE: default: return false;
+			case Component::X: value = _value.x; break;
+			case Component::Y: value = _value.y; break;
+			case Component::Z: value = _value.z; break;
+			default: return false;
 			}
-			break;
-		default: return false;
+			have_value = true;
 		}
+		catch (...) {} // not a vector
+
+		if (!have_value) return false;
 	}
 	else
 		return false;
 
-	// clamp value and calculate derived versions
+	// Clamp the value and calculate derived versions.
 	value = std::min (max, std::max (min, value));
-	value_pct = (max != min) ? (value - min) / (max - min) : 0.0;
+	value_pct = (max != min) ? (value - min) / (max - min) : 0.0f;
 	value_int = std::lround (value);
-	if (value_pct * 100.0 <= low)
-		value_tier = VALUE_LOW;
-	else if (value_pct * 100.0 >= high)
-		value_tier = VALUE_HIGH;
+	if (value_pct * 100.0f <= low)
+		value_tier = Tier::LOW;
+	else if (value_pct * 100.0f >= high)
+		value_tier = Tier::HIGH;
 	else
-		value_tier = VALUE_MED;
+		value_tier = Tier::MEDIUM;
 
-	// get canvas and text sizes
-	CanvasSize canvas = GetCanvasSize (),
-		text_size = GetTextSize (text);
+	// Get the sizes of the canvas and the text.
+	CanvasSize canvas = Engine::get_canvas_size (),
+		text_size = get_text_size (text);
 
-	// calculate meter size
-	CanvasSize meter_size = request_size;
-	if (style == STYLE_UNITS)
+	// Calculate the size of the meter.
+	CanvasSize request_size = get_request_size (),
+		meter_size = request_size;
+	if (style == Style::UNITS)
 	{
-		if (orient == ORIENT_HORIZ)
+		if (orient == Orient::HORIZ)
 			meter_size.w = value_int * request_size.w +
 				(value_int - 1) * spacing;
-		else // ORIENT_VERT
+		else // Orient::VERT
 			meter_size.h = value_int * request_size.h +
 				(value_int - 1) * spacing;
 	}
-	else if (orient == ORIENT_VERT)
+	else if (orient == Orient::VERT)
 	{
 		meter_size.w = request_size.h;
 		meter_size.h = request_size.w;
 	}
 
-	// calculate element size
+	// Calculate the size of the element.
 	CanvasSize elem_size;
 	bool show_text;
-	if (orient == ORIENT_HORIZ && !text.IsEmpty ())
+	if (orient == Orient::HORIZ && !text.empty ())
 	{
 		show_text = true;
 		elem_size.w = std::max (meter_size.w, text_size.w);
 		elem_size.h = meter_size.h + spacing + text_size.h;
 	}
-	else // ORIENT_VERT and/or empty text
+	else // Orient::VERT and/or empty text
 	{
 		show_text = false;
 		elem_size = meter_size;
 	}
 
-	// calculate element position and positions of meter and text inside
+	// Calculate the element position and relative positions of meter/text.
 	CanvasPoint elem_pos;
 	switch (position)
 	{
-	case POS_NW: case POS_WEST: case POS_SW: default:
+	case Position::NW: case Position::WEST: case Position::SW: default:
 		elem_pos.x = MARGIN;
 		meter_pos.x = text_pos.x = 0;
 		break;
-	case POS_NORTH: case POS_CENTER: case POS_SOUTH:
+	case Position::NORTH: case Position::CENTER: case Position::SOUTH:
 		elem_pos.x = (canvas.w - elem_size.w) / 2;
 		meter_pos.x = std::max (0, (text_size.w - meter_size.w) / 2);
 		text_pos.x = std::max (0, (meter_size.w - text_size.w) / 2);
 		break;
-	case POS_NE: case POS_EAST: case POS_SE:
+	case Position::NE: case Position::EAST: case Position::SE:
 		elem_pos.x = canvas.w - MARGIN - elem_size.w;
 		meter_pos.x = std::max (0, text_size.w - meter_size.w);
 		text_pos.x = std::max (0, meter_size.w - text_size.w);
@@ -159,379 +242,297 @@ cScr_StatMeter::Prepare ()
 	}
 	switch (position)
 	{
-	case POS_NW: case POS_NORTH: case POS_NE: default: // text below
+	case Position::NW: case Position::NORTH: case Position::NE: default:
 		elem_pos.y = MARGIN;
 		meter_pos.y = 0;
-		text_pos.y = meter_size.h + spacing;
+		text_pos.y = meter_size.h + spacing; // text below
 		break;
-	case POS_WEST: case POS_CENTER: case POS_EAST: // text below
+	case Position::WEST: case Position::CENTER: case Position::EAST:
 		elem_pos.y = (canvas.h - elem_size.h) / 2;
 		meter_pos.y = 0;
-		text_pos.y = meter_size.h + spacing;
+		text_pos.y = meter_size.h + spacing; // text below
 		break;
-	case POS_SW: case POS_SOUTH: case POS_SE: // text above
+	case Position::SW: case Position::SOUTH: case Position::SE:
 		elem_pos.y = canvas.h - MARGIN - elem_size.h;
 		meter_pos.y = show_text ? (text_size.h + spacing) : 0;
-		text_pos.y = 0;
+		text_pos.y = 0; // text above
 		break;
 	}
 
-	SetPosition (elem_pos + offset);
-	SetSize (elem_size);
+	set_position (elem_pos + CanvasPoint (offset_x, offset_y));
+	set_size (elem_size);
 	// If this script ever becomes an overlay, it won't be able to redraw
-	// every frame. We would need to subscribe to the qvar/property.
-	ScheduleRedraw ();
+	// every frame. It would need to subscribe to the qvar/property.
+	schedule_redraw ();
 	return true;
 }
 
 void
-cScr_StatMeter::Redraw ()
+KDStatMeter::redraw ()
 {
-	// calculate value-sensitive colors
-	ulong tier_color, color_blend = (value_pct < 0.5)
-		? AverageColors (color_low, color_med, value_pct * 2.0)
-		: AverageColors (color_med, color_high, (value_pct-0.5) * 2.0);
+	// Calculate value-sensitive colors.
+	Color tier_color, color_blend = (value_pct < 0.5f)
+		? Thief::interpolate (color_low, color_med, value_pct * 2.0f)
+		: Thief::interpolate (color_med, color_high,
+			(value_pct - 0.5f) * 2.0f);
 	switch (value_tier)
 	{
-	case VALUE_LOW: tier_color = color_low; break;
-	case VALUE_HIGH: tier_color = color_high; break;
-	case VALUE_MED: default: tier_color = color_med; break;
+	case Tier::LOW: tier_color = color_low; break;
+	case Tier::HIGH: tier_color = color_high; break;
+	case Tier::MEDIUM: default: tier_color = color_med; break;
 	}
 
-	// draw text, if any
-	if (orient == ORIENT_HORIZ && !text.IsEmpty ())
+	// Draw the text, if any.
+	if (orient == Orient::HORIZ && !text.empty ())
 	{
-		SetDrawingColor ((style == STYLE_GEM)
-			? color_blend : tier_color);
-		DrawText (text, text_pos, true);
-		SetDrawingOffset (meter_pos);
+		set_drawing_color
+			((style == Style::GEM) ? color_blend : tier_color);
+		draw_text_shadowed (text, text_pos);
+		set_drawing_offset (meter_pos);
 	}
 
-	// draw progress bar
-	if (style == STYLE_PROGRESS)
+	CanvasSize request_size = get_request_size ();
+
+	// Draw a progress bar meter.
+	if (style == Style::PROGRESS)
 	{
-		CanvasRect fill_area (request_size);
-		if (orient == ORIENT_VERT) // invert dimensions
+		CanvasRect area (request_size);
+		if (orient == Orient::VERT) // invert dimensions
 		{
-			fill_area.w = request_size.h;
-			fill_area.h = request_size.w;
+			area.w = request_size.h;
+			area.h = request_size.w;
 		}
 
-		SetDrawingColor (color_bg);
-		FillArea (fill_area);
+		set_drawing_color (color_bg);
+		fill_area (area);
 
-		SetDrawingColor (tier_color);
-		DrawBox (fill_area);
+		set_drawing_color (tier_color);
+		draw_box (area);
 
-		if (orient == ORIENT_HORIZ)
+		if (orient == Orient::HORIZ)
 		{
-			fill_area.w = std::lround (fill_area.w * value_pct);
-			if (position == POS_NE || position == POS_EAST ||
-			    position == POS_SE) // right to left
-				fill_area.x = request_size.w - fill_area.w;
+			area.w = std::lround (area.w * value_pct);
+			if (position == Position::NE ||
+			    position == Position::EAST ||
+			    position == Position::SE) // right to left
+				area.x = request_size.w - area.w;
 		}
-		else // ORIENT_VERT
+		else // Orient::VERT
 		{
-			fill_area.h = std::lround (fill_area.h * value_pct);
-			if (position != POS_NW && position != POS_NORTH &&
-			    position != POS_NE) // bottom to top
-				fill_area.y = request_size.w - fill_area.h;
+			area.h = std::lround (area.h * value_pct);
+			if (position != Position::NW &&
+			    position != Position::NORTH &&
+			    position != Position::NE) // bottom to top
+				area.y = request_size.w - area.h;
 		}
-		FillArea (fill_area);
+		fill_area (area);
 	}
 
-	// draw individual units
-	else if (style == STYLE_UNITS)
+	// Draw a meter with individual units.
+	else if (style == Style::UNITS)
 	{
-		SetDrawingColor (tier_color);
+		set_drawing_color (tier_color);
 		CanvasPoint unit;
 		for (int i = 1; i <= value_int; ++i)
 		{
-			if (bitmap)
-				DrawBitmap (bitmap, HUDBitmap::STATIC, unit);
-			else if (symbol != SYMBOL_NONE)
-				DrawSymbol (symbol, request_size, unit);
+			if (image->bitmap)
+				draw_bitmap
+					(image->bitmap, HUDBitmap::STATIC, unit);
+			else
+				draw_symbol ((image->symbol != Symbol::NONE)
+					? image->symbol : Symbol::SQUARE,
+					request_size, unit);
 
-			if (orient == ORIENT_HORIZ)
+			if (orient == Orient::HORIZ)
 				unit.x += request_size.w + spacing;
-			else // ORIENT_VERT
+			else // Orient::VERT
 				unit.y += request_size.h + spacing;
 		}
 	}
 
-	// draw solid gem
-	else if (style == STYLE_GEM)
+	// Draw a solid gem meter.
+	else if (style == Style::GEM)
 	{
-		if (bitmap)
-			DrawBitmap (bitmap, std::lround
-				(value_pct * (bitmap->GetFrames () - 1)));
+		if (image->bitmap)
+			draw_bitmap (image->bitmap, std::lround (value_pct *
+				(image->bitmap->count_frames () - 1)));
 		else
 		{
-			CanvasRect fill_area (request_size);
-			if (orient == ORIENT_VERT)
+			CanvasRect area (request_size);
+			if (orient == Orient::VERT)
 			{
-				fill_area.w = request_size.h;
-				fill_area.h = request_size.w;
+				area.w = request_size.h;
+				area.h = request_size.w;
 			}
-			SetDrawingColor (color_blend);
-			FillArea (fill_area);
-			SetDrawingColor (color_bg);
-			DrawBox (fill_area);
+			set_drawing_color (color_blend);
+			fill_area (area);
+			set_drawing_color (color_bg);
+			draw_box (area);
 		}
 	}
 
-	SetDrawingOffset ();
+	set_drawing_offset ();
 }
 
-long
-cScr_StatMeter::OnSim (sSimMsg* pMsg, cMultiParm& mpReply)
+
+
+CanvasSize
+KDStatMeter::get_request_size () const
 {
-	if (pMsg->fStarting)
-		post_sim_fix = true;
-	return cScr_HUDElement::OnSim (pMsg, mpReply);
+	CanvasSize request_size (128, 32);
+	if (image->bitmap)
+		request_size = image->bitmap->get_size ();
+	else
+	{
+		if (style == Style::UNITS) request_size.w = 32;
+		if (request_w > 0) request_size.w = request_w;
+		if (request_h > 0) request_size.h = request_h;
+	}
+	return request_size;
 }
 
-long
-cScr_StatMeter::OnMessage (sScrMsg* pMsg, cMultiParm& mpReply)
+
+
+Message::Result
+KDStatMeter::on_post_sim (GenericMessage&)
 {
-	if (!stricmp (pMsg->message, "StatMeterOn"))
-	{
-		enabled = true;
-		return S_OK;
-	}
+	// Update anything based on an object that may have been absent.
 
-	if (!stricmp (pMsg->message, "StatMeterOff"))
-	{
-		enabled = false;
-		return S_OK;
-	}
+	schedule_redraw ();
+	prop_obj.reparse ();
+	update_text ();
+	update_range ();
 
-	return cScr_HUDElement::OnMessage (pMsg, mpReply);
-}
+	// Issue any one-time warnings on configuration.
 
-void
-cScr_StatMeter::OnPropertyChanged (const char* property)
-{
-	if (!!strcmp (property, "DesignNote")) return;
-	ScheduleRedraw (); // too many to check, so just assume we're affected
+	if (style == Style::PROGRESS && image->bitmap)
+		mono () << "Warning: Bitmap image \"" << image.get_raw ()
+			<< "\" will be ignored for a progress-style meter."
+			<< std::endl;
 
-	cAnsiStr _style = GetParamString ("stat_meter_style", "");
-	if (!stricmp (_style, "progress")) style = STYLE_PROGRESS;
-	else if (!stricmp (_style, "units")) style = STYLE_UNITS;
-	else if (!stricmp (_style, "gem")) style = STYLE_GEM;
-	else
-	{
-		if (!_style.IsEmpty ())
-			DebugPrintf ("Warning: `%s' is not a valid stat meter "
-				"style.", (const char*) _style);
-		style = STYLE_PROGRESS;
-	}
+	if (style != Style::UNITS && image->symbol != Symbol::NONE)
+		mono () << "Warning: Symbol \"" << image.get_raw () << "\" will "
+			"be ignored for a non-units-style meter." << std::endl;
 
-	UpdateImage ();
+	if (!quest_var->empty () && !prop_name->empty ())
+		mono () << "Warning: Both a quest variable and a property were "
+			"specified; will use the quest variable and ignore the "
+			"property." << std::endl;
 
-	spacing = GetParamInt ("stat_meter_spacing", 8);
+	if (quest_var->empty () && prop_name->empty ())
+		mono () << "Warning: Neither a quest variable nor a property "
+			"was specified; the stat meter will not be displayed."
+			<< std::endl;
 
-	UpdateText ();
+	if (min > max)
+		mono () << "Warning: Minimum value " << min << " is greater "
+			"than maximum value " << max << "." << std::endl;
 
-	cAnsiStr _position = GetParamString ("stat_meter_position", "");
-	if (!stricmp (_position, "center")) position = POS_CENTER;
-	else if (!stricmp (_position, "north")) position = POS_NORTH;
-	else if (!stricmp (_position, "ne")) position = POS_NE;
-	else if (!stricmp (_position, "east")) position = POS_EAST;
-	else if (!stricmp (_position, "se")) position = POS_SE;
-	else if (!stricmp (_position, "south")) position = POS_SOUTH;
-	else if (!stricmp (_position, "sw")) position = POS_SW;
-	else if (!stricmp (_position, "west")) position = POS_WEST;
-	else if (!stricmp (_position, "nw")) position = POS_NW;
-	else
-	{
-		if (!_position.IsEmpty ())
-			DebugPrintf ("Warning: `%s' is not a valid stat meter "
-				"position.", (const char*) _position);
-		position = POS_NW;
-	}
-
-	offset.x = GetParamInt ("stat_meter_offset_x", 0);
-	offset.y = GetParamInt ("stat_meter_offset_y", 0);
-
-	cAnsiStr _orient = GetParamString ("stat_meter_orient", "");
-	if (!stricmp (_orient, "horiz")) orient = ORIENT_HORIZ;
-	else if (!stricmp (_orient, "vert")) orient = ORIENT_VERT;
-	else
-	{
-		if (!_orient.IsEmpty ())
-			DebugPrintf ("Warning: `%s' is not a valid stat meter "
-				"orientation.", (const char*) _orient);
-		orient = ORIENT_HORIZ;
-	}
-
-	if (bitmap)
-		request_size = bitmap->GetSize ();
-	else
-	{
-		request_size.w = GetParamInt ("stat_meter_width",
-			(style == STYLE_UNITS) ? 32 : 128);
-		request_size.h = GetParamInt ("stat_meter_height", 32);
-	}
-
-	qvar = GetParamString ("stat_source_qvar", "");
-
-	prop_name = GetParamString ("stat_source_property", "");
-	prop_field = GetParamString ("stat_source_field", "");
-	if (!qvar.IsEmpty () && !prop_name.IsEmpty ())
-		DebugPrintf ("Warning: Both a quest variable and a property "
-			"were specified; will use the quest variable and "
-			"ignore the property.");
-	else if (qvar.IsEmpty () && prop_name.IsEmpty ())
-		DebugPrintf ("Warning: Neither a quest variable nor a property "
-			"was specified; the stat meter will not be displayed.");
-
-	cAnsiStr _prop_comp = GetParamString ("stat_source_component", "");
-	if (!stricmp (_prop_comp, "x")) prop_comp = COMP_X;
-	else if (!stricmp (_prop_comp, "y")) prop_comp = COMP_Y;
-	else if (!stricmp (_prop_comp, "z")) prop_comp = COMP_Z;
-	else
-	{
-		if (!_prop_comp.IsEmpty ())
-			DebugPrintf ("Warning: `%s' is not a valid vector "
-				"component.", (const char*) _prop_comp);
-		prop_comp = COMP_NONE;
-	}
-
-	UpdateObject ();
-
-	low = GetParamInt ("stat_range_low", 25);
 	if (low < 0 || low > 100)
-		DebugPrintf ("Warning: Low bracket %d%% is out of range.", low);
-	high = GetParamInt ("stat_range_high", 75);
+		mono () << "Warning: Low bracket " << low << "% is out of the "
+			"range [0,100]." << std::endl;
+
 	if (high < 0 || high > 100)
-		DebugPrintf ("Warning: High bracket %d%% is out of range.", high);
+		mono () << "Warning: High bracket " << high << "% is out of the "
+			"range [0,100]." << std::endl;
+
 	if (low >= high)
-		DebugPrintf ("Warning: Low bracket %d%% is greater than or "
-			"equal to high bracket %d%%.", low, high);
+		mono () << "Warning: Low bracket " << low << "% is greater than "
+			"or equal to high bracket " << high << "%." << std::endl;
 
-	color_bg = GetParamColor ("stat_color_bg", 0x000000);
-	color_low = GetParamColor ("stat_color_low", 0x0000ff);
-	color_med = GetParamColor ("stat_color_med", 0x00ffff);
-	color_high = GetParamColor ("stat_color_high", 0x00ff00);
+	return Message::CONTINUE;
+}
+
+
+
+Message::Result
+KDStatMeter::on_on (GenericMessage&)
+{
+	enabled = true;
+	return Message::CONTINUE;
+}
+
+
+Message::Result
+KDStatMeter::on_off (GenericMessage&)
+{
+	enabled = false;
+	return Message::CONTINUE;
+}
+
+
+
+Message::Result
+KDStatMeter::on_property_change (PropertyChangeMessage& message)
+{
+	if (message.get_prop_name () == "DesignNote")
+	{
+		// Too many to check, so just assume the meter is affected.
+		schedule_redraw ();
+
+		update_text ();
+		update_range ();
+	}
+	return Message::CONTINUE;
 }
 
 void
-cScr_StatMeter::UpdateImage ()
+KDStatMeter::update_text ()
 {
-	// hold local reference to old bitmap in case it is unchanged
-	HUDBitmapPtr old_bitmap = bitmap;
-	bitmap.reset ();
+	text.clear ();
 
-	cAnsiStr image = GetParamString ("stat_meter_image",
-		(style == STYLE_UNITS) ? "@square" : "@none");
-	Symbol _symbol = SYMBOL_NONE;
-
-	if (image.GetAt (0) == '@')
-		_symbol = InterpretSymbol (image, false);
-	else
-	{
-		bitmap = LoadBitmap (image, true);
-		if (!bitmap)
-			_symbol = (style == STYLE_GEM)
-				? SYMBOL_NONE : SYMBOL_ARROW;
-	}
-
-	if (style == STYLE_PROGRESS && bitmap)
-	{
-		DebugPrintf ("Warning: Bitmap image `%s' will be ignored for "
-			"a progress-style meter.", (const char*) image);
-		bitmap.reset ();
-	}
-
-	if (style != STYLE_UNITS && symbol != SYMBOL_NONE)
-	{
-		DebugPrintf ("Warning: Symbol %s will be ignored for a "
-			"non-units-style meter.", (const char*) image);
-		symbol = SYMBOL_NONE;
-	}
-
-	if (symbol != _symbol || bitmap != old_bitmap)
-	{
-		symbol = _symbol;
-		ScheduleRedraw ();
-	}
-
-}
-
-void
-cScr_StatMeter::UpdateText ()
-{
-	cAnsiStr __text = GetParamString ("stat_meter_text", "@none");
-	SService<IDataSrv> pDS (g_pScriptManager);
-	cScrStr _text;
-
-	if (__text.IsEmpty () || !stricmp (__text, "@none"))
+	if (_text->empty () || _text == "@none")
 		{}
 
-	else if (!stricmp (__text, "@name"))
+	else if (_text->front () != '@')
+		text = Mission::get_text ("strings", "hud", _text);
+
+	else if (_text == "@name")
 	{
-		if (prop_object)
-			pDS->GetObjString (_text, prop_object, "objnames");
+		if (prop_obj != Object::NONE)
+			text = prop_obj->get_display_name ();
 		else
-			pDS->GetString (_text, "hud", qvar, "", "strings");
+			text = Mission::get_text ("strings", "hud", quest_var);
 	}
 
-	else if (!stricmp (__text, "@description"))
+	else if (_text == "@description")
 	{
-		if (prop_object)
-			pDS->GetObjString (_text, prop_object, "objdescs");
+		if (prop_obj != Object::NONE)
+			text = prop_obj->get_description ();
 		else
-			DebugPrintf ("Warning: `@description' is not a valid "
+			mono () << "Warning: \"@description\" is not a valid "
 				"stat meter text source for a quest variable "
-				"statistic.");
+				"statistic." << std::endl;
 	}
-
-	else if (__text.GetAt (0) == '@')
-		DebugPrintf ("Warning: `%s' is not a valid stat meter text "
-			"source.", (const char*) __text);
 
 	else
-		pDS->GetString (_text, "hud", __text, "", "strings");
-
-	if (!!strcmp (text, _text))
-	{
-		text = _text;
-		ScheduleRedraw ();
-	}
-
-	//FIXME LGMM _text.Free ();
+		mono () << "Warning: \"" << _text << "\" is not a valid stat "
+			"meter text source." << std::endl;
 }
 
 void
-cScr_StatMeter::UpdateObject ()
+KDStatMeter::update_range ()
 {
-	prop_object = GetParamObject ("stat_source_object", ObjId ());
-	UpdateText (); // in case _text == @name or == @description
+	min = _min;
+	max = _max;
 
-	if (qvar.IsEmpty () && !stricmp (prop_name, "AI_Visibility") &&
-	    !stricmp (prop_field, "Level"))
+	// Provide special min/max defaults if neither is set.
+	if (!_min.exists () && !_max.exists () && quest_var->empty ())
 	{
-		min = 0.0;
-		max = 100.0;
+		if (prop_name == "AI_Visibility" && prop_field == "Level")
+		{
+			min = 0.0f;
+			max = 100.0f;
+		}
+		else if (prop_name == "HitPoints")
+		{
+			Property max_hp (prop_obj, "MAX_HP");
+			if (max_hp.exists ())
+			{
+				min = 0.0f;
+				max = max_hp.get<int> ();
+			}
+		}
 	}
-	else if (qvar.IsEmpty () && !stricmp (prop_name, "HitPoints"))
-	{
-		min = 0.0;
-		SService<IPropertySrv> pPS (g_pScriptManager);
-		cMultiParm max_hp;
-		pPS->Get (max_hp, prop_object, "MAX_HP", NULL);
-		max = (max_hp.type == kMT_Int) ? int (max_hp) : 22.0;
-	}
-	else
-	{
-		min = 0.0;
-		max = 1.0;
-	}
-	min = GetParamFloat ("stat_range_min", min);
-	max = GetParamFloat ("stat_range_max", max);
-	if (min > max)
-		DebugPrintf ("Warning: Minimum value %f is greater than "
-			"maximum value %f.", min, max);
 }
 

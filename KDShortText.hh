@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDShortText.h
+ *  KDShortText.hh
  *
  *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,29 +18,28 @@
  *
  *****************************************************************************/
 
-#ifndef KDSHORTTEXT_H
-#define KDSHORTTEXT_H
+#ifndef KDSHORTTEXT_HH
+#define KDSHORTTEXT_HH
 
-#if !SCR_GENSCRIPTS
-#include "BaseScript.h"
-#endif // SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-#if !SCR_GENSCRIPTS
-class cScr_ShortText : public virtual cBaseScript
+class KDShortText : public Script
 {
 public:
-	cScr_ShortText (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnFrobWorldEnd (sFrobMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnWorldSelect (sScrMsg* pMsg, cMultiParm& mpReply);
+	KDShortText (const String& name, const Object& host);
 
 private:
-	void DisplayMessage ();
-};
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDShortText","BaseScript",cScr_ShortText)
-#endif // SCR_GENSCRIPTS
+	Message::Result on_focus (GenericMessage&);
+	Message::Result on_frob (FrobMessage&);
 
-#endif // KDSHORTTEXT_H
+	void show_text ();
+
+	Parameter<String> text;
+	Parameter<Color> text_color;
+	Parameter<Time> text_time;
+	Parameter<bool> text_on_focus, text_on_frob;
+};
+
+#endif // KDSHORTTEXT_HH
 

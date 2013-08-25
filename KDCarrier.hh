@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDCarrier.h
+ *  KDCarrier.hh
  *
  *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,37 +18,29 @@
  *
  *****************************************************************************/
 
-#ifndef KDCARRIER_H
-#define KDCARRIER_H
+#ifndef KDCARRIER_HH
+#define KDCARRIER_HH
 
-#if !SCR_GENSCRIPTS
-#include "BaseScript.h"
-#endif // SCR_GENSCRIPTS
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-#if !SCR_GENSCRIPTS
-class cScr_Carrier : public virtual cBaseAIScript
+class KDCarrier : public Script
 {
 public:
-	cScr_Carrier (const char* pszName, int iHostObjId);
-
-protected:
-	virtual long OnSim (sSimMsg* pMsg, cMultiParm& mpReply);
-	virtual long OnCreate (sScrMsg* pMsg, cMultiParm& mpReply);
-
-	virtual long OnAIModeChange (sAIModeChangeMsg* pMsg,
-		cMultiParm& mpReply);
-	virtual long OnAlertness (sAIAlertnessMsg* pMsg, cMultiParm& mpReply);
+	KDCarrier (const String& name, const Object& host);
 
 private:
-	void CreateAttachments ();
-	void CreateAttachment (object archetype, int joint);
+	Message::Result on_sim (SimMessage&);
+	Message::Result on_create (GenericMessage&);
+	void do_create_attachments ();
 
-	void NotifyCarried (const char* message,
-		const cMultiParm& data = cMultiParm::Undef);
+	Message::Result on_ai_mode_change (AIModeChangeMessage&);
+	Message::Result on_slain (SlayMessage&);
+	Message::Result on_alertness (AIAlertnessMessage&);
+	void notify_carried (const char* message, int data = 0);
+
+	Parameter<bool> create_attachments;
 };
-#else // SCR_GENSCRIPTS
-GEN_FACTORY("KDCarrier","BaseAIScript",cScr_Carrier)
-#endif // SCR_GENSCRIPTS
 
-#endif // KDCARRIER_H
+#endif // KDCARRIER_HH
 

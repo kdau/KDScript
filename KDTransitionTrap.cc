@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDTransitionTrap.cpp
+ *  KDTransitionTrap.cc
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *
@@ -18,111 +18,101 @@
  *
  *****************************************************************************/
 
-#include "KDTransitionTrap.h"
-#include <ScriptLib.h>
-#include "utils.h"
+#include "KDTransitionTrap.hh"
 
-const int
-cScr_TransitionTrap::INCREMENT_TIME = 50;
+const Time
+KDTransitionTrap::INCREMENT_TIME = 50ul;
 
-cScr_TransitionTrap::cScr_TransitionTrap (const char* pszName, int iHostObjId)
-	: cBaseScript (pszName, iHostObjId),
-	  cBaseTrap (pszName, iHostObjId),
-	  // associate to final script's name to avoid collisions
-	  timer (pszName, "transition_timer", iHostObjId),
-	  time_remaining (pszName, "transition_remaining", iHostObjId)
-{}
-
-long
-cScr_TransitionTrap::OnSwitch (bool bState, sScrMsg*, cMultiParm&)
+KDTransitionTrap::KDTransitionTrap (const String& _name, const Object& _host)
+	: TrapTrigger (_name, _host),
+	  PARAMETER (transition),
+	  PARAMETER (curve, Curve::LINEAR),
+	  PERSISTENT (timer),
+	  PERSISTENT (time_remaining)
 {
-	if (OnPrepare (bState))
-	{
-		Begin ();
-		return S_OK;
-	}
-	else
-		return S_FALSE;
-}
-
-long
-cScr_TransitionTrap::OnTimer (sScrTimerMsg* pMsg, cMultiParm& mpReply)
-{
-	if (!strcmp (pMsg->name, "Increment") &&
-	    pMsg->data.type == kMT_String && !strcmp (pMsg->data, Name ()))
-	{
-		Increment ();
-		return S_OK;
-	}
-	return cBaseTrap::OnTimer (pMsg, mpReply);
-}
-
-bool
-cScr_TransitionTrap::OnPrepare (bool)
-{
-	// trap behavior requires an override of this method
-	return false;
+	listen_timer ("Increment", &KDTransitionTrap::on_increment);
 }
 
 void
-cScr_TransitionTrap::Begin ()
+KDTransitionTrap::start ()
 {
-	if (timer.Valid ()) // stop any previous transition
+	if (timer.valid ()) // stop any previous transition
 	{
-		KillTimedMessage (timer);
-		timer.Clear ();
+		Timer (timer).cancel ();
+		timer.clear ();
 	}
 
-	time_remaining = GetObjectParamTime (ObjId (), "transition", 0);
-	Increment ();
+	time_remaining = transition;
+	do_increment ();
 }
 
 bool
-cScr_TransitionTrap::OnIncrement ()
+KDTransitionTrap::incomplete () const
 {
-	DebugPrintf ("Error: OnIncrement unimplemented in script inheriting "
-		"from TransitionTrap.");
+	return time_remaining.valid () && time_remaining != 0ul;
+}
+
+float
+KDTransitionTrap::get_progress () const
+{
+	if (!time_remaining.valid ())
+		return 0.0f;
+	else if (transition == 0ul || time_remaining == 0ul)
+		return 1.0f;
+	else
+	{
+		float _transition = float (Time (transition)),
+			_remaining = float (Time (time_remaining));
+		return (_transition - _remaining) / _transition;
+	}
+}
+
+bool
+KDTransitionTrap::prepare (bool)
+{
+	// Trap behavior requires an override of this method.
 	return false;
 }
 
-float
-cScr_TransitionTrap::GetProgress ()
+Message::Result
+KDTransitionTrap::on_trap (bool on, Message&)
 {
-	float total = GetObjectParamTime (ObjId (), "transition", 0);
-	if (!time_remaining.Valid ())
-		return 0.0;
-	else if (total == 0.0 || time_remaining == 0)
-		return 1.0;
+	if (prepare (on))
+	{
+		start ();
+		return Message::CONTINUE;
+	}
 	else
-		return (total - float (time_remaining)) / total;
+		return Message::HALT;
 }
 
-float
-cScr_TransitionTrap::Interpolate (float start, float end)
+Message::Result
+KDTransitionTrap::on_increment (TimerMessage& message)
 {
-	return start + GetProgress () * (end - start);
-}
-
-ulong
-cScr_TransitionTrap::InterpolateColor (ulong start, ulong end)
-{
-	return AverageColors (start, end, GetProgress ());
+	if (message.has_data (Message::DATA1) &&
+	    message.get_data<String> (Message::DATA1) == name ())
+	{
+		do_increment ();
+		return Message::CONTINUE;
+	}
+	else // for a different transition hosted by this object
+		return Message::HALT;
 }
 
 void
-cScr_TransitionTrap::Increment ()
+KDTransitionTrap::do_increment ()
 {
-	if (OnIncrement () && time_remaining > 0)
+	if (increment () &&
+	    time_remaining.valid () && Time (time_remaining) > 0ul)
 	{
-		time_remaining =
-			std::max (0, time_remaining - INCREMENT_TIME);
-		timer = SetTimedMessage ("Increment", INCREMENT_TIME,
-			kSTM_OneShot, Name ());
+		time_remaining = std::max (0l,
+			long (Time (time_remaining)) - long (INCREMENT_TIME));
+		timer = start_timer ("Increment", INCREMENT_TIME, false, name ());
 	}
 	else
 	{
-		timer.Clear ();
-		time_remaining.Clear ();
+		timer.clear ();
+		time_remaining.clear ();
 	}
 }
 
