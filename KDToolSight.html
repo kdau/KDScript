@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>KDToolSight - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr; <a href="custom-hud.html">Custom HUD elements</a> &rarr;</div>
+		<h1>KDToolSight</h1>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>tool_sight_image</code></td><td>string</td><td>path to a bitmap or name of a symbol (see below)</td><td><code>@crosshairs</code></td></tr>
+			<tr><td><code>tool_sight_color</code></td><td>color</td><td>color of any symbol or text drawn</td><td><code>#808080</code>&nbsp;(grey)</td></tr>
+			<tr><td><code>tool_sight_offset_x</code></td><td>integer</td><td>x-axis distance from center of screen, in pixels</td><td><code>0</code></td></tr>
+			<tr><td><code>tool_sight_offset_y</code></td><td>integer</td><td>y-axis distance from center of screen, in pixels</td><td><code>0</code></td></tr>
+		</tbody></table>
+		<p><code>KDToolSight</code> displays an image or symbol at the center of the screen when the object is is placed on is selected in inventory. It is intended to help the player target thrown tools and non-bow projectiles, primarily that have little or no gravity (such as magic spells). This is a custom HUD element script; see the <a href="custom-hud.html">custom HUD elements</a> documentation for more details.</p>
+		<p>The <code>tool_sight_image</code> parameter determines how the tool sight appears. If it is set to one of the <a href="custom-hud.html#symbols">predefined symbols</a> (other than <code>@arrow</code>), the named symbol will be drawn in the color specified in the <code>tool_sight_color</code> parameter. Otherwise, this parameter should be a relative path to a bitmap image that will represent the arrow. The bitmap should be relatively small but may have a full alpha channel. Animations and context-sensitive choice of images are not yet supported. If the image cannot be loaded, <code>@crosshairs</code> will be drawn instead.</p>
+		<p>The center of the bitmap image or symbol will be aligned at the center of the canvas (screen), as offset by the values of <code>tool_sight_offset_x</code> and <code>tool_sight_offset_y</code>.</p>
+		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

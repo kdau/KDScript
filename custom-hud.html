@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>Custom HUD elements - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>Custom HUD elements</h1>
+		<p>The following scripts add a variety of custom HUD (head-up display) elements to the Dark Engine interface.  These scripts are incompatible with NewDark custom HUD scripts from any other OSM.</p>
+		<ul class="primary">
+			<li><a href="KDQuestArrow.html"><code>KDQuestArrow</code></a></li>
+			<li><a href="KDStatMeter.html"><code>KDStatMeter</code></a></li>
+			<li><a href="KDToolSight.html"><code>KDToolSight</code></a></li>
+			<li>The <a href="subtitles.html">subtitle scripts</a> (<code>KDSubtitledAI</code> and <code>KDSubtitledVO</code>) may also create HUD elements.</li>
+		</ul>
+		<p>Any parameter of a HUD element script can also be set on an object (e.g. a marker) named <code>CustomHUD</code>, providing a default for all instances of that element.</p>
+		<p>All text drawn in HUD elements will appear in the font named in the <code>gui_font</code> configuration variable in <code>dark.cfg</code>, <code>dromed.cfg</code>, or likewise. This is same font used for the onscreen names of weapons and tools and, unfortunately, for the loadout and load/save screens, where larger sizes may lead to layout issues. By default, this font is <code>intrface\smalfont.fon</code> in the actual game, but <code>editor\textfont.fon</code> in DromEd game mode. Any type of Dark Engine font can be used, including fully antialiased fonts.</p>
+		<p>HUD elements are affected by the <code>d3d_disp_scaled_2d_overlay</code> (scale), <code>d3d_disp_force_filter_scale2d</code> (scaling filter), and <code>d3d_disp_2d_overlay_alpha</code> (opacity) settings in <code>cam_ext.cfg</code>, which can also be placed in <code>dark.cfg</code> for distribution with FMs.</p>
+		<p>If custom HUD elements (such as <code>KDStatMeter</code>) are replacing the light gem and/or health bar, the default versions should be disabled in <code>dark.cfg</code> by setting <code>vismeter_zoom</code> and/or <code>hpbar_zoom</code>, respectively, to <code>-1</code>. Disabling the default breath meter would be more complicated.</p>
+		<p>Under rare circumstances, HUD elements placed on objects other than simple fnords may temporarily disappear. This issue should always be fixable by entering the in-game menu and returning to game mode. Specifically, a HUD element script placed directly on an AI may temporarily disappear after that AI dies or is knocked out. To avoid this form of the issue, avoid placing a HUD element script directly on an AI: whenever possible, place it on a fnord with a reference to the AI instead.</p>
+		<p>Note that a maximum of 128 HUD-related images can be loaded at a time; animation frames count individually towards this limit.</p>
+		<h2 id="symbols">Symbols</h2>
+		<p>Some HUD element scripts may be configured to draw line art symbols on screen. For script parameters that define symbols, the following values are possible:</p>
+		<dl>
+			<dt><code>@none</code></dt><dd>No image or symbol is drawn.</dd>
+			<dt><code>@arrow</code></dt><dd>An arrow is drawn, pointing at an appropriate direction (some elements only).</dd>
+			<dt><code>@crosshairs</code></dt><dd>Simple crosshairs are drawn.</dd>
+			<dt><code>@reticule</code></dt><dd>A reticule with a square and crosshairs is drawn.</dd>
+			<dt><code>@square</code></dt><dd>A filled square is drawn.</dd>
+		</dl>
+		<address>This feature is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

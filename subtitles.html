@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>Subtitles (KDSubtitledAI, KDSubtitledVO) - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>Subtitles</h1>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>subtitle_color</code></td><td>color</td><td>color of the subtitle text (and border)</td><td><code>0xffffff</code> (white)</td></tr>
+		</tbody></table>
+		<p>The <code>KDSubtitledAI</code> and <code>KDSubtitledVO</code> scripts provide automatic subtitling of AI speech and voiceovers, respectively. They share the common setup discussed here.</p>
+		<p>Subtitles are taken from the <code>strings\subtitles.str</code> file, where they are identified by schema name; if no subtitle is present for a schema, nothing will be shown. In addition to the trigger for each script below, a subtitle can be displayed by sending the script a <code>Subtitle</code> message whose data is the object name or number of the schema.</p>
+		<p>By default, subtitles are displayed like other onscreen text in the top center of the screen. If the <code>subtitles_use_hud</code> quest variable is set to <code>1</code>, subtitles will be displayed as HUD elements instead. These are individual boxes of text that track the position of the speaker and do not overwrite each other or other text. See the <a href="custom-hud.html">custom HUD elements</a> documentation for more details.</p>
+		<p>The subtitle is displayed in <code>subtitle_color</code>, which may be set either on the schema object (takes priority) or another relevant object (see below). If the <code>Script\Timing</code> property is set on the schema object, it determines how long, in milliseconds, the subtitle is displayed; otherwise, an appropriate length is calculated based on the text.</p>
+
+		<h2 id="KDSubtitledAI">KDSubtitledAI</h2>
+		<p>When the AI it is placed on plays a speech schema, <code>KDSubtitledAI</code> displays a subtitle for that schema on screen.</p>
+		<p>The <code>subtitle_color</code> parameter may be set on the AI itself, as a default for all the AI's speech schemas.</p>
+		<p>For convenience, this script can be placed on the <code>Creature</code> archetype to be inherited by all AI. (Any AI archetype or instance with the &ldquo;Don't Inherit&rdquo; option on its <code>Scripts</code> property would need to re-add the script to use it. In the stock T2&nbsp;(TMA) <code>dark.gam</code>, these are <code>Rat</code>, <code>ScurryBot</code>, and <code>Phantom</code>.)</p>
+
+		<h2 id="KDSubtitledVO">KDSubtitledVO</h2>
+		<p>When the <code>VOTrap</code> (or other trap with a <code>SoundDescription</code> link) it is placed on is turned on, <code>KDSubtitledVO</code> displays a subtitle for the linked schema on screen. There should only be one <code>SoundDescription</code> link from the object. The subtitle for a schema will only be displayed once in a mission, like the schema itself.</p>
+		<p>The <code>subtitle_color</code> parameter may be set on the <code>Player</code> object (via the starting point or the <code>Garrett</code> archetype), as a default for all voiceover schemas.</p>
+		<p>For convenience, this script can be placed on the <code>VOTrap</code> archetype to be inherited by all voiceovers.</p>
+
+		<address>These scripts are part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

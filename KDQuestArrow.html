@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>KDQuestArrow - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr; <a href="custom-hud.html">Custom HUD elements</a> &rarr;</div>
+		<h1>KDQuestArrow</h1>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>quest_arrow</code></td><td>boolean</td><td>whether to initially display the quest arrow</td><td>(see&nbsp;below)</td></tr>
+			<tr><td><code>quest_arrow_goal</code></td><td>integer</td><td>disable arrow once this objective is completed</td><td><code>-1</code>&nbsp;(none)</td></tr>
+			<tr><td><code>quest_arrow_image</code></td><td>string</td><td>path to a bitmap or name of a symbol (see below)</td><td><code>@arrow</code></td></tr>
+			<tr><td><code>quest_arrow_text</code></td><td>string</td><td>name of a text string or special string (see below)</td><td><code>@name</code></td></tr>
+			<tr><td><code>quest_arrow_color</code></td><td>color</td><td>color of any symbol or text drawn</td><td><code>#ffffff</code> (white)</td></tr>
+			<tr><td><code>quest_arrow_shadow</code></td><td>boolean</td><td>whether to draw a shadow behind the symbol/text</td><td><code>true</code></td></tr>
+			<tr><td><code>quest_arrow_obscured</code></td><td>boolean</td><td>whether to show the arrow even when the object is not visible (obscured by something)</td><td><code>false</code></td></tr>
+		</tbody></table>
+		<p><code>KDQuestArrow</code> displays an image, a symbol, and/or text on screen that tracks the position of the object is is placed on. The arrow might be used to direct the player towards an objective, point out an important area or object, or give brief additional information. This is a custom HUD element script; see the <a href="custom-hud.html">custom HUD elements</a> documentation for more details.</p>
+		<p>The <code>quest_arrow</code> parameter determines whether the arrow is initially enabled (visible) or not. By default, the arrow starts enabled (<code>true</code>) unless it is or has been contained by the player (or the starting point). The arrow can be turned on or off during the mission by sending this object a <code>QuestArrowOn</code> or <code>QuestArrowOff</code> message. If the <code>quest_arrow_goal</code> parameter is set, the arrow is enabled only when that objective is incomplete and visible. Additionally, the arrow is automatically turned off in any of the following events: the object is contained by the player (put in inventory); the object is slain (even if it is not destroyed); the AI object is knocked out.</p>
+		<p>The <code>quest_arrow_image</code> parameter determines how the quest arrow appears. If it is set to one of the <a href="custom-hud.html#symbols">predefined symbols</a>, the named symbol will be drawn. Otherwise, this parameter should be a relative path to a bitmap image that will represent the arrow. The bitmap should be relatively small but may have a full alpha channel. Animations and context-sensitive choice of images are not yet supported. If the image cannot be loaded, an <code>@arrow</code> will be drawn instead.</p>
+		<p>The <code>quest_arrow_text</code> parameter determines what text, if any, is displayed next to the arrow image. This parameter does not contain the text itself; it is either one of the special values listed below or the name of a string in the <code>strings\hud.str</code> file.</p>
+		<dl>
+			<dt><code>@none</code></dt><dd>No text is displayed (image only).</dd>
+			<dt><code>@name</code></dt><dd>The object's name, as defined in the <code>Inventory\Object Name</code> property, is displayed.</dd>
+			<dt><code>@description</code></dt><dd>The object's description, as defined in the <code>Inventory\Long Description</code> property, is displayed.</dd>
+			<dt><code>@objective</code></dt><dd>The short description of the objective identified in the <code>quest_arrow_goal</code> parameter is displayed. <strong>*</strong></dd>
+		</dl>
+		<p class="notice"><img class="icon" alt="" src="thief2.png" />The <code>@objective</code> value for <code>quest_arrow_text</code> is available in T2 (TMA) only. It is not available in DromEd game mode, TG, or T1 (TDP), where the arrow will not display any text for this value.</p>
+		<p>Any named symbol or text will be drawn in the color specified in the <code>quest_arrow_color</code> parameter. If the <code>quest_arrow_shadow</code> parameter is <code>true</code>, the symbol and/or text will have a thin black shadow drawn behind it for increased visibility.</p>
+		<p>By default, even if the quest arrow is enabled, it will only be drawn if the player can see the object. If the <code>quest_arrow_obscured</code> parameter is <code>true</code>, the arrow will be displayed even if the object is not visible (is obscured by other objects or terrain). The direction of the object still must be within the player's current field of view.</p>
+		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

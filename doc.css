@@ -1,0 +1,65 @@
+html { background-color: #040408; }
+body
+{
+	width: 60em; margin: 0em 0em 0em 10em; padding: 0em 2em; background-color: #080810;
+	font-family: serif; font-size: 11pt; color: #eee;
+}
+
+#trail { position: absolute; top: 1em; left: 12em; margin: 0em; padding: 0em; }
+
+address { margin: 6em 0em 0em 0em; border-top: 1px solid #aab; padding: 0.5em 0em 3em 0em; color: #aab; }
+
+h1, h2, h3, h4
+{
+	clear: both; margin: 2em 0em 0em 0em; border-bottom: 1px dotted #aab; padding-top: 1em;
+	font-family: Carleton, serif; font-weight: normal; font-variant: small-caps;
+}
+	h1 { font-size: 32pt; margin: 0em 0em 1em 0em; padding-top: 1.25em; border-bottom-style: solid; }
+	h2 { font-size: 24pt; }
+	h3 { font-size: 18pt; }
+	h4 { font-size: 14pt; }
+
+p { margin: 2em 0em 1em 0em; line-height: 150%; text-align: justify; }
+	p.notice
+	{
+		height: 100%; margin: 2.5em 2em; overflow: auto;
+		border: 1px dotted; padding: 0.5em; text-align: left;
+	}
+
+ul { margin: 1em 2em 1em 2em; padding: 0em; line-height: 150%; list-style-type: square; font-size: 10pt; }
+	ul.primary { margin-top: 2em; font-size: inherit; }
+	ul ul, dl ul { margin: 0em 0em 1em 1em; }
+		ul ul { list-style-type: circle; }
+	li { margin: 1em 0em 1em 2em; }
+		ul ul li, dl ul li { margin: 0.25em; }
+		.primary li { margin: 0.5em 2em; }
+
+dl
+{
+	margin: 1em 2em 1em 2em; padding: 0em; border-bottom: 1px dotted #667;
+	line-height: 150%; font-size: 10pt;
+}
+	dt, dd { border-top: 1px dotted #667; padding-top: 0.75em; }
+		dt { clear: left; float: left; width: 15em; margin: 0em; font-weight: bold; }
+		dd { margin: 0em 0em 0.75em 15em; }
+
+table { margin: 2em 2em 2em 2em; border-collapse: collapse; font-size: 10pt; }
+	caption { font-style: italic; }
+	th, td { border: 1px dotted #667; padding: 0.5em 0.75em; vertical-align: middle; text-align: left; }
+		thead th { background-color: #667; color: #000; border-style: solid; }
+	col.identifier { width: 15em; }
+	col.type { width: 8em; }
+	col.description { width: 35em; }
+	col.values { width: 15em; }
+
+a:link, a:visited { color: #99f; text-decoration: none; border-bottom: 1px dotted #99f; }
+	a:link:hover, a:visited:hover { border-bottom-style: solid; }
+code { background-color: #000; color: #c0e0c0; padding: 1px; }
+	a:link code, a:visited code { background-color: transparent; color: inherit; }
+strong, .important, .notice { color: #ccf; border-color: #ccf; }
+.disabled { color: #667; }
+.icon, .iconr { width: 58px; height: 58px; }
+	.icon { float: left; margin-right: 1em; }
+	.iconr { float: right; margin-left: 1em; }
+.note { font-size: 90%; }
+

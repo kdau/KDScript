@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>KDStatMeter - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr; <a href="custom-hud.html">Custom HUD elements</a> &rarr;</div>
+		<h1>KDStatMeter</h1>
+		<p><code>KDStatMeter</code> displays a meter (bar, gem, or other indicator) on screen that reflects the value of a numeric property, quest variable, or other setting. The meter might be used to display health, visibility, alertness, etc. of the player or an AI; time elapsed or remaining; progress towards an objective; or any other numeric value. This is a custom HUD element script; see the <a href="custom-hud.html">custom HUD elements</a> documentation for more details.</p>
+
+		<h2>Parameters</h2>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>stat_meter</code></td><td>boolean</td><td>whether to initially display the stat meter</td><td><code>true</code></td></tr>
+			<tr><td><code>stat_meter_style</code></td><td>string</td><td>the style of meter to draw (see below)</td><td><code>progress</code></td></tr>
+			<tr><td><code>stat_meter_image</code></td><td>string</td><td>path to a bitmap or name of a symbol (see below)</td><td><code>@square</code> or <code>@none</code></td></tr>
+			<tr><td><code>stat_meter_spacing</code></td><td>integer</td><td>space between units of the meter, in pixels</td><td><code>8</code></td></tr>
+			<tr><td><code>stat_meter_text</code></td><td>string</td><td>name of a text string or special string (see below)</td><td><code>@none</code></td></tr>
+			<tr><td><code>stat_meter_position</code></td><td>string</td><td>where to draw the display on screen (see below)</td><td><code>nw</code></td></tr>
+			<tr><td><code>stat_meter_offset_x</code></td><td>integer</td><td>distance to offset along x axis, in pixels</td><td><code>0</code></td></tr>
+			<tr><td><code>stat_meter_offset_y</code></td><td>integer</td><td>distance to offset along y axis, in pixels</td><td><code>0</code></td></tr>
+			<tr><td><code>stat_meter_orient</code></td><td>string</td><td>how the meter is arranged (see below)</td><td><code>horiz</code></td></tr>
+			<tr><td><code>stat_meter_width</code></td><td>integer</td><td>the width of the meter or unit, in pixels</td><td>(see&nbsp;below)</td></tr>
+			<tr><td><code>stat_meter_height</code></td><td>integer</td><td>the height of the meter or unit, in pixels</td><td>(see&nbsp;below)</td></tr>
+			<tr><td><code>stat_source_qvar</code></td><td>string</td><td>which quest variable to use as the statistic</td><td>&mdash;</td></tr>
+			<tr><td><code>stat_source_property</code></td><td>string</td><td>which property to use as the statistic</td><td>&mdash;</td></tr>
+			<tr><td><code>stat_source_field</code></td><td>string</td><td>which field within a property to use</td><td>&mdash;</td></tr>
+			<tr><td><code>stat_source_component</code></td><td>string</td><td>which component of a vector property/field to use</td><td>&mdash;</td></tr>
+			<tr><td><code>stat_source_object</code></td><td>object</td><td>which object to use for a property</td><td>(self)</td></tr>
+			<tr><td><code>stat_range_min</code></td><td>float</td><td>the lowest possible value of the statistic</td><td>(see&nbsp;below)</td></tr>
+			<tr><td><code>stat_range_max</code></td><td>float</td><td>the highest possible value of the statistic</td><td>(see&nbsp;below)</td></tr>
+			<tr><td><code>stat_range_low</code></td><td>integer</td><td>the percentage at or below which a value is considered low</td><td><code>25</code></td></tr>
+			<tr><td><code>stat_range_high</code></td><td>integer</td><td>the percentage at or above which a value is considered high</td><td><code>75</code></td></tr>
+			<tr><td><code>stat_color_bg</code></td><td>color</td><td>color of the meter's background area</td><td><code>0x000000</code> (black)</td></tr>
+			<tr><td><code>stat_color_low</code></td><td>color</td><td>color of the meter's content if its value is low</td><td><code>0xff0000</code> (red)</td></tr>
+			<tr><td><code>stat_color_med</code></td><td>color</td><td>color of the meter's content if its value is medium</td><td><code>0xffff00</code> (yellow)</td></tr>
+			<tr><td><code>stat_color_high</code></td><td>color</td><td>color of the meter's content if its value is high</td><td><code>0x00ff00</code> (green)</td></tr>
+		</tbody></table>
+
+		<h2>Appearance of meter</h2>
+		<p>The <code>stat_meter</code> parameter determines whether the meter is initially enabled (visible) or not. The meter can be turned on or off during the mission by sending this object a <code>StatMeterOn</code> or <code>StatMeterOff</code> message.</p>
+		<p>The <code>stat_meter_style</code> parameter determines what visual style of meter is drawn, from among these values:</p>
+		<dl>
+			<dt><code>progress</code></dt><dd>A progress bar is drawn that is gradually filled based on the statistic.</dd>
+			<dt><code>units</code></dt><dd>A number of individual images or symbols are drawn based on the statistic.</dd>
+			<dt><code>gem</code></dt><dd>A solid area is drawn whose image or color changes based on the statistic.</dd>
+		</dl>
+		<p>The <code>stat_meter_image</code> parameter determines a bitmap image or symbol to use in drawing the meter, depending on style:</p>
+		<ul>
+			<li>For a <code>units</code> meter, if it is set to one of the <a href="custom-hud.html#symbols">predefined symbols</a> (other than <code>@arrow</code>), the named symbol will be drawn as the unit. Otherwise, this parameter should be set to a relative path to a bitmap image that will be drawn as the unit. If the image cannot be loaded, the default <code>@square</code> unit will be drawn instead. The <code>stat_meter_spacing</code> parameter determines the space in pixels left between each unit image or symbol.</li>
+			<li>For a <code>gem</code> meter, the <code>stat_meter_image</code> may be a relative path to the first of a series of bitmap frames in the usual Dark Engine naming pattern (e.g. <code>meter.png</code>, <code>meter_1.png</code>, <code>meter_2.png</code>, etc.). The frame displayed will be based on the value of the statistic, with the first frame representing the lowest values and the last frame the highest. All frames should be the same size, as only the size of the first frame will be checked.</li>
+			<li>Images are not supported for <code>progress</code> meters, but a similar effect can be obtained with the <code>gem</code> style.</li>
+		</ul>
+		<p>The <code>stat_meter_text</code> parameter determines what text, if any, is displayed next to the meter. Only horizontal meters may display text; on vertical meters, this parameter is ignored. This parameter does not contain the text itself; it is either one of the special values listed below or the name of a string in the <code>strings\hud.str</code> file.</p>
+		<dl>
+			<dt><code>@none</code></dt><dd>No text is displayed (meter only).</dd>
+			<dt><code>@name</code></dt><dd>For property sources, the name of the <code>stat_source_object</code>, as defined in the <code>Inventory\Object Name</code> property, is displayed. For quest variable sources, the value of <code>stat_source_qvar</code> is used as the name of a string in <code>strings\hud.str</code>.</dd>
+			<dt><code>@description</code></dt><dd>For property sources only, the description of the <code>stat_source_object</code>, as defined in the <code>Inventory\Long Description</code> property, is displayed.</dd>
+		</dl>
+
+		<h2>Dimensions of meter</h2>
+		<p>The <code>stat_meter_position</code> parameter determines where on the screen the meter is drawn, from among these values:</p>
+		<dl>
+			<dt><code>center</code></dt><dd>The meter is drawn in the center of the screen.</dd>
+			<dt><code>north</code>, <code>south</code>,<br/><code>east</code>, <code>west</code></dt><dd>The meter is drawn at the center of the specified edge of the screen (where <code>north</code> is up, <code>west</code> is left, etc.).</dd>
+			<dt><code>nw</code>, <code>se</code>, <code>sw</code>, <code>se</code></dt><dd>The meter is drawn at the specified corner of the screen.</dd>
+		</dl>
+		<p>The <code>stat_meter_offset_x</code> and <code>stat_meter_offset_y</code> parameters determine how far, in pixels, to offset the meter from the position calculated by <code>stat_meter_position</code>.</p>
+		<p>The <code>stat_meter_orient</code> parameter determines how a <code>progress</code> or <code>units</code> meter is arranged, either:</p>
+		<dl>
+			<dt><code>horiz</code></dt><dd>A horizontal progress bar or series of units is drawn. For elements at the left of the screen, higher values are towards the right; for those on the right, towards the left.</dd>
+			<dt><code>vert</code></dt><dd>A vertical progress bar or series of units is drawn. For elements at the bottom of the screen, higher values are towards the top; for those on the top, towards the bottom.</dd>
+		</dl>
+		<p>The <code>stat_meter_width</code> and <code>stat_meter_height</code> parameters determine the size of a <code>progress</code> or <code>gem</code> meter (exclusive of any text) or of a single unit of a <code>units</code> meter. If a bitmap image is specified in <code>stat_meter_image</code>, these parameters are ignored. Otherwise, they default to <code>32</code>&times;<code>32</code> for <code>units</code> meters and <code>128</code>&times;<code>32</code> for all others. For a <code>progress</code> or <code>gem</code> meter with <code>vert</code> orientation, the values are inverted, with <code>stat_meter_width</code> determining the height and vice versa.</p>
+
+		<h2>The source statistic</h2>
+		<p>The statistic displayed by the meter can be sourced from either an object property or a quest variable.</p>
+		<p>The <code>stat_source_qvar</code> parameter names a quest variable that provides the statistic. The variable may be set at mission or campaign level.</p>
+		<p>The <code>stat_source_property</code> parameter names a property that provides the statistic. Use an internal Dark Engine property name (e.g. <code>PhysState</code> for <code>Physics\Model\State</code>); these can be found using the <code>list_props</code> command (<em>Log&rarr;Dump&nbsp;property&nbsp;list</em>).</p>
+		<p>The <code>stat_source_field</code> parameter names the field within a property that provides the statistic. This parameter may only be and must be set if <code>stat_source_property</code> names a property with more than one field. The field name should be exactly as it appears in the property dialog (e.g. <code>Rot Velocity</code> within the <code>PhysState</code> property).</p>
+		<p>The <code>stat_source_component</code> parameter names the component of a vector value that provides the statistic. This parameter may only be and must be set if the property/field providing the statistic is a vector (has three values in a row). This parameter should then be set to <code>x</code>, <code>y</code>, or <code>z</code> (first, second, or third value, respectively).</p>
+		<p>The <code>stat_source_object</code> parameter determines the object that provides a property statistic. It may be an object name or an object number, though the former is recommended. This parameter may only be set if <code>stat_source_property</code> is set; its default is the object on which this script is placed.</p>
+
+		<h2>Range and coloration</h2>
+		<p>Several aspects of the meter depend on where the statistic value falls within a range of possible values.</p>
+		<p>The <code>stat_range_min</code> and <code>stat_range_max</code> parameters determine the lowest and highest possible values, respectively, of the statistic. These are used to convert the statistic to a percentage. If the current value falls outside this range, it will be clamped within the range. The parameters' defaults depend on the source statistic:</p>
+		<dl>
+			<dt><code>Level</code> field of the <code>AI_Visibility</code> property</dt><dd>minimum = 0,<br/>maximum = 100</dd>
+			<dt><code>HitPoints</code> property</dt><dd>minimum = 0,<br/>maximum = value of <code>MAX_HP</code> property</dd>
+			<dt>all other statistics</dt><dd>minimum = 0,<br/>maximum = 1</dd>
+		</dl>
+		<p>The <code>stat_range_low</code> parameter is a percentage (between minimum and maximum values) threshold at or below which the statistic value is considered to be low. Likewise, the value is considered high if its percentage is at or above the <code>stat_range_high</code> parameter. Together, these determine when to display the meter with special coloring or imagery.</p>
+		<p>For <code>progress</code> and <code>units</code> meters, the foreground elements of the meter (progress bar, unit symbols, border, and text) are colored based on where the current value falls within the range: low (<code>stat_color_low</code>), medium (<code>stat_color_med</code>), or high (<code>stat_color_high</code>). The <code>stat_color_bg</code> parameter defines the color of background elements of the meter.</p>
+		<p>For <code>gem</code> meters, color is handled differently: the color smoothly transitions from the low color to the medium color to the high color based on the statistic value, while the background color is used for a border.</p>
+		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

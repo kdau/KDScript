@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>KDTrapEnvMap  - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr; Rendering effects &rarr;</div>
+		<h1>KDTrapEnvMap</h1>
+		<p class="notice"><img class="icon" alt="" src="newdark.png" /> This script works only with NewDark version 1.20 or later. With NewDark 1.19, which does not support zone-based environment maps, it only writes an error to the monolog.</p>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>env_zone</code></td><td>integer</td><td>zone to change the texture for (<code>0</code>&ndash;<code>63</code>)</td><td><code>0</code>&nbsp;(global)</td></tr>
+			<tr><td><code>env_map_on</code></td><td>string</td><td>environment map texture to apply when turned on</td><td>&mdash;</td></tr>
+			<tr><td><code>env_map_off</code></td><td>string</td><td>environment map texture to apply when turned off</td><td>&mdash;</td></tr>
+		</tbody></table>
+		<p>When triggered, <code>KDTrapEnvMap</code> changes the texture associated with an environment zone. If the <code>env_zone</code> parameter is <code>0</code>, the global texture is changed. (The default textures, both global and per zone, are defined in the <em>Mission&nbsp;Variables&nbsp;&rarr;&nbsp;Environment&nbsp;Maps</em> dialog. See the NewDark documentation for more details on environment maps and reflective materials.)</p>
+		<p>When turned on, this script sets the texture for the specified zone to the value of the <code>env_map_on</code> parameter, if defined. When turned off, this script sets the texture to the value of <code>env_map_off</code>, if defined. Values should be specified as relative paths, e.g. <code>tex\envmaps\hallway</code>. The usual trap control flags, locking, and timing are respected.</p>
+		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

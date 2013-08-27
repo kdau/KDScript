@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>KDJunkTool  - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>KDJunkTool</h1>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>junk_tool_lugged</code></td><td>boolean</td><td>whether to slow down the player while in inventory</td><td><code>true</code></td></tr>
+			<tr><td><code>junk_tool_drop</code></td><td>boolean</td><td>whether to drop the object upon successful use</td><td><code>false</code></td></tr>
+		</tbody></table>
+		<p>Unlike other inventory objects, tools (objects that can be used to frob other objects) cannot be given the <code>Junk</code> type. <code>KDJunkTool</code> replaces much of this behavior for a tool object. While the object is in inventory:</p>
+		<ul>
+			<li>No other inventory item or weapon can be accessed.</li>
+			<li>Objects in the world cannot be frobbed, except to be picked up. <span class="note">(The latter is a technical limitation.)</span></li>
+			<li>The object is kept at the center of the screen (always in use).</li>
+			<li>The object still functions as a tool, interacting with any target object it is used to frob.</li>
+		</ul>
+		<p>The object should have the following settings in the <code>Engine Features\FrobInfo</code> property:</p>
+		<dl>
+			<dt>World Action</dt><dd><code>Move</code> (To place the object in inventory when frobbed in the world.)</dd>
+			<dt>Inv Action</dt><dd><ul>
+				<li><code>Script</code> (No action), or</li>
+				<li><code>Move</code> (To throw the object when it is frobbed without a target object.)</li>
+			</ul></dd>
+			<dt>Tool Action</dt><dd><code>Script</code> (Combined with a script, such as <code>StdKey</code> or <code>LockPick</code>, or an A/R stimulus.)</dd>
+		</dl>
+		<p>If the <code>junk_tool_lugged</code> parameter is <code>true</code>, the player will be slowed down to 60% of normal speed while holding the object, and the grunting schemas <code>garlift</code> and <code>gardrop</code> will be played when the object is picked up and put down, respectively. This replicates the behavior of the <code>Lugged</code> script (which should <em>not</em> be used with this one), except that this script handles slaying of the object correctly. If this parameter is used, the object's mass should be increased (in the <code>Physics\Attributes</code> property) for realistic throwing/dropping physics.</p>
+		<p>For key objects (having the <code>StdKey</code> script), a successful use results in the key being slain. This allows various responses to successful use:</p>
+		<dl>
+			<dt>remain in inventory</dt><dd>no special setup</dd>
+			<dt>be destroyed</dt><dd>set <code>Game\Damage Model\Slay Result</code> property to <code>Normal</code></dd>
+			<dt>drop to ground</dt><dd>set <code>junk_tool_drop</code> parameter to <code>true</code></dd>
+		</dl>
+		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

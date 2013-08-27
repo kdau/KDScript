@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>KDTrapWeather  - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr; Rendering effects &rarr;</div>
+		<h1>KDTrapWeather</h1>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>precip_freq_on</code></td><td>float</td><td>frequency (drops/second) to set when turned on</td><td>&mdash;</td></tr>
+			<tr><td><code>precip_freq_off</code></td><td>float</td><td>frequency (drops/second) to set when turned off</td><td>&mdash;</td></tr>
+			<tr><td><code>precip_speed_on</code></td><td>float</td><td>speed (feet/second) to set when turned on</td><td>&mdash;</td></tr>
+			<tr><td><code>precip_speed_off</code></td><td>float</td><td>speed (feet/second) to set when turned off</td><td>&mdash;</td></tr>
+			<tr><td><code>transition</code></td><td>time</td><td>length of transition between states, in milliseconds</td><td><code>0</code></td></tr>
+		</tbody></table>
+		<p>When triggered, <code>KDTrapWeather</code> changes the frequency and speed of precipitation (weather). The frequency is expressed in number of new drops per second, while the speed is expressed in feet per second. (The default weather, including a number of other values, is defined in the <em>Mission&nbsp;Variables&nbsp;&rarr;&nbsp;Weather</em> dialog.)</p>
+		<p>When turned on, this script sets the precipitation frequency and speed to the values of the <code>precip_freq_on</code> and <code>precip_speed_on</code> parameters, respectively. If either is not defined or is less than zero, it will not be changed. If the defined frequency is zero (<code>0.0</code>), precipitation will be turned off completely. When turned off, this script sets the precipitation frequency and speed to <code>precip_freq_off</code> and <code>precip_speed_off</code>, with the same caveats.</p>
+		<p>The <code>transition</code> parameter specifies the length, in milliseconds, of the transition between the old and new values. If that parameter is undefined or set to <code>0</code>, the transition will be instantaneous. The usual trap control flags, locking, and timing (before the start of the transition, not its length) are respected.</p>
+		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

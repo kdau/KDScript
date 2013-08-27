@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>KDCarrier  - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>KDCarrier</h1>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>create_attachments</code></td><td>boolean</td><td>whether to create instances of <code>CreatureAttachment</code>-linked archetypes</td><td><code>true</code></td></tr>
+		</tbody></table>
+		<p><code>KDCarrier</code> supports the <a href="KDCarried.html"><code>KDCarried</code></a> script by sending messages from the AI it is placed on to objects carried or worn by that AI. If the AI is slain or knocked out, this script will send the <code>CarrierBrainDead</code> message. If the AI is alerted, this script will send the <code>CarrierAlerted</code> message with the data set to the new alert level. Objects linked from this AI with <code>Contains</code>, <code>CreatureAttachment</code>, and <code>~DetailAttachement</code> links will receive these messages.</p>
+		<p>If the <code>create_attachments</code> parameter is <code>true</code>, <code>KDCarrier</code> also allows <code>CreatureAttachment</code> links to be placed on archetypes. When an object is created whose archetype has <code>KDCarrier</code>, objects will automatically be created and attached according to any inherited <code>CreatureAttachment</code> links. They will also be created at <code>Sim</code>. An object will only be created if the specified joint is available (has no other objects linked to it), so a link in a child archetype may override one in a parent. (This is similar in effect to <code>NVAttachMyObj</code>, but does not require any special parameters or <code>ScriptParams</code> links.)</p>
+		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>KDTrapNextMission  - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>KDTrapNextMission</h1>
+		<p class="notice"><img class="icon" alt="" src="thief2.png" /> This script works in T2 (TMA) only. It has no effect in DromEd game mode. In TG and T1 (TDP), which do not support nonlinear campaigns, it only writes an error to the monolog.</p>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>next_mission_on</code></td><td>integer</td><td>mission number to set as next when turned on</td><td>&mdash;</td></tr>
+			<tr><td><code>next_mission_off</code></td><td>integer</td><td>mission number to set as next when turned off</td><td>&mdash;</td></tr>
+		</tbody></table>
+		<p>When triggered, <code>KDTrapNextMission</code> changes which mission will begin after the current mission ends. (By default, the next mission is the mission specified in <code>strings\missflag.str</code> in the <code>miss_X_next</code> value [where <code>X</code> is the current mission], or else one mission past the current mission.) When turned on, this script sets the next mission to the value of the <code>next_mission_on</code> parameter, if defined; when turned off, it sets it to <code>next_mission_off</code>, if defined. The usual trap control flags, locking, and timing are respected.</p>
+		<p><span class="important"><strong>Important:</strong> The engine does not perform any validation on mission numbers.</span> If the next mission is set to a nonexistent mission, the game will crash as soon as it tries to load it. If the chosen mission has the <code>skip</code> flag set, it will still be skipped; for example, choosing <code>3</code> (the cancelled museum mission) in Thief II will load mission 4 (<em>Framed</em>). If the mission calling this script has the <code>end</code> flag set, this script will have no effect, as the campaign will end after this mission regardless.</p>
+		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

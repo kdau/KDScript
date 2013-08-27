@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>KDRenewable  - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>KDRenewable</h1>
+		<p><code>KDRenewable</code> ensures that a supply of an object is always available to the player. Whenever the player's inventory stack count of the object drops below a threshold, a new instance of the object is created at the <code>KDRenewable</code> marker's position. Only one new instance may exist at a time, so another will not be created until the previous one has been picked up or destroyed.</p>
+		<p>The renewable object is identified by a <code>ScriptParams</code> link from the <code>KDRenewable</code> marker to an archetype. This script correctly handles the standard T2 crystal types, looking for the corresponding arrows in inventory. It also correctly handles archetypes (or their parents) with <code>Transmute</code> links, as used by the <a href="http://dromed.whoopdedo.org/public_scripts/transmogrify"><code>Transmogrify</code></a> script in Public Scripts.</p>
+		<p>Only one <code>ScriptParams</code> link may exist from the marker. The data of that link must be the stack count threshold: the maximum amount of the object that can be in the player's inventory.</p>
+		<p>By default, the inventory check is performed every 180 seconds (three minutes). If the inventory stack count is below the threshold and any previously created instance has been consumed, a new instance is created. To change the delay between checks, set the <code>Script\Timing</code> property to a different amount of time, in seconds.</p>
+		<p>The new instance is created without a physics model or velocity, so the marker should be positioned and rotated appropriately for the object being created.</p>
+		<p class="notice">This script is a replacement for the <code>RenewableResource</code> script in T2's <code>miss16.osm</code>, whose additional behaviors can lead to bugs in missions. It does <em>not</em> share that script's feature of notifying the managing object with a <code>TurnOn</code> message when a created object is picked up.</p>
+		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

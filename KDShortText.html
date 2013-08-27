@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>KDShortText  - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>KDShortText</h1>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>text</code></td><td>string</td><td>name of the message from <code>strings\short.str</code> to display (if the <code>Book\Text</code> property is not set)</td><td>&mdash;</td></tr>
+			<tr><td><code>text_color</code></td><td>color</td><td>color to display the message in</td><td><code>0xffffff</code> (white)</td></tr>
+			<tr><td><code>text_time</code></td><td>time</td><td>how long to display the message, in milliseconds</td><td>(calculated based on message length)</td></tr>
+			<tr><td><code>text_on_frob</code></td><td>boolean</td><td>whether to display the message when frobbed</td><td><code>true</code></td></tr>
+			<tr><td><code>text_on_focus</code></td><td>boolean</td><td>whether to display the message when focused</td><td><code>true</code></td></tr>
+		</tbody></table>
+		<p>When frobbed and/or focused, <code>KDShortText</code> displays text in an on-screen message of the specified color for the specified time. The <code>Book\Text</code> property, if present, gives the name of a message in the <code>strings\short.str</code> file; otherwise, the <code>text</code> parameter gives the name of the message. This structure allows for cleaner updating and translation of short readables without requiring a separate <code>.str</code> file for each.</p>
+		<p>If the <code>text_on_frob</code> parameter is <code>true</code> and the <code>WorldAction</code> of the object's <code>Engine Features\FrobInfo</code> property includes <code>Script</code>, the message will be displayed when the object is frobbed (clicked).</p>
+		<p>If the <code>text_on_focus</code> parameter is <code>true</code> and the <code>WorldAction</code> of the object's <code>Engine Features\FrobInfo</code> property includes <code>FocusScript</code>, the message will be displayed when the object is focused (highlighted/pointed to).</p>
+		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+
