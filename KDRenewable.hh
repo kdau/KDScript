@@ -30,11 +30,11 @@ public:
 	KDRenewable (const String& name, const Object& host);
 
 private:
-	static const Time DEFAULT_TIMING;
-
-	Message::Result on_sim (SimMessage&);
+	Message::Result on_post_sim (GenericMessage&);
 	Message::Result on_renew (TimerMessage&);
 
+	Parameter<Time> frequency;
+	Parameter<int> threshold;
 	Parameter<bool> physical;
 };
 

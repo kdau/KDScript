@@ -20,30 +20,31 @@
 
 #include "KDRenewable.hh"
 
-const Time
-KDRenewable::DEFAULT_TIMING = 180000ul; // = three minutes
-
 KDRenewable::KDRenewable (const String& _name, const Object& _host)
 	: Script (_name, _host),
+	  PARAMETER_ (frequency, "renewable_frequency", 180000ul),
+	  PARAMETER_ (threshold, "renewable_threshold", 0),
 	  PARAMETER_ (physical, "renewable_physical", false)
 {
-	listen_message ("Sim", &KDRenewable::on_sim);
+	listen_message ("PostSim", &KDRenewable::on_post_sim);
 	listen_timer ("Renew", &KDRenewable::on_renew);
 }
 
 Message::Result
-KDRenewable::on_sim (SimMessage& message)
+KDRenewable::on_post_sim (GenericMessage&)
 {
-	if (!message.is_starting ()) return Message::CONTINUE;
+	// This non-standard use of the Script->Timing property is kept for
+	// backwards compatibility with miss16.osm's RenewableResource.
+	Time delay = frequency;
+	if (host ().script_timing.exists () && !frequency.exists ())
+		delay = 1000ul * Time (host ().script_timing);
 
-	// This is a non-standard use of the Script\Timing property.
-	Property _timing (host (), "ScriptTiming");
-	Time timing = _timing.exists ()
-		? Time (1000ul * _timing.get<int> ())
-		: DEFAULT_TIMING;
+	if (delay != 0ul)
+	{
+		TimerMessage ("Renew").send (host (), host ());
+		start_timer ("Renew", delay, true);
+	}
 
-	TimerMessage ("Renew").send (host (), host ());
-	start_timer ("Renew", timing, true);
 	return Message::CONTINUE;
 }
 
@@ -64,12 +65,20 @@ KDRenewable::on_renew (TimerMessage&)
 
 	// Identify the resource archetype and stack count threshold.
 	Object archetype;
-	size_t threshold = 0;
+	size_t my_threshold = 0u;
 	for (auto& script_param : ScriptParamsLink::get_all (host ()))
 	{
-		String data = script_param.data;
+		CIString data = String (script_param.data).data ();
+		if (data == "Renewable")
+		{
+			archetype = script_param.get_dest ();
+			my_threshold = threshold;
+			break;
+		}
+
+		// For backwards compatibility, look in the link data.
 		char* end = nullptr;
-		threshold = strtol (data.data (), &end, 10);
+		my_threshold = strtoul (data.data (), &end, 10);
 		if (end != data.data ())
 		{
 			archetype = script_param.get_dest ();
@@ -99,7 +108,7 @@ KDRenewable::on_renew (TimerMessage&)
 	for (auto& content : player.get_inventory ())
 		if (content.object.inherits_from (inv_type))
 			inv_count += content.object.stack_count;
-	if (inv_count >= threshold)
+	if (inv_count >= my_threshold)
 		return Message::HALT;
 
 	// Create new instance.

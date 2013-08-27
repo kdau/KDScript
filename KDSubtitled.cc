@@ -140,8 +140,9 @@ KDSubtitled::start_subtitle (const Object& speaker, const Object& schema)
 	finish_subtitle ();
 
 	// Get or calculate the schema duration.
-	Time duration = Property (schema, "ScriptTiming").get
-		(Mission::calc_text_duration (text, 700ul));
+	Time duration = ScriptHost (schema).script_timing.exists ()
+		? ScriptHost (schema).script_timing
+		: Mission::calc_text_duration (text, 700ul);
 
 	// Get subtitle color.
 	Parameter<Color> schema_color (schema, "subtitle_color", DEFAULT_COLOR),
