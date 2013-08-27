@@ -34,6 +34,8 @@ private:
 
 	Message::Result on_sim (SimMessage&);
 	Message::Result on_renew (TimerMessage&);
+
+	Parameter<bool> physical;
 };
 
 #endif // KDRENEWABLE_HH

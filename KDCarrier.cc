@@ -22,14 +22,33 @@
 
 KDCarrier::KDCarrier (const String& _name, const Object& _host)
 	: Script (_name, _host),
-	  PARAMETER (create_attachments, true)
+	  PARAMETER (create_attachments, true),
+	  PERSISTENT (detected_braindeath),
+	  PERSISTENT (detected_slaying)
 {
 	listen_message ("Sim", &KDCarrier::on_sim);
 	listen_message ("Create", &KDCarrier::on_create);
+
 	listen_message ("AIModeChange", &KDCarrier::on_ai_mode_change);
-	listen_message ("Alertness", &KDCarrier::on_alertness);
+	listen_message ("IgnorePotion", &KDCarrier::on_ignore_potion);
+
 	listen_message ("Slain", &KDCarrier::on_slain);
+	listen_message ("PropertyChange", &KDCarrier::on_property_change);
+
+	listen_message ("Alertness", &KDCarrier::on_alertness);
+
 }
+
+void
+KDCarrier::initialize ()
+{
+	detected_braindeath.init (false);
+
+	Property (host (), "DeathStage").subscribe (host ());
+	detected_slaying.init (false);
+}
+
+
 
 Message::Result
 KDCarrier::on_sim (SimMessage& message)
@@ -54,55 +73,94 @@ KDCarrier::do_create_attachments ()
 	for (auto& attachment : CreatureAttachmentLink::get_all
 		(host (), Object::ANY, Link::Inheritance::SOURCE))
 	{
+		CreatureAttachmentLink::Joint joint = attachment.joint;
+
 		// Don't attach two objects to the same joint.
 		bool has_existing = false;
 		for (auto& existing : CreatureAttachmentLink::get_all (host ()))
-			if (attachment.get_joint () == existing.get_joint ())
+			if (joint == existing.joint)
 				{ has_existing = true; break; }
 		if (has_existing) continue;
 
 		mono () << "Attaching a new "
 			<< attachment.get_dest ().get_editor_name ()
-			<< " to joint " << int (attachment.get_joint ()) << "."
+			<< " to joint " << int (joint) << "."
 			<< std::endl;
 
 		CreatureAttachmentLink::create (host (),
-			Object::create (attachment.get_dest ()),
-			attachment.get_joint ());
+			Object::create (attachment.get_dest ()), joint);
 	}
 }
+
+
 
 Message::Result
 KDCarrier::on_ai_mode_change (AIModeChangeMessage& message)
 {
-	if (message.get_new_mode () == AI::Mode::DEAD) // killed or knocked out
-		notify_carried ("CarrierBrainDead");
+	if (message.get_new_mode () == AI::Mode::DEAD)
+	{ // The AI has been killed or knocked out.
+		if (detected_braindeath) // The message has already been sent.
+			detected_braindeath = false;
+		else
+			notify_carried ("CarrierBrainDead");
+	}
 	return Message::CONTINUE;
 }
 
 Message::Result
-KDCarrier::on_slain (SlayMessage&)
+KDCarrier::on_ignore_potion (GenericMessage&)
 {
-	notify_carried ("CarrierSlain");
+	// The AI is being knocked out.
+	detected_braindeath = true;
+	notify_carried ("CarrierBrainDead", true);
 	return Message::CONTINUE;
 }
+
+
+
+Message::Result
+KDCarrier::on_slain (SlayMessage&)
+{
+	if (detected_slaying) // The message has already been sent.
+		detected_slaying = false;
+	else
+		notify_carried ("CarrierSlain");
+	return Message::CONTINUE;
+}
+
+Message::Result
+KDCarrier::on_property_change (PropertyChangeMessage& message)
+{
+	if (message.get_prop_name () == "DeathStage" &&
+	    host_as<Damageable> ().death_stage == 12) // The AI is being slain.
+	{
+		detected_slaying = true;
+		notify_carried ("CarrierSlain", true);
+	}
+	return Message::CONTINUE;
+}
+
+
 
 Message::Result
 KDCarrier::on_alertness (AIAlertnessMessage& message)
 {
 	AI::Alert level = message.get_new_level ();
 	if (level > AI::Alert::NONE)
-		notify_carried ("CarrierAlerted", int (level));
+		notify_carried ("CarrierAlerted", false, int (level));
 	return Message::CONTINUE;
 }
 
+
+
 void
-KDCarrier::notify_carried (const char* _message, int data)
+KDCarrier::notify_carried (const char* _message, bool _delay, int data)
 {
 	GenericMessage message (_message);
 	message.set_data (Message::DATA1, data);
-	message.broadcast (host (), "Contains");
-	message.broadcast (host (), "CreatureAttachment");
-	message.broadcast (host (), "~DetailAttachement");
+	Time delay = _delay ? 250ul : 0ul;
+	message.broadcast (host (), "Contains", delay);
+	message.broadcast (host (), "CreatureAttachment", delay);
+	message.broadcast (host (), "~DetailAttachement", delay);
 }
 

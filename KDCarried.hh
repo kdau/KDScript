@@ -30,8 +30,9 @@ public:
 	KDCarried (const String& name, const Object& host);
 
 private:
-	Message::Result on_sim (SimMessage&);
+	Message::Result on_post_sim (GenericMessage&);
 	Message::Result on_create (GenericMessage&);
+
 	Message::Result on_carrier_alerted (GenericMessage&);
 	Message::Result on_drop (GenericMessage&);
 	Message::Result on_fix_physics (GenericMessage&);

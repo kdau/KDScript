@@ -20,6 +20,18 @@
 
 #include "KDHUDElement.hh"
 
+namespace Thief {
+
+THIEF_ENUM_CODING (KDHUDElement::Symbol, CODE, CODE,
+	THIEF_ENUM_VALUE (NONE, "@none"),
+	THIEF_ENUM_VALUE (ARROW, "@arrow"),
+	THIEF_ENUM_VALUE (CROSSHAIRS, "@crosshairs"),
+	THIEF_ENUM_VALUE (RETICULE, "@reticule", "@reticle"),
+	THIEF_ENUM_VALUE (SQUARE, "@square"),
+)
+
+} // namespace Thief
+
 KDHUDElement::KDHUDElement (const String& _name, const Object& _host,
 		HUD::ZIndex _priority)
 	: Script (_name, _host), priority (_priority)
@@ -156,37 +168,25 @@ Parameter<KDHUDElement::Image>::decode (const String& raw) const
 	if (raw.empty ())
 		return false;
 
-	else if (raw.front () != '@') // if no @, it's a bitmap
+	else if (raw.front () == '@') // Interpret as a symbol name.
 	{
-		value = { KDHUDElement::Symbol::NONE,
-			HUD::get ()->load_bitmap (raw, config.animated) };
-		if (!value.bitmap)
-			throw std::runtime_error ("could not load bitmap");
-	}
+		value.symbol = KDHUDElement::Symbol
+			(EnumCoding::get<KDHUDElement::Symbol> ().decode (raw));
+		value.bitmap = nullptr;
 
-	else if (raw == "@none")
-		value = { KDHUDElement::Symbol::NONE, nullptr };
-
-	else if (raw == "@arrow")
-	{
-		if (config.directional)
-			value = { KDHUDElement::Symbol::ARROW, nullptr };
-		else
+		if (value.symbol == KDHUDElement::Symbol::ARROW &&
+		    !config.directional)
 			throw std::runtime_error ("A non-directional HUD "
 				"element cannot have an arrow symbol.");
 	}
 
-	else if (raw == "@crosshairs")
-		value = { KDHUDElement::Symbol::CROSSHAIRS, nullptr };
-
-	else if (raw == "@reticule")
-		value = { KDHUDElement::Symbol::RETICULE, nullptr };
-
-	else if (raw == "@square")
-		value = { KDHUDElement::Symbol::SQUARE, nullptr };
-
-	else
-		return false;
+	else // Interpret as a path to a bitmap.
+	{
+		value.symbol = KDHUDElement::Symbol::NONE;
+		value.bitmap = HUD::get ()->load_bitmap (raw, config.animated);
+		if (!value.bitmap)
+			throw std::runtime_error ("Could not load bitmap.");
+	}
 
 	return true;
 }

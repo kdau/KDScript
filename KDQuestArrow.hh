@@ -50,10 +50,13 @@ private:
 	static const int PADDING;
 
 	Persistent<bool> enabled;
+
+	Parameter<Objective> objective;
 	Persistent<Objective::Number> old_objective;
 
+	Parameter<float> range;
 	Parameter<bool> obscured;
-	Parameter<Objective> objective;
+
 	Parameter<Image> image;
 	Parameter<String> _text; String text;
 	Parameter<Color> color;

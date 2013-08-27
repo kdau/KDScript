@@ -29,6 +29,7 @@ KDToolSight::SYMBOL_SIZE = { 24, 24 };
 KDToolSight::KDToolSight (const String& _name, const Object& _host)
 	: KDHUDElement (_name, _host, PRIORITY),
 	  selected (false),
+	  PARAMETER_ (deselect_on_use, "tool_sight_deselect", false),
 	  PARAMETER_ (image, "tool_sight_image",
 	  	Symbol::CROSSHAIRS, false, false),
 	  PARAMETER_ (color, "tool_sight_color", Color (128, 128, 128)),
@@ -39,6 +40,7 @@ KDToolSight::KDToolSight (const String& _name, const Object& _host)
 	listen_message ("InvFocus", &KDToolSight::on_inv_select);
 	listen_message ("InvDeSelect", &KDToolSight::on_inv_deselect);
 	listen_message ("InvDeFocus", &KDToolSight::on_inv_deselect);
+	listen_message ("FrobInvEnd", &KDToolSight::on_frob_inv_end);
 	listen_message ("PropertyChange", &KDToolSight::on_property_change);
 }
 
@@ -90,6 +92,14 @@ Message::Result
 KDToolSight::on_inv_deselect (GenericMessage&)
 {
 	selected = false;
+	return Message::CONTINUE;
+}
+
+Message::Result
+KDToolSight::on_frob_inv_end (FrobMessage&)
+{
+	if (deselect_on_use)
+		Player ().clear_item ();
 	return Message::CONTINUE;
 }
 

@@ -24,7 +24,8 @@ const Time
 KDRenewable::DEFAULT_TIMING = 180000ul; // = three minutes
 
 KDRenewable::KDRenewable (const String& _name, const Object& _host)
-	: Script (_name, _host)
+	: Script (_name, _host),
+	  PARAMETER_ (physical, "renewable_physical", false)
 {
 	listen_message ("Sim", &KDRenewable::on_sim);
 	listen_timer ("Renew", &KDRenewable::on_renew);
@@ -66,7 +67,7 @@ KDRenewable::on_renew (TimerMessage&)
 	size_t threshold = 0;
 	for (auto& script_param : ScriptParamsLink::get_all (host ()))
 	{
-		String data = script_param.get_data ();
+		String data = script_param.data;
 		char* end = nullptr;
 		threshold = strtol (data.data (), &end, 10);
 		if (end != data.data ())
@@ -84,18 +85,14 @@ KDRenewable::on_renew (TimerMessage&)
 		Link::Inheritance::SOURCE);
 	if (!transmute.empty ())
 		inv_type = transmute.front ().get_dest ();
-	else
-	{
-		String archetype_name = archetype.get_name ();
-		if (archetype_name == "EarthCrystal")
-			inv_type = Object ("EarthArrow");
-		else if (archetype_name == "WaterCrystal")
-			inv_type = Object ("water");
-		else if (archetype_name == "FireCrystal")
-			inv_type = Object ("firearr");
-		else if (archetype_name == "AirCrystal")
-			inv_type = Object ("GasArrow");
-	}
+	else if (archetype == Object ("EarthCrystal"))
+		inv_type = Object ("EarthArrow");
+	else if (archetype == Object ("WaterCrystal"))
+		inv_type = Object ("water");
+	else if (archetype == Object ("FireCrystal"))
+		inv_type = Object ("firearr");
+	else if (archetype == Object ("AirCrystal"))
+		inv_type = Object ("GasArrow");
 
 	// Check the inventory count.
 	size_t inv_count = 0;
@@ -108,8 +105,11 @@ KDRenewable::on_renew (TimerMessage&)
 	// Create new instance.
 	Physical instance = Object::create (archetype);
 	instance.set_position (Vector (), Vector (), host ());
-	instance.remove_physics ();
 	Link::create ("Owns", host (), instance);
+
+	// Remove the instance's physics, if required.
+	if (!physical)
+		instance.remove_physics ();
 
 	return Message::CONTINUE;
 }

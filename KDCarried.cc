@@ -27,7 +27,7 @@ KDCarried::KDCarried (const String& _name, const Object& _host)
 	  PARAMETER (inert_until_dropped, false),
 	  PARAMETER (off_when_dropped, false)
 {
-	listen_message ("Sim", &KDCarried::on_sim);
+	listen_message ("PostSim", &KDCarried::on_post_sim);
 	listen_message ("Create", &KDCarried::on_create);
 	listen_message ("CarrierAlerted", &KDCarried::on_carrier_alerted);
 	listen_message ("CarrierBrainDead", &KDCarried::on_drop);
@@ -37,11 +37,22 @@ KDCarried::KDCarried (const String& _name, const Object& _host)
 }
 
 Message::Result
-KDCarried::on_sim (SimMessage& message)
+KDCarried::on_post_sim (GenericMessage&)
 {
 	// Add the FrobInert metaproperty, if requested.
-	if (message.is_starting () && inert_until_dropped)
+	if (inert_until_dropped)
+	{
 		host ().add_metaprop (Object ("FrobInert"));
+
+		// Decrease the pickable pocket count if Contains-linked.
+		ContainsLink container = Link::get_one ("~Contains", host ());
+		if (container != Link::NONE &&
+		    container.type != Container::Type::GENERIC)
+		{
+			QuestVar pockets ("DrSPocketCnt");
+			pockets.set (pockets.get () - 1);
+		}
+	}
 
 	return Message::CONTINUE;
 }
@@ -115,16 +126,7 @@ KDCarried::on_drop (GenericMessage&)
 
 	ContainsLink container = Link::get_one ("~Contains", dropped);
 	if (container != Link::NONE)
-	{
-		if (container.get_type () != Container::Type::GENERIC)
-		{
-			// Decrease the pickable pocket count.
-			QuestVar pockets ("DrSPocketCnt");
-			pockets.set (pockets.get () - 1);
-		}
-
 		container.destroy ();
-	}
 
 	Link creature = Link::get_one ("~CreatureAttachment", dropped);
 	if (creature != Link::NONE)
@@ -134,7 +136,7 @@ KDCarried::on_drop (GenericMessage&)
 	if (detail != Link::NONE)
 	{
 		dropped = dropped.clone ();
-		mono () << "Replacing self with clone:"
+		mono () << "Replacing self with clone: "
 			<< dropped.get_editor_name () << std::endl;
 
 		// Add a reference link to the ex-carrying AI.

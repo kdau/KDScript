@@ -36,12 +36,15 @@ private:
 	Message::Result on_inv_select (GenericMessage&);
 	Message::Result on_inv_deselect (GenericMessage&);
 
+	Message::Result on_frob_inv_end (FrobMessage&);
+
 	Message::Result on_property_change (PropertyChangeMessage&);
 
 	static const HUD::ZIndex PRIORITY;
 	static const CanvasSize SYMBOL_SIZE;
 
 	bool selected; // not persistent because selection isn't
+	Parameter<bool> deselect_on_use;
 
 	Parameter<Image> image;
 	Parameter<Color> color;

@@ -30,16 +30,25 @@ public:
 	KDCarrier (const String& name, const Object& host);
 
 private:
+	virtual void initialize ();
+
 	Message::Result on_sim (SimMessage&);
 	Message::Result on_create (GenericMessage&);
 	void do_create_attachments ();
+	Parameter<bool> create_attachments;
 
 	Message::Result on_ai_mode_change (AIModeChangeMessage&);
-	Message::Result on_slain (SlayMessage&);
-	Message::Result on_alertness (AIAlertnessMessage&);
-	void notify_carried (const char* message, int data = 0);
+	Message::Result on_ignore_potion (GenericMessage&);
+	Persistent<bool> detected_braindeath;
 
-	Parameter<bool> create_attachments;
+	Message::Result on_slain (SlayMessage&);
+	Message::Result on_property_change (PropertyChangeMessage&);
+	Persistent<bool> detected_slaying;
+
+	Message::Result on_alertness (AIAlertnessMessage&);
+
+	void notify_carried (const char* message, bool delay = false,
+		int data = 0);
 };
 
 #endif // KDCARRIER_HH

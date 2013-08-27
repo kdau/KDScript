@@ -36,9 +36,10 @@ KDQuestArrow::PADDING = 8;
 KDQuestArrow::KDQuestArrow (const String& _name, const Object& _host)
 	: KDHUDElement (_name, _host, PRIORITY),
 	  PERSISTENT (enabled),
-	  PERSISTENT (old_objective),
-	  PARAMETER_ (obscured, "quest_arrow_obscured", false),
 	  PARAMETER_ (objective, "quest_arrow_goal"),
+	  PERSISTENT (old_objective),
+	  PARAMETER_ (range, "quest_arrow_range", 0.0f),
+	  PARAMETER_ (obscured, "quest_arrow_obscured", false),
 	  PARAMETER_ (image, "quest_arrow_image", Symbol::ARROW, false, true),
 	  PARAMETER_ (_text, "quest_arrow_text", "@name"),
 	  PARAMETER_ (color, "quest_arrow_color", Color (255, 255, 255)),
@@ -81,7 +82,12 @@ KDQuestArrow::prepare ()
 {
 	if (!enabled) return false;
 
-	// Confirm that he object is actually visible, if required.
+	// Confirm that the object is within range, if required.
+	if (range != 0.0f && host ().get_location ().distance
+			(Player ().get_location ()) > range)
+		return false;
+
+	// Confirm that the object is actually visible, if required.
 	if (!obscured && !Engine::rendered_this_frame (host ()))
 		return false;
 

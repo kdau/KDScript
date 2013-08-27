@@ -33,10 +33,22 @@ private:
 	virtual bool increment ();
 
 	Parameter<float> precip_freq_on, precip_freq_off;
-	Parameter<float> precip_speed_on, precip_speed_off;
-
 	Persistent<float> start_freq, end_freq;
+
+	Parameter<float> precip_speed_on, precip_speed_off;
 	Persistent<float> start_speed, end_speed;
+
+	Parameter<float> precip_radius_on, precip_radius_off;
+	Persistent<float> start_radius, end_radius;
+
+	Parameter<float> precip_opacity_on, precip_opacity_off;
+	Persistent<float> start_opacity, end_opacity;
+
+	Parameter<float> precip_brightness_on, precip_brightness_off;
+	Persistent<float> start_brightness, end_brightness;
+
+	Parameter<Vector> precip_wind_on, precip_wind_off;
+	Persistent<Vector> start_wind, end_wind;
 };
 
 #endif // KDTRAPWEATHER_HH
