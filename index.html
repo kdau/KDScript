@@ -9,10 +9,10 @@
 			body { font-family: serif; font-size: 11pt; color: #ccc; background-color: #000; margin-left: 5em; }
 			a:link, a:visited { color: #99f; text-decoration: none; border-bottom: 1px dotted #99f; }
 				a:link:hover, a:visited:hover { border-bottom-style: solid; }
-			h1, h2, h3 { clear: both; margin: 1em 0em; font-family: Carleton, serif; font-weight: normal; font-variant: small-caps; }
-				h1 { width: 25em; font-size: 28pt; margin-top: 2em; border-bottom: 1px dotted #ccc; }
-				h2 { width: 20em; font-size: 20pt; margin-top: 4em; border-bottom: 1px dotted #999; }
-				h3 { width: 15em; font-size: 16pt; margin-top: 2em; border-bottom: 1px dotted #333; }
+			h1, h2, h3 { clear: both; margin: 1em 0em; padding-top: 1em; font-family: Carleton, serif; font-weight: normal; font-variant: small-caps; }
+				h1 { width: 25em; font-size: 28pt; margin-top: 1em; border-bottom: 1px dotted #ccc; }
+				h2 { width: 20em; font-size: 20pt; margin-top: 3em; border-bottom: 1px dotted #999; }
+				h3 { width: 15em; font-size: 16pt; margin-top: 1em; border-bottom: 1px dotted #333; }
 			dl { margin: 2em 5em; width: 60em; padding: 0em; line-height: 150%; border-bottom: 1px dotted #333; font-size: 10pt; }
 				dt, dd { border-top: 1px dotted #333; padding-top: 5px; }
 					dt { clear: left; float: left; width: 10em; margin: 0em; font-weight: bold; }
@@ -41,12 +41,12 @@
 		<h1>KDScript</h1>
 		<p>KDScript is a custom script module for the Dark Engine. It provides access to the new script services available with the unofficial <a href="http://www.ttlg.com/forums/showthread.php?t=141148">NewDark patch</a>, including dynamic weather and fog and nonlinear campaigns. It provides custom HUD elements including quest arrows, statistic meters, and tool sights. It also provides automatic AI/voiceover subtitling and other useful features.</p>
 		<p class="important"><strong>This is an alpha/demonstration version only.</strong> The script module is not yet intended for use in missions. The script specifications below may change prior to the final version. For now, if you are interested in using any of these scripts in your mission, please contact me so I can provide updated versions and help you during your testing process.</p>
-		<p> This is version <strong>0.1.0.1</strong> of KDScript, released on <strong>2013-07-07</strong> as <code>kdscript&#8209;0.1.0.1.zip</code>. It currently works only with Thief II: The Metal Age patched with NewDark version 1.19 or higher (tested with 1.21 only) on Windows XP or later (or Linux via WINE). Support for Thief: The Dark Project/Thief Gold (with the NewDark patch) may be added in the future.</p>
+		<p> This is version <strong>0.1.1</strong> of KDScript, released on <strong>2013-07-08</strong> as <code>kdscript&#8209;0.1.1.zip</code>. It currently works only with Thief II: The Metal Age patched with NewDark version 1.19 or higher (tested with 1.21 only) on Windows XP or later (or Linux via WINE). Support for Thief: The Dark Project/Thief Gold (with the NewDark patch) may be added in the future.</p>
 		<p>Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. I am <a href="http://www.ttlg.com/forums/member.php?u=66136">kdau</a> on TTLG and can be reached by email at <code>&lt;kevin&nbsp;AT&nbsp;kdau&nbsp;DOT&nbsp;com&gt;</code>. The script module is licensed under terms of the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>. It is provided &ldquo;as is&rdquo; without warranty of any kind, either expressed or implied.</p>
 		<p>KDScript is based in part on Public Scripts by <a href="http://dromed.whoopdedo.org/">Tom N. Harris (Telliamed)</a> and includes <code>dh2.osl</code> and lightly modified versions of his <code>lg</code>, <code>DH2</code>, and <code>ScriptLib</code> libraries, which derive in part from earlier work by GayleSaver and Totality. His code is available at his website; mine is included in this archive. Subtitle support is based on <a href="http://www.ttlg.com/forums/showthread.php?t=107554">ideas from Nameless Voice and others</a>.</p>
 
 		<h3 id="demo">Demo mission</h2>
-		<p>The included mission demonstrates the scripts in this module. The demo mission may distributed in any way as long as it remains unmodified and I am credited for it. This level was not made and is not supported by Looking Glass Studios or Eidos Interactive. It contains corona designs and textures from the <a href="http://www.ttlg.com/forums/showthread.php?t=141148">NewDark</a> distribution by Le Corbeau and a smoking pipe object by Targa (<a title="Targa's first site" href="http://www.thiefmissions.com/targa/">1</a>, <a title="Targa's second site" href="http://www.grax.org/targa/">2</a>).</p>
+		<p>The included mission demonstrates the scripts in this module; load this ZIP file as an FM to try it. The demo mission may distributed in any way as long as it remains unmodified and I am credited for it. This level was not made and is not supported by Looking Glass Studios or Eidos Interactive. It contains corona designs and textures from the <a href="http://www.ttlg.com/forums/showthread.php?t=141148">NewDark</a> distribution by Le Corbeau and a smoking pipe object by Targa (<a title="Targa's first site" href="http://www.thiefmissions.com/targa/">1</a>, <a title="Targa's second site" href="http://www.grax.org/targa/">2</a>).</p>
 
 
 
@@ -81,6 +81,7 @@
 
 		<h2 id="history">Version history</h2>
 		<dl>
+			<dt>0.1.1</dt><dd>Accept object name as data for <code>Subtitle</code> message to <code>KDSubtitled</code>. Fixed issue with Windows XP. Return to cross-compiling. (2013-07-08)</dd>
 			<dt>0.1.0.1</dt><dd>Rebuilt natively on Windows without debug enabled. Included some missing source files. (2013-07-07)</dd>
 			<dt>0.1.0</dt><dd>Initial alpha release. (2013-07-06)</dd>
 		</dl>
@@ -372,7 +373,7 @@
 		<tbody>
 		</tbody></table>
 		<p><code>KDSubtitled</code> is the base script for <code>KDSubtitledAI</code> and <code>KDSubtitledVO</code>. It cannot be used directly.</p>
-		<p>Subtitles are taken from the <code>strings\subtitles.str</code> file, where they are identified by schema name; if no subtitle is present for a schema, nothing will be shown. In addition to the trigger for each script below, a subtitle can be displayed by sending the script a <code>Subtitle</code> message whose data is the object number of the schema.</p>
+		<p>Subtitles are taken from the <code>strings\subtitles.str</code> file, where they are identified by schema name; if no subtitle is present for a schema, nothing will be shown. In addition to the trigger for each script below, a subtitle can be displayed by sending the script a <code>Subtitle</code> message whose data is the object name or number of the schema.</p>
 		<p>By default, subtitles are displayed like other onscreen text in the top center of the screen. If the <code>subtitles_use_hud</code> quest variable is set to <code>1</code> and a handler object has the <code>KDCustomHUD</code> script (see above), subtitles will be displayed as HUD elements instead. These are individual boxes of text that track the position of the speaker and do not overwrite each other or other text. If there is a <code>ScriptParams</code> link with the data <code>CustomHUD</code> from this object, its target should be the handler object; otherwise, the handler object should be named <code>CustomHUD</code>.</p>
 		<p>The subtitle is displayed in <code>subtitle_color</code>, which may be set either on the schema object (takes priority) or another relevant object (see below). If the <code>Script\Timing</code> property is set on the schema object, it determines how long, in milliseconds, the subtitle is displayed; otherwise, an appropriate length is calculated based on the text.</p>
 
