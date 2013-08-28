@@ -94,6 +94,7 @@ public:
 
 private:
 	Message::Result on_turn_on (GenericMessage&);
+	Message::Result on_initial_delay (TimerMessage&);
 };
 
 

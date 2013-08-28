@@ -526,11 +526,11 @@ KDStatMeter::update_range ()
 		}
 		else if (prop_name == "HitPoints")
 		{
-			Property max_hp (prop_obj, "MAX_HP");
-			if (max_hp.exists ())
+			Being being (prop_obj->number);
+			if (being.max_hit_points.exists ())
 			{
 				min = 0.0f;
-				max = max_hp.get<int> ();
+				max = being.max_hit_points;
 			}
 		}
 	}

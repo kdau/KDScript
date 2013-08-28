@@ -162,12 +162,8 @@ KDSubtitled::start_subtitle (const Object& speaker, const Object& schema)
 	}
 
 	if (element)
-	{
 		// Schedule its destruction.
-		TimerMessage finish ("FinishSubtitle");
-		finish.set_data (Message::DATA1, schema);
-		finish.schedule (host (), host (), duration, false);
-	}
+		start_timer ("FinishSubtitle", duration, false, schema);
 	else
 		// Go the old-fashioned way.
 		Mission::show_text (text, duration, color);
@@ -271,6 +267,7 @@ KDSubtitledVO::KDSubtitledVO (const String& _name, const Object& _host)
 {
 	// This script lacks trap behavior because VOSounds isn't a StdTrap.
 	listen_message ("TurnOn", &KDSubtitledVO::on_turn_on);
+	listen_timer ("InitialDelay", &KDSubtitledVO::on_initial_delay);
 }
 
 Message::Result
@@ -282,20 +279,32 @@ KDSubtitledVO::on_turn_on (GenericMessage&)
 	if (schema == Object::NONE)
 		return Message::HALT;
 
-	// Only display the subtitle if the schema hasn't been played. At this
-	// point, the schema has probably already been started, so it will
-	// appear to be previously played regardless. Instead, the workaround
-	// used here is to set an unrelated property (StimKO, which would never
-	// appear on a sound schema otherwise) as a placeholder. Note that this 
-	// method does not consider other objects having played the schema.
-	Property played (schema, "StimKO");
-	if (played.exists ())
-		return Message::HALT;
-	else
-		played.set (true);
+	// If the schema has the "Play Once" flag, only display the subtitle if
+	// the schema hasn't been played already. At this point, the schema has
+	// probably already been started, so it will always appear to have been
+	// played already. Instead, the workaround used here is to track the
+	// status on an unrelated property, StimKO, which would never appear on
+	// a sound schema otherwise. Note that this method does not recognize
+	// if any non-KDSubtitledVO object has played the schema.
+	if (schema.play_once)
+	{
+		Property played (schema, "StimKO");
+		if (played.exists ())
+			return Message::HALT;
+		else
+			played.set (true);
+	}
 
+	// Wait until the initial delay is over before displaying the subtitle.
+	start_timer ("InitialDelay", schema.initial_delay, false, schema);
+	return Message::CONTINUE;
+}
+
+Message::Result
+KDSubtitledVO::on_initial_delay (TimerMessage& message)
+{
 	// Display the subtitle.
-	start_subtitle (Player (), schema);
+	start_subtitle (Player (), message.get_data<Object> (Message::DATA1));
 	return Message::CONTINUE;
 }
 

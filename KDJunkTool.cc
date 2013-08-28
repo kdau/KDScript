@@ -79,7 +79,7 @@ KDJunkTool::start_carry ()
 	if (lugged)
 	{
 		player.add_speed_control ("JunkTool", 0.6f);
-		if (Property (host (), "InvLimbModel").exists ())
+		if (host_as<Interactive> ().limb_model.exists ())
 			player.show_arm ();
 		SoundSchema ("garlift").play_voiceover ();
 	}
