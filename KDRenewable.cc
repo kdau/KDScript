@@ -107,7 +107,7 @@ KDRenewable::on_renew (TimerMessage&)
 	size_t inv_count = 0;
 	for (auto& content : player.get_inventory ())
 		if (content.object.inherits_from (inv_type))
-			inv_count += content.object.stack_count;
+			inv_count += Combinable (content.object).stack_count;
 	if (inv_count >= my_threshold)
 		return Message::HALT;
 

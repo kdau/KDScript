@@ -29,11 +29,11 @@ using namespace Thief;
 class HUDSubtitle : public HUDElement
 {
 public:
-	HUDSubtitle (const Object& speaker, const Object& schema,
+	HUDSubtitle (const Being& speaker, const SoundSchema& schema,
 		const String& text, Color color);
 	virtual ~HUDSubtitle ();
 
-	Object get_schema () const { return schema; }
+	SoundSchema get_schema () const { return schema; }
 
 private:
 	virtual bool prepare ();
@@ -43,8 +43,8 @@ private:
 	static const int BORDER, PADDING;
 	static const Color BACKGROUND_COLOR;
 
-	Object speaker;
-	Object schema;
+	Being speaker;
+	SoundSchema schema;
 	String text;
 	Color color;
 };
@@ -62,8 +62,8 @@ protected:
 	static const float EARSHOT;
 	static const Color DEFAULT_COLOR;
 
-	bool start_subtitle (const Object& speaker, const Object& schema);
-	void finish_subtitle (const Object& schema = Object::ANY);
+	bool start_subtitle (const Being& speaker, const SoundSchema& schema);
+	void finish_subtitle (const SoundSchema& schema = Object::ANY);
 
 private:
 	Message::Result on_subtitle (GenericMessage&);

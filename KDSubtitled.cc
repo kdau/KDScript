@@ -36,7 +36,7 @@ HUDSubtitle::PADDING = 8;
 const Color
 HUDSubtitle::BACKGROUND_COLOR (0, 0, 0);
 
-HUDSubtitle::HUDSubtitle (const Object& _speaker, const Object& _schema,
+HUDSubtitle::HUDSubtitle (const Being& _speaker, const SoundSchema& _schema,
 		const String& _text, Color _color)
 	: HUDElement (),
 	  speaker (_speaker), schema (_schema), text (_text), color (_color)
@@ -118,11 +118,10 @@ KDSubtitled::~KDSubtitled ()
 }
 
 bool
-KDSubtitled::start_subtitle (const Object& speaker, const Object& schema)
+KDSubtitled::start_subtitle (const Being& speaker, const SoundSchema& schema)
 {
 	// Confirm speaker and schema objects are valid.
-	if (!speaker.exists () || !schema.exists () ||
-	    !schema.inherits_from (Object ("Schema")))
+	if (!speaker.is_being () || !schema.is_sound_schema ())
 	{
 		mono () << "Warning: Can't subtitle invalid speaker/schema pair "
 			<< speaker.number << "/" << schema.number << "."
@@ -172,7 +171,7 @@ KDSubtitled::start_subtitle (const Object& speaker, const Object& schema)
 }
 
 void
-KDSubtitled::finish_subtitle (const Object& schema)
+KDSubtitled::finish_subtitle (const SoundSchema& schema)
 {
 	// This only applies to HUD elements.
 	if (!element) return;
@@ -188,10 +187,10 @@ KDSubtitled::finish_subtitle (const Object& schema)
 Message::Result
 KDSubtitled::on_subtitle (GenericMessage& message)
 {
-	Object schema = message.has_data (Message::DATA1)
+	SoundSchema schema = message.has_data (Message::DATA1)
 		? message.get_data<Object> (Message::DATA1)
 		: Object::NONE;
-	Object speaker = message.has_data (Message::DATA2)
+	Being speaker = message.has_data (Message::DATA2)
 		? message.get_data<Object> (Message::DATA2)
 		: message.get_from ();
 	start_subtitle (speaker, schema);
@@ -225,36 +224,38 @@ KDSubtitledAI::KDSubtitledAI (const String& _name, const Object& _host)
 void
 KDSubtitledAI::initialize ()
 {
-	Property (host (), "Speech").subscribe (Object::SELF);
+	ObjectProperty::subscribe ("Speech", host ());
 }
 
 Message::Result
 KDSubtitledAI::on_property_change (PropertyChangeMessage& message)
 {
+	AI ai = host_as<AI> ();
+
 	// Confirm that the relevant property has changed.
-	if (message.get_object () != host () ||
-	    message.get_prop_name () != "Speech")
+	if (message.get_object () != ai ||
+	    message.get_property () != Property ("Speech"))
 		return Message::CONTINUE;
 
 	// Confirm that the speech schema is valid.
-	Object schema = host_as<AI> ().last_speech_schema;
+	SoundSchema schema = ai.last_speech_schema;
 	if (!schema.exists ()) return Message::HALT;
 
 	// If this is the end of a speech schema, finish the subtitle instead.
-	if (!host_as<AI> ().is_speaking)
+	if (!ai.is_speaking)
 	{
 		finish_subtitle (schema);
 		return Message::CONTINUE;
 	}
 
 	// Confirm that the speech is in the player's (estimated) earshot.
-	Vector host_pos = host ().get_location (),
+	Vector ai_pos = ai.get_location (),
 		player_pos = Player ().get_location ();
-	if (host_pos.distance (player_pos) >= EARSHOT)
+	if (ai_pos.distance (player_pos) >= EARSHOT)
 		return Message::HALT;
 
 	// Display the subtitle.
-	start_subtitle (host (), schema);
+	start_subtitle (ai, schema);
 	return Message::CONTINUE;
 }
 
@@ -288,7 +289,7 @@ KDSubtitledVO::on_turn_on (GenericMessage&)
 	// if any non-KDSubtitledVO object has played the schema.
 	if (schema.play_once)
 	{
-		Property played (schema, "StimKO");
+		ObjectProperty played ("StimKO", schema);
 		if (played.exists ())
 			return Message::HALT;
 		else

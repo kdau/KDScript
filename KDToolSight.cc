@@ -48,7 +48,7 @@ void
 KDToolSight::initialize ()
 {
 	KDHUDElement::initialize ();
-	Property (host (), "DesignNote").subscribe (Object::SELF);
+	ObjectProperty::subscribe ("DesignNote", host ());
 }
 
 bool
@@ -106,7 +106,7 @@ KDToolSight::on_frob_inv_end (FrobMessage&)
 Message::Result
 KDToolSight::on_property_change (PropertyChangeMessage& message)
 {
-	if (message.get_prop_name () == "DesignNote")
+	if (message.get_property () == Property ("DesignNote"))
 		schedule_redraw ();
 	return Message::CONTINUE;
 }

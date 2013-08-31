@@ -119,7 +119,7 @@ KDStatMeter::initialize ()
 
 	enabled.init (Parameter<bool> (host (), "stat_meter", true));
 
-	Property (host (), "DesignNote").subscribe (Object::SELF);
+	ObjectProperty::subscribe ("DesignNote", host ());
 	update_text ();
 	update_range ();
 }
@@ -131,7 +131,7 @@ KDStatMeter::prepare ()
 
 	// Get the current value.
 	QuestVar qvar (quest_var->data ());
-	Property property (prop_obj, prop_name);
+	ObjectProperty property (prop_name->data (), prop_obj);
 	if (qvar.exists ())
 		value = qvar.get ();
 	else if (property.exists ())
@@ -465,7 +465,7 @@ KDStatMeter::on_off (GenericMessage&)
 Message::Result
 KDStatMeter::on_property_change (PropertyChangeMessage& message)
 {
-	if (message.get_prop_name () == "DesignNote")
+	if (message.get_property () == Property ("DesignNote"))
 	{
 		// Too many to check, so just assume the meter is affected.
 		schedule_redraw ();

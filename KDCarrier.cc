@@ -44,7 +44,7 @@ KDCarrier::initialize ()
 {
 	detected_braindeath.init (false);
 
-	Property (host (), "DeathStage").subscribe (host ());
+	ObjectProperty::subscribe ("DeathStage", host ());
 	detected_slaying.init (false);
 }
 
@@ -131,7 +131,7 @@ KDCarrier::on_slain (SlayMessage&)
 Message::Result
 KDCarrier::on_property_change (PropertyChangeMessage& message)
 {
-	if (message.get_prop_name () == "DeathStage" &&
+	if (message.get_property () == Property ("DeathStage") &&
 	    host_as<Damageable> ().death_stage == 12) // The AI is being slain.
 	{
 		detected_slaying = true;

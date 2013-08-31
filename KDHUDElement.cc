@@ -183,7 +183,7 @@ Parameter<KDHUDElement::Image>::decode (const String& raw) const
 	else // Interpret as a path to a bitmap.
 	{
 		value.symbol = KDHUDElement::Symbol::NONE;
-		value.bitmap = HUD::get ()->load_bitmap (raw, config.animated);
+		value.bitmap = HUD::load_bitmap (raw, config.animated);
 		if (!value.bitmap)
 			throw std::runtime_error ("Could not load bitmap.");
 	}

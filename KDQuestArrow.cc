@@ -69,12 +69,12 @@ KDQuestArrow::initialize ()
 		(host (), "quest_arrow", !Player ().has_touched (host ())));
 	old_objective.init (Objective::NONE);
 
-	Property (host (), "DesignNote").subscribe (Object::SELF);
+	ObjectProperty::subscribe ("DesignNote", host ());
 	update_objective ();
 	update_text ();
 
 	// for quest_arrow_text == "@name"
-	Property (host (), "GameName").subscribe (Object::SELF);
+	ObjectProperty::subscribe ("GameName", host ());
 }
 
 bool
@@ -202,13 +202,13 @@ KDQuestArrow::on_ai_mode_change (AIModeChangeMessage& message)
 Message::Result
 KDQuestArrow::on_property_change (PropertyChangeMessage& message)
 {
-	if (message.get_prop_name () == "DesignNote")
+	if (message.get_property () == Property ("DesignNote"))
 	{
 		schedule_redraw ();
 		update_objective ();
 		update_text ();
 	}
-	else if (message.get_prop_name () == "GameName")
+	else if (message.get_property () == Property ("GameName"))
 	{
 		schedule_redraw ();
 		update_text ();
