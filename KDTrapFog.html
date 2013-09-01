@@ -4,10 +4,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<link rel="stylesheet" type="text/css" href="doc.css" />
-		<title>KDTrapFog  - KDScript</title>
+		<title>KDTrapFog - KDScript</title>
 	</head>
 	<body>
-		<div id="trail"><a href="index.html">KDScript</a> &rarr; Rendering effects &rarr;</div>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr; <a href="rendering-effects.html">Rendering effects</a> &rarr;</div>
 		<h1>KDTrapFog</h1>
 		<table>
 			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
@@ -15,14 +15,13 @@
 		<tbody>
 			<tr><td><code>fog_zone</code></td><td>integer</td><td>zone to change the fog for (<code>0</code>&ndash;<code>8</code>)</td><td><code>0</code>&nbsp;(global)</td></tr>
 			<tr><td><code>fog_color_on</code></td><td>color</td><td>color of fog to set when turned on</td><td>&mdash;</td></tr>
-			<tr><td><code>fog_dist_on</code></td><td>float</td><td>distance (in feet) of fog to set when turned on</td><td>&mdash;</td></tr>
+			<tr><td><code>fog_dist_on</code></td><td>real</td><td>distance (in feet) of fog to set when turned on</td><td>&mdash;</td></tr>
 			<tr><td><code>fog_color_off</code></td><td>color</td><td>color of fog to set when turned off</td><td>&mdash;</td></tr>
-			<tr><td><code>fog_dist_off</code></td><td>float</td><td>distance (in feet) of fog to set when turned off</td><td>&mdash;</td></tr>
-			<tr><td><code>transition</code></td><td>time</td><td>length of transition between states, in milliseconds</td><td><code>0</code></td></tr>
+			<tr><td><code>fog_dist_off</code></td><td>real</td><td>distance (in feet) of fog to set when turned off</td><td>&mdash;</td></tr>
 		</tbody></table>
 		<p>When triggered, <code>KDTrapFog</code> changes the color and distance of fog for the specified fog zone. If the <code>fog_zone</code> parameter is <code>0</code> or undefined, the global fog is changed. (The initial fog, both global and per zone, is defined in the <em>Mission&nbsp;Variables&nbsp;&rarr;&nbsp;Fog&nbsp;Zones</em> dialog.)</p>
 		<p>When turned on, this script sets the fog color and distance for the specified zone to the values of the <code>fog_color_on</code> and <code>fog_dist_on</code> parameters, respectively. If the color is undefined or black (<code>#000000</code>), it will not be changed. If the distance is undefined or less than zero, it will not be changed. If the distance is zero (<code>0.0</code>), fog is disabled; transitions to and from disabled fog are handled correctly. When turned off, this script sets the fog color and distance to <code>fog_color_off</code> and <code>fog_dist_off</code>, with the same caveats.</p>
-		<p>The <code>transition</code> parameter specifies the length, in milliseconds, of the transition between the old and new values. If that parameter is undefined or set to <code>0</code>, the transition will be instantaneous. The usual trap control flags, locking, and timing (before the start of the transition, not its length) are respected.</p>
+		<p>This script supports <a href="rendering-effects.html#transitions">smooth transitions</a>; see that section for details. The usual trap control flags, locking, and timing are respected.</p>
 		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
 	</body>
 </html>

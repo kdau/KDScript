@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>Quick start - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>Quick start</h1>
+
+		<ol class="primary">
+			<li>Put the <code>KDScript.osm</code> file in your mission's main folder. <span class="note">(If this is a T1/TG mission, use the version from KDScript's <code>thief1</code> subfolder.)</span></li>
+			<li>Put the <code>ThiefLib.osl</code> file in your mission's main folder as well.</li>
+			<li>Open your mission in DromEd and run this command: <pre>script_load KDScript</pre></li>
+			<li>In your mission's readme file, include this text or something like it: <pre>This mission includes KDScript, copyright &copy; 2012&ndash;2013 Kevin Daughtridge (kdau).</pre></li>
+			<li>Choose from these tasks to continue:<ul>
+				<li><a href="#carry">have an AI drop what they are carrying</a></li>
+				<li><a href="#junk-tool">have a tool which Garrett must carry like junk</a></li>
+				<li><a href="#next-mission">change which mission will start after the current one</a></li>
+				<li><a href="#optional-reverse">have an objective that is both optional and reverse</a></li>
+				<li><a href="#short-text">keep all your short on-screen text in one file</a></li>
+				<li><a href="#subtitles">subtitle some of your AIs' and Garrett's speech</a></li>
+				<li><a href="#fog">change the fog during the mission</a></li>
+				<li><a href="#weather">change the weather (precipitation) during the mission</a></li>
+			</ul></li>
+		</ol>
+		<p class="note">The following scripts are not documented in this section; see their individual sections for details:<br/>
+			<a href="KDGetInfo.html"><code>KDGetInfo</code></a>,
+			<a href="KDQuestArrow.html"><code>KDQuestArrow</code></a>,
+			<a href="KDRenewable.html"><code>KDRenewable</code></a>,
+			<a href="KDStatMeter.html"><code>KDStatMeter</code></a>,
+			<a href="KDSyncGlobalFog.html"><code>KDSyncGlobalFog</code></a>,
+			<a href="KDToolSight.html"><code>KDToolSight</code></a>,
+			<a href="KDTrapEnvMap.html"><code>KDTrapEnvMap</code></a>.
+		</p>
+		<h3 id="carry">Have an AI drop what they are carrying</h3>
+		<ol class="primary">
+			<li>The AI(s) should have the carried object(s) attached with <em>Contains</em>, <em>CreatureAttachment</em>, or <em>~DetailAttachement</em> link(s).</li>
+			<li>Add <code>KDCarrier</code> to the AI's or AI archetype's <em>Scripts</em> property.</li>
+			<li>Add <code>KDCarried</code> to the carried object's or archetype's <em>Scripts</em> property.</li>
+			<li>The object will be dropped if the AI is killed or knocked out. If you also want it to be dropped when the AI is alerted, add <code>drop_on_alert=<strong>X</strong>;</code> to the object's or archetype's <em>Design Note</em> property, where <code><strong>X</strong></code> is the minimum alert level (<code>low</code>, <code>moderate</code>, or <code>high</code>).</li>
+			<li>If you don't want the object to be frobbable while the AI is carrying it, add <code>inert_until_dropped=true;</code> to the Design Note.</li>
+		</ol>
+		<p class="note">See the <a href="KDCarrier.html"><code>KDCarrier</code></a> and <a href="KDCarried.html"><code>KDCarried</code></a> sections for more details.</p>
+
+		<h3 id="junk-tool">Have a tool which Garrett must carry like junk</h3>
+		<ol class="primary">
+			<li>Add <code>KDJunkTool</code> to the tool object's or archetype's <em>Scripts</em> property.</li>
+			<li>Set the tool's <em>Engine Features&rarr;FrobInfo</em> property as follows:<ul>
+				<li><em>World Action</em>: &ldquo;Move&rdquo;</li>
+				<li><em>Inv Action</em>: &ldquo;Move&rdquo; if the tool can be thrown down, else &ldquo;None&rdquo;</li>
+				<li><em>Tool Action</em>: &ldquo;Script&rdquo;</li>
+			</ul></li>
+			<li>If the tool is heavy enough that Garrett should grunt and slow down when he picks it up, add <code>junk_tool_lugged=true;</code> to the tool's or archetype's <em>Design Note</em> property.</li>
+			<li>If the tool is a key and Garrett should drop it after using it, add <code>junk_tool_drop=true;</code> to the Design Note.</li>
+		</ol>
+		<p class="note">See the <a href="KDJunkTool.html"><code>KDJunkTool</code></a> section for more details.</p>
+
+		<h3 id="next-mission">Change which mission will start after the current one</h3>
+		<ol class="primary">
+			<li>Create a new <code>TrapTrig</code> fnord object.</li>
+			<li>Add <code>KDTrapNextMission</code> to the object's <em>Scripts</em> property.</li>
+			<li>Add <code>next_mission_on=<strong>X</strong>;</code> to the object's <em>Design Note</em> property, where <code><strong>X</strong></code> is the number of the new next mission.</li>
+			<li>Create a <em>ControlDevice</em> link from some trigger(s) to the object.</li>
+		</ol>
+		<p class="note">Works with T2 (TMA) only. See the <a href="KDTrapNextMission.html"><code>KDTrapNextMission</code></a> section for more details.</p>
+
+		<h3 id="optional-reverse">Have an objective that is both optional and reverse</h3>
+		<ol class="primary">
+			<li>Create a new <code>Marker</code> fnord object. (Only one object is needed to cover all your optional reverse objectives.)</li>
+			<li>Add <code>KDOptionalReverse</code> to the object's <em>Scripts</em> property.</li>
+			<li>Add your objective's description to the appropriate <code>goals.str</code> and create these quest variables, where <code><strong>X</strong></code> is the objective number:<ul>
+				<li><code>goal_state_<strong>X</strong></code> = <code>0</code></li>
+				<li><code>goal_visible_<strong>X</strong></code> = <code>1</code> (or <code>0</code> if it will be revealed later)</li>
+				<li><code>goal_optional_<strong>X</strong></code> = <code>1</code></li>
+			</ul></li>
+			<li>Do <em>not</em> make this objective reverse, give it a type, or set it in any <code>QuestVarTrap</code>.</li>
+			<li>Instead, create a separate, invisible objective that will track the <em>opposite</em> of the first objective's state. Create these quest variables, where <code><strong>X</strong></code> is the real objective's number and <code><strong>Y</strong></code> is the invisible objective's number:<ul>
+				<li><code>goal_state_<strong>Y</strong></code> = <code>0</code></li>
+				<li><code>goal_visible_<strong>Y</strong></code> = <code>0</code></li>
+				<li><code>goal_optional_<strong>Y</strong></code> = <code>1</code></li>
+				<li><code>goal_negation_<strong>Y</strong></code> = <code><strong>X</strong></code> <span class="note">(This is critical, as it tells the script what to do.)</span></li>
+			</ul></li>
+			<li>Give this invisible objective whatever type, target, loot, etc. are needed for the <em>opposite</em> of the real objective. If using a <code>QuestVarTrap</code>, set <code>goal_state_<strong>Y</strong></code> to <code>1</code> (complete) when you want the real objective to be failed.</li>
+			<li>If the invisible objective is completed during the mission, the real objective will be failed (cancelled). If it has not been cancelled by the time the mission ends, it will appear completed in the debriefing screen.</li>
+		</ol>
+		<p class="note">See the <a href="KDOptionalReverse.html"><code>KDOptionalReverse</code></a> section for more details.</p>
+
+		<h3 id="short-text">Keep all your short on-screen text in one file</h3>
+		<ol class="primary">
+			<li>Create a file <code>strings\short.str</code> (or a language-specific version like <code>strings\english\short.str</code>) in your mission directory.</li>
+			<li>For each short text message, add a line like this to the file: <pre>go_away: "KEEP OUT - NO SOLICITORS"</pre></li>
+			<li>Add <code>KDShortText</code> to the readable's or archetype's <em>Scripts</em> property.</li>
+			<li>Check the <em>Don't Inherit</em> box on the same <em>Scripts</em> property (or delete <code>StdBook</code>/<code>StdScroll</code> if present).</li>
+			<li>Set the readable's <em>Book&rarr;Text</em> property to name of the desired message in <code>short.str</code> (such as <code>go_away</code> for the message above).</li>
+			<li>If you want the text to appear in a different color, add <code>text_color=<strong>X</strong>;</code> to the readable's <em>Design Note</em> property, where <code><strong>X</strong></code> is a color such as <code>red</code>, <code>#66ff99</code>, or (RGB) <code>255,128,255</code>.</li>
+		</ol>
+		<p class="note">See the <a href="KDShortText.html"><code>KDShortText</code></a> section for more details.</p>
+
+		<h3 id="subtitles">Subtitle some of your AIs' and Garrett's speech</h3>
+		<ol class="primary">
+			<li>Open the <code>Creature</code> archetype and add <code>KDSubtitledAI</code> to its <em>Scripts</em> property.</li>
+			<li>Open the <code>VOTrap</code> archetype and add <code>KDSubtitledVO</code> to its <em>Scripts</em> property.</li>
+			<li>Create a file <code>strings\subtitles.str</code> (or a language-specific version like <code>strings\english\subtitles.str</code>) in your mission directory.</li>
+			<li>For each speech schema that you want to subtitle, add a line like this to the file (use the schema name as it appears in the schema files): <pre>no11103A: "That's the point, Margaret: now they will be happy."</pre></li>
+			<li>By default, subtitles are displayed like other text messages. If you want subtitles to appear in boxes in front of the AIs that are speaking, set the <code>subtitles_use_hud</code> quest variable to <code>1</code>.</li>
+			<li>If you want an AI or AI archetype to have subtitles in a specific color, add <code>subtitle_color=<strong>X</strong>;</code> to its <em>Design Note</em> property, where <code><strong>X</strong></code> is a color such as <code>red</code>, <code>#66ff99</code>, or (RGB) <code>255,128,255</code>. For Garrett, add it on the <code>Garrett</code> archetype.</li>
+		</ol>
+		<p class="note">See the <a href="subtitles.html">Subtitles</a> section for more details.</p>
+
+		<h3 id="fog">Change the fog during the mission</h3>
+		<ol class="primary">
+			<li>Create a new <code>TrapTrig</code> fnord object.</li>
+			<li>Add <code>KDTrapFog</code> to the object's <em>Scripts</em> property.</li>
+			<li>Add one or more of these parameters to the object's <em>Design Note</em> property, as desired:<dl>
+				<dt><code>fog_color_on=<strong>X</strong>;</code></dt><dd>where <code><strong>X</strong></code> is the fog's color, such as <code>red</code>, <code>#66ff99</code>, or (RGB) <code>255,128,255</code></dd>
+				<dt><code>fog_dist_on=<strong>X</strong>;</code></dt><dd>where <code><strong>X</strong></code> is the distance (thickness) of the fog, in feet</dd>
+				<dt><code>fog_zone=<strong>X</strong>;</code></dt><dd>where <code><strong>X</strong></code> is the fog zone you want to change, between <code>1</code> and <code>8</code><br/>(By default, the global fog is changed.)</dd>
+			</dl></li>
+			<li>If you want to the fog to change gradually over time, add <code>transition=<strong>X</strong>;</code> to the Design Note, where <code><strong>X</strong></code> is a length of time such as <code>500</code> (milliseconds), <code>15s</code> (seconds), or <code>5m</code> (minutes).</li>
+			<li>Create a <em>ControlDevice</em> link from some trigger(s) to the object.</li>
+		</ol>
+		<p class="note">See the <a href="KDTrapFog.html"><code>KDTrapFog</code></a> section for more details.</p>
+
+		<h3 id="weather">Change the weather (precipitation) during the mission</h3>
+		<ol class="primary">
+			<li>Create a new <code>TrapTrig</code> fnord object.</li>
+			<li>Add <code>KDTrapWeather</code> to the object's <em>Scripts</em> property.</li>
+			<li>Add one or more of these parameters to the object's <em>Design Note</em> property, as desired:<dl>
+				<dt><code>precip_freq_on=<strong>X</strong>;</code></dt><dd>where <code><strong>X</strong></code> is how many new drops fall per second</dd>
+				<dt><code>precip_speed_on=<strong>X</strong>;</code></dt><dd>where <code><strong>X</strong></code> is how fast the drops fall, in feet per second</dd>
+				<dt><code>precip_radius_on=<strong>X</strong>;</code></dt><dd>where <code><strong>X</strong></code> is how large each drop is, in feet</dd>
+				<dt><code>precip_opacity_on=<strong>X</strong>;</code></dt><dd>where <code><strong>X</strong></code> is how opaque the drops are, from <code>0</code> (transparent) to <code>1</code> (opaque)</dd>
+				<dt><code>precip_brightness_on=<strong>X</strong>;</code></dt><dd>where <code><strong>X</strong></code> is how bright the drops are, from <code>0</code> (black) to <code>1</code> (very bright)</dd>
+				<dt><code>precip_wind_on=<strong>X,Y,Z</strong>;</code></dt><dd>where <code><strong>X,Y,Z</strong></code> is the speed and direction of the wind, such as <code>-50,0,0</code> (fast to the north)</dd>
+			</dl></li>
+			<li>If you want to the weather to change gradually over time, add <code>transition=<strong>X</strong>;</code> to the Design Note, where <code><strong>X</strong></code> is a length of time such as <code>500</code> (milliseconds), <code>15s</code> (seconds), or <code>5m</code> (minutes).</li>
+			<li>Create a <em>ControlDevice</em> link from some trigger(s) to the object.</li>
+		</ol>
+		<p class="note">See the <a href="KDTrapWeather.html"><code>KDTrapWeather</code></a> section for more details.</p>
+
+		<address>This documentation is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

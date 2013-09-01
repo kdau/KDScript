@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>Introduction - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>Introduction</h1>
+
+		<p>KDScript is a custom script module for the Dark Engine games <a href="https://en.wikipedia.org/wiki/Thief:_The_Dark_Project">Thief: The Dark Project</a> and <a href="https://en.wikipedia.org/wiki/Thief_II:_The_Metal_Age">Thief&nbsp;II: The Metal Age</a>. It provides access to the new script services available with the unofficial <a href="http://www.ttlg.com/forums/showthread.php?t=141148">NewDark patch</a>, including dynamic weather and fog and nonlinear campaigns. It offers custom HUD elements including quest arrows, statistic meters, and tool sights. It also includes other useful features such as automatic subtitling of AI speech and voiceovers. The included mission demonstrates the scripts in this module; load this ZIP file as an FM to try it.</p>
+		<p>This is version <strong>0.7.0</strong> of KDScript, released on <strong>2013-09-01</strong> as <code>KDScript&#8209;0.7.0.zip</code>. (See the <a href="history.html">version history</a> for what has changed.) <strong>This module is in a public beta testing phase,</strong> and the script specifications below may change prior to the first official version. If you are interested in using any of these scripts in your mission, please follow <a href="http://www.ttlg.com/forums/showthread.php?t=141906">my announcements on TTLG</a> so you can have an up-to-date version. I would be glad to assist you in using these scripts and testing them in your mission; see my contact information below.</p>
+		<p>This module owes its existence to Telliamed's robust base libraries and to our NewDark benefactor Le&nbsp;Corbeau. Thank you!</p>
+
+		<h2 id="requirements">Requirements</h2>
+		<p>This module works with one of the following games and engine versions on one of the following operating systems:</p>
+		<dl>
+			<dt>Game</dt><dd><img class="iconr" alt="" src="thief1.png" /><img class="iconr" alt="" src="thief2.png" /><ul>
+				<li>Thief II: The Metal Age (T2/TMA)</li>
+				<li>Thief Gold (TG) <strong>*</strong></li>
+				<li class="disabled">Thief: The Dark Project (T1/TDP) <span class="note">(Not tested.)</span> <strong>*</strong></li>
+			</ul></dd>
+			<dt>Engine</dt><dd><img class="iconr" alt="" src="newdark.png" /><ul>
+				<li><a href="http://www.ttlg.com/forums/showthread.php?t=141148">NewDark patch</a> version 1.20 or higher</li>
+				<li class="disabled">NewDark 1.19 <span class="note">(This version has significant bugs. Some features are not available.)</span></li>
+			</ul></dd>
+			<dt>Operating system</dt><dd><ul>
+				<li>Windows XP or later version</li>
+				<li>Linux with a recent version of Wine</li>
+			</ul></dd>
+		</dl>
+		<p><strong>*</strong> A version of KDScript is available for use with Thief Gold (TG) and Thief: The Dark Project (T1/TDP). Not all of the scripts and features are available for these games; see individual scripts for details. <span class="important">Note that the module has not been tested with T1, only with TG.</span> The TG/T1 version of the module, along with a limited demo mission, is located in the <code>thief1</code> directory inside this ZIP file.</p>
+
+		<h2 id="usage">Using the scripts</h2>
+		<p>To use these scripts while creating a mission, they must be available to the Dark Engine. Place the <code>KDScript.osm</code> and <code>ThiefLib.osl</code> files in your mission's root (main) directory, to be included in the distributed ZIP file. (No other files from the KDScript archive are required.)</p>
+		<p>Next, open your mission in DromEd and add this module with the command <code>script_load KDScript</code>. You are now ready to add the scripts in this module to archetypes and objects.</p>
+		<p>Many of these scripts are configured using <a href="parameters.html">Design Note parameters</a> in addition to standard properties and links. See that section for more details.</p>
+		<p>The source code for <a href="https://github.com/kdau/KDScript">KDScript</a> and its <a href="https://github.com/kdau/ThiefLib">ThiefLib</a> support library are available on GitHub. This module is licensed under the GPL, which usually requires you to distribute it along with its source code. However, you may distribute the module in a fan mission without including the source; see the legal notes below.</p>
+		<p>If you have any questions or issues related to these scripts, please post them in the <a href="http://www.ttlg.com/forums/showthread.php?t=141906">KDScript thread on TTLG</a>, contact me by <a href="http://www.ttlg.com/forums/private.php?do=newpm&amp;u=66136">private message on TTLG</a>, or email me at <code>&lt;kevin&nbsp;AT&nbsp;kdau&nbsp;DOT&nbsp;com&gt;</code>.</p>
+
+		<h2 id="legal">Credits and legal notes</h2>
+		<p>Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. The script module is licensed under terms of the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>. The demo missions may be distributed in any way as long as it remains unmodified and I am credited for it. The module and missions are provided &ldquo;as is&rdquo; without warranty of any kind, either expressed or implied. This level was not made and is not supported by Looking Glass Studios or Eidos Interactive.</p>
+		<p>In addition to your rights under the GPL, you may distribute unmodified copies of <code>KDScript.osm</code> along with fan missions and expansion packs intended for use with Dark Engine based games without providing the source code for this software. The fan mission or expansion pack must be distributed in compliance with the terms of the DromEd End-User License Agreement issued by Eidos Interactive. The mission or pack must also include a notice in its documentation that it uses KDScript and that KDScript is copyright &copy; 2012&ndash;2013 Kevin Daughtridge (kdau).</p>
+
+		<p>The following works of others are included in or inspired the script module or demo mission:</p>
+		<ul>
+			<li>The Dark Engine and the original games using it are the work of Looking Glass Studios. This module must be used in compliance with the game and DromEd licenses from LGS and Square Enix.</li>
+			<li>The &ldquo;NewDark&rdquo; patch (1.19, 1.20, 1.21) to the Dark Engine, including new features accessed by these scripts, is the work of the pseudonymous &ldquo;Le&nbsp;Corbeau&rdquo;. The demo mission contains corona designs and textures from the NewDark distribution.</li>
+			<li>KDScript's underlying ThiefLib library is based in part on <a href="https://github.com/whoopdedo/publicscripts">Public Scripts</a>, the <a href="https://github.com/whoopdedo/scriptlib">Object Script Library</a>, and <a href="https://github.com/whoopdedo/dh2">Dark Hook 2</a> by <a href="http://dromed.whoopdedo.org/">Tom N. Harris (Telliamed)</a>. It also includes a modified version of his <a href="https://github.com/whoopdedo/lg">lg</a> library, which derives in part from earlier work by GayleSaver and Totality.</li>
+			<li>Subtitle support is based on <a href="http://www.ttlg.com/forums/showthread.php?t=107554">ideas from Nameless Voice and others</a>.</li>
+			<li>The NewDark &ldquo;raven&rdquo; icon in this documentation is by <a href="http://unit66.deviantart.com/">Unit66</a> and available under <a href="http://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA 3.0</a>.</li>
+			<li>The T2 demo mission includes a smoking pipe object by Targa (<a title="Targa's first site" href="http://www.thiefmissions.com/targa/">first site</a>, <a title="Targa's second site" href="http://www.grax.org/targa/">second site</a>), enhanced water textures by <a href="http://www.hulub.ch/customstuff.php">Renzo Thönen (Eshaktaar)</a>, and a rain ambient by <a href="http://www.ttlg.com/forums/showthread.php?t=142173">gigagooga</a>.</li>
+		</ul>
+
+		<address>Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge.</address>
+	</body>
+</html>
+

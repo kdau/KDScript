@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<link rel="stylesheet" type="text/css" href="doc.css" />
-		<title>KDOptionalReverse  - KDScript</title>
+		<title>KDOptionalReverse - KDScript</title>
 	</head>
 	<body>
 		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
@@ -12,21 +12,21 @@
 		<p class="notice"><img class="icon" alt="" src="thief2.png" /> This script works in T2 (TMA) only. In TG and T1 (TDP), which do not support optional objectives, it only writes an error to the monolog.</p>
 		<p>The standard <code>VictoryCheck</code> script does not support objectives that are both optional and reverse; it incorrectly marks these as failed instead of completed if they are incomplete at the end of a mission. <code>KDOptionalReverse</code> works around this behavior to allow optional reverse objectives to exist. For <em>each</em> desired optional reverse objective:</p>
 		<ul>
-			<li>The objective displayed to the player should start out incomplete, visible, and optional, but not reverse. It should not have any type (steal, kill, loot, location) and nothing in the mission should change its state (other than this script).</li>
+			<li>The &ldquo;real&rdquo; objective (displayed to the player) should start out incomplete and optional, but <em>not</em> reverse. It should not have any type (steal, kill, loot, location) and nothing in the mission should change its state (other than this script). (Its visibility may be changed as needed.)</li>
 			<li>There should instead be an invisible objective that implements the <em>opposite</em> of the actual conditions, whether they are one of the four predefined types or set by quest variable traps. This objective should start out incomplete, invisible, and optional, but <em>not</em> reverse (since it's the opposite).</li>
-			<li>If quest variable traps (or other scripts that modify the <code>goal_state_X</code>) are being used, remember that they should be configured to set the <em>opposite</em> of the intended state: for a breach, set to <code>1</code>&nbsp;(complete) instead of <code>3</code>&nbsp;(failed).</li>
-			<li>The invisible objective should have a quest variable <code>goal_negation_X</code> whose value is the number of the visible objective. For example, if the visible objective is #3 and the invisible objective is #6, there should be a <code>goal_negation_6</code> quest variable whose value is <code>3</code>.</li>
+			<li>If quest variable traps (or other scripts that modify the <code>goal_state_<strong>X</strong></code>) are being used, remember that they should be configured to set the <em>opposite</em> of the intended state: for a breach, set to <code>1</code>&nbsp;(complete) instead of <code>3</code>&nbsp;(failed).</li>
+			<li>The invisible objective should have a quest variable <code>goal_negation_<strong>X</strong></code> whose value is the number of the &ldquo;real&rdquo; objective. For example, if the &ldquo;real&rdquo; objective is #3 and the invisible objective is #6, there should be a <code>goal_negation_6</code> quest variable whose value is <code>3</code>.</li>
 		</ul>
-		<p>This script should be placed on a fnord <em>other than</em> the starting point. At <code>Sim</code>, it will look for each objective with a <code>goal_negation_X</code> set and begin monitoring its state. Whenever the state of the &ldquo;invisible&rdquo; objective changes, the state of the &ldquo;visible&rdquo; objective will be updated per the table below. At the end of the mission, this translation will happen again to correct any changes by <code>VictoryCheck</code>.</p>
+		<p>This script should be placed on a fnord <em>other than</em> the starting point. At <code>Sim</code>, it will look for each objective with a <code>goal_negation_<strong>X</strong></code> set and begin monitoring its state. Whenever the state of the invisible objective changes, the state of the &ldquo;real&rdquo; objective will be updated per the table below. At the end of the mission, this translation will happen again to correct any changes by <code>VictoryCheck</code>.</p>
 		<table>
 			<colgroup><col class="type"/><col class="type"/><col class="type"/><col class="description"/></colgroup>
-			<thead><tr><th>Mission stage</th><th>&ldquo;Invisible&rdquo; objective</th><th>&ldquo;Visible&rdquo; objective</th><th>Notes</th></tr></thead>
+			<thead><tr><th>Mission stage</th><th>Invisible objective</th><th>&ldquo;Real&rdquo; objective</th><th>Notes</th></tr></thead>
 		<tbody>
 			<tr><td>during&nbsp;mission</td><td><code>0</code>&nbsp;(incomplete)</td><td><code>0</code>&nbsp;(incomplete)</td><td>&mdash;</td></tr>
 			<tr><td>end&nbsp;of&nbsp;mission</td><td><code>0</code>&nbsp;(incomplete)</td><td><code>1</code>&nbsp;(complete)</td><td>The conditions were never met, so the objective is complete.</td></tr>
 			<tr><td rowspan="3">any</td><td><code>1</code>&nbsp;(complete)</td><td><code>2</code>&nbsp;(cancelled)</td><td>The conditions were met, so the objective was breached.</td></tr>
 			<tr><td><code>2</code>&nbsp;(cancelled)</td><td><code>2</code>&nbsp;(cancelled)</td><td>Something (not <code>VictoryCheck</code>) has cancelled the objective.</td></tr>
-			<tr><td><code>3</code>&nbsp;(failed)</td><td><code>3</code>&nbsp;(failed)</td><td>Like any optional objective, the &ldquo;invisible&rdquo; objective should never reach a state of <code>3</code>&nbsp;(failed), or else the mission will fail.</td></tr>
+			<tr><td><code>3</code>&nbsp;(failed)</td><td><code>3</code>&nbsp;(failed)</td><td>Like any optional objective, the invisible objective should never reach a state of <code>3</code>&nbsp;(failed), or else the mission will fail.</td></tr>
 		</tbody></table>
 		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
 	</body>

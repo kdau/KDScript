@@ -4,12 +4,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<link rel="stylesheet" type="text/css" href="doc.css" />
-		<title>KDGetInfo  - KDScript</title>
+		<title>KDGetInfo - KDScript</title>
 	</head>
 	<body>
 		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
 		<h1>KDGetInfo</h1>
-		<p>Every time the mission is started/loaded or enters game mode (returns from a menu), <code>KDGetInfo</code> populates a number of mission quest variables with information about the game environment. These values are available at <code>Sim</code> time and can be tracked by <code>TrigQVar</code>. They are also updated when this script receives an <code>UpdateVariables</code> message. They are deleted as the script unloads, to prevent them from being stored with the mission in DromEd.</p>
+		<p>Every time the mission is started or loaded, <code>KDGetInfo</code> populates a number of mission quest variables with information about the game environment. These values are available at <code>Sim</code> time and can be tracked by <code>TrigQVar</code>. They are also updated when this script receives an <code>UpdateVariables</code> message and, for T2 (TMA), when the player returns from a menu. They are deleted as the script unloads, to prevent them from being stored with the mission in DromEd.</p>
 		<table>
 			<colgroup><col class="identifier"/><col class="description"/><col class="description"/></colgroup>
 			<thead><tr><th>Quest variable</th><th>Description</th><th>Values</th></tr></thead>

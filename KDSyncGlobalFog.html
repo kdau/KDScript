@@ -4,10 +4,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<link rel="stylesheet" type="text/css" href="doc.css" />
-		<title>KDSyncGlobalFog  - KDScript</title>
+		<title>KDSyncGlobalFog - KDScript</title>
 	</head>
 	<body>
-		<div id="trail"><a href="index.html">KDScript</a> &rarr; Rendering effects &rarr;</div>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr; <a href="rendering-effects.html">Rendering effects</a> &rarr;</div>
 		<h1>KDSyncGlobalFog</h1>
 		<table>
 			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
@@ -15,15 +15,15 @@
 		<tbody>
 			<tr><td><code>sync_fog_color</code></td><td>boolean</td><td>whether to synchronize the global fog color</td><td><code>true</code></td></tr>
 			<tr><td><code>sync_fog_dist</code></td><td>boolean</td><td>whether to synchronize the global fog distance</td><td><code>true</code></td></tr>
-			<tr><td><code>fog_dist_mult</code></td><td>float</td><td>value to multiply zonal fog distance by</td><td><code>1.0</code></td></tr>
-			<tr><td><code>fog_dist_add</code></td><td>float</td><td>value to add to zonal fog distance after multiplying</td><td><code>0.0</code></td></tr>
+			<tr><td><code>fog_dist_mult</code></td><td>real</td><td>value to multiply zonal fog distance by</td><td><code>1.0</code></td></tr>
+			<tr><td><code>fog_dist_add</code></td><td>real</td><td>value to add to zonal fog distance after multiplying</td><td><code>0.0</code></td></tr>
 			<tr><td><code>sync_fog_disabled</code></td><td>boolean</td><td>whether to disable global fog if room's is disabled</td><td><code>false</code></td></tr>
-			<tr><td><code>transition</code></td><td>time</td><td>length of transition between states, in milliseconds</td><td><code>0</code></td></tr>
 		</tbody></table>
 		<p>When placed on the <code>Player</code> object (via the starting point), <code>KDSyncGlobalFog</code> keeps the color and/or distance of the global fog synchronized with that of the current room's fog zone. Since only global fog can apply to the various NewSky layers, this allows the sky fog to match the (near-)ground fog. (The initial fog, both global and per zone, is defined in the <em>Mission&nbsp;Variables&nbsp;&rarr;&nbsp;Fog&nbsp;Zones</em> dialog.)</p>
-		<p>If the <code>sync_fog_color</code> parameter is <code>true</code>, the fog color will be synchronized; if <code>sync_fog_dist</code> is true, the fog distance will be synchronized. The fog distance used globally is equal to the zonal fog distance, multiplied by <code>fog_dist_mult</code>, added to <code>fog_dist_add</code>. The <code>transition</code> parameter specifies the length, in milliseconds, of the transition between the old and new values. If that parameter is undefined or set to <code>0</code>, the transition will be instantaneous.</p>
+		<p>If the <code>sync_fog_color</code> parameter is <code>true</code>, the fog color will be synchronized; if <code>sync_fog_dist</code> is true, the fog distance will be synchronized. The fog distance used globally is equal to the zonal fog distance, multiplied by <code>fog_dist_mult</code>, added to <code>fog_dist_add</code>.</p>
+		<p>This script supports <a href="rendering-effects.html#transitions">smooth transitions</a>; see that section for details.</p>
 		<p>When looking at the sky from indoor areas (ones without fog), it is expected that the outdoor fog levels should apply. As such, this script ignores rooms where fog is set to <code>Disabled</code>, leaving the global fog unchanged from the last (outdoor) zone. If the <code>sync_fog_disabled</code> parameter is <code>true</code>, however, global fog will instead be disabled in rooms where fog is disabled. Regardless of this setting, global fog will be disabled in <em>fog zones</em> where fog is disabled (distance is set to <code>0.0</code>). </p>
-		<p>Since this script continuously alters the global fog settings, no room in a mission using this script should be set to use global fog; use only the zones (1&ndash;8) or <code>Disabled</code>. This script <em>is</em> compatible with <a href="KDTrapFog.html"><code>KDTrapFog</code></a> when that script's <code>fog_zone</code> parameter is not <code>0</code>; that script will notify this one automatically of changes. This script is <em>not</em> compatible, of course, with <code>KDTrapFog</code> with a <code>fog_zone</code> of <code>0</code> (global).</p>
+		<p>Since this script continuously alters the global fog settings, no room in a mission using this script should be set to use global fog; use only the zones (1&ndash;8) or <em>Disabled</em>. This script <em>is</em> compatible with <a href="KDTrapFog.html"><code>KDTrapFog</code></a> when that script's <code>fog_zone</code> parameter is not <code>0</code>; that script will notify this one automatically of changes. This script is <em>not</em> compatible, of course, with <code>KDTrapFog</code> with a <code>fog_zone</code> of <code>0</code> (global).</p>
 		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
 	</body>
 </html>

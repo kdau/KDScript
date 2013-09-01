@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>Design Note parameters - KDScript</title>
+		<style type="text/css"><!--
+			#color-chart
+			{
+				margin: 0.5em; list-style-type: none; background-color: #000;
+				-moz-column-count: 6; -moz-column-gap: 0em;
+				-webkit-column-count: 6; -webkit-column-gap: 0em;
+				column-count: 6; column-gap: 0em;
+			}
+				#color-chart li { margin: 0em; padding: 0.25em 1em; }
+		--></style>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>Design Note parameters</h1>
+		<p>Since Dark Engine script modules cannot create their own special properties, custom scripts are instead configured with &ldquo;parameters&rdquo; stored in the <em>Editor&rarr;Design Note</em> property. These parameters have a similar syntax across the various custom script modules (<a href="http://dromed.whoopdedo.org/public_scripts/index">Public Scripts</a>, <a href="http://dromed.whoopdedo.org/tnhscript/index">tnhScript</a>, <a href="http://www.ttlg.com/forums/showthread.php?t=134166">NVScript</a>, <a href="http://thief.starforge.co.uk/twscript/README.html">TWScript</a>, and KDScript). Since there are some differences, however, the KDScript parameter syntax is documented here.</p>
+		<p>In KDScript, an object inherits Design Note parameter values individually from its metaproperties, archetype, and ancestors. For example, if a parameter is set on an object's distant parent archetype and not set on any lower archetypes or the concrete object itself, the object will inherit that parameter regardless of which parents have Design Notes of their own.</p>
+		<p>Further, Design Note parameters in KDScript may be changed during the course of the mission. Wherever possible, KDScript scripts will use the new values from then on.</p>
+		<h2>General syntax</h2>
+		<p>The <em>Design Note</em> property is a string; it is separated into individual parameters with semicolons (<code>;</code>). Each parameter consists of:</p>
+		<dl>
+			<dt>a parameter name</dt><dd>such as <code>renewable_threshold</code>,</dd>
+			<dt>a difficulty index</dt><dd><em>(optional)</em> such as <code>[1,2]</code>,</dd>
+			<dt>an equals sign</dt><dd><code>=</code>,</dd>
+			<dt>a value</dt><dd>such as <code>3</code>.</dd>
+		</dl>
+		<p>Whitespace (spaces, tabs, line breaks) may appear between parameters and between parts of parameters, and will be ignored. Parameter names are not case-sensitive. The value may be surrounded by single (<code>''</code>) or double (<code>""</code>) quotation marks, and must be quoted if it is to include any semicolons or quotation marks itself. Backslashes, single quotes, and double quotes should be preceded by a backslash (i.e. <code>\\</code>, <code>\'</code>, and <code>\"</code>). Here is an example of a longer Design Note:</p>
+		<pre class="wrap">renewable_threshold[0] = 6; renewable_threshold [1,2]=3  ; renewable_physical=true; transition=30s; curve=quadratic; precip_freq_on=100.5;precip_wind_on=10,-2.5,0; fog_color_on=#c862a3; message =   "  He called me a \"taffer\"!"</pre>
+		<h2>Difficulty variation</h2>
+		<p>In KDScript, all parameter values may vary based on the player's chosen difficulty level. Any of the difficulty indexes below may appear between square brackets (<code>[]</code>) after any parameter name. The following value will only be used if the difficulty matches. If a parameter appears more than once in a Design Note, the last value for the parameter with a matching difficulty will be used. See the example Design Note above for an example.</p>
+		<dl>
+			<dt><code>0</code>, <code>n</code>, or <code>normal</code></dt><dd>Normal difficulty, such as <code>renewable_threshold[0]=6</code></dd>
+			<dt><code>1</code>, <code>h</code>, or <code>hard</code></dt><dd>Hard difficulty, such as <code>renewable_threshold[1]=4</code></dd>
+			<dt><code>2</code>, <code>e</code>, or <code>expert</code></dt><dd>Expert difficulty, such as <code>renewable_threshold[2]=2</code></dd>
+			<dt><code>0,1</code>, <code>0-1</code>, or <code>n,h</code></dt><dd>Normal or Hard difficulty, such as <code>inert_until_dropped[0,1]=false</code></dd>
+			<dt><code>1,2</code>, <code>1-2</code>, or <code>h,e</code></dt><dd>Hard or Expert difficulty, such as <code>drop_on_alert[1,2]=false</code></dd>
+			<dt><code>0,1,2</code>, <code>0-2</code>, <code>n,h,e</code>, <code>any</code></dt><dd>any difficulty (default if no index given)</dd>
+		</dl>
+		<h2>Value types</h2>
+		<p>Each parameter has one of the types described below. Its value must be formatted accordingly. Types marked with an asterisk (<strong>*</strong>) can be set via a quest variable; to do this, set the parameter value to a dollar sign (<code>$</code>) followed by the quest variable name, for example <code>renewable_threshold=$max_arrows</code>.</p>
+		<dl class="primary">
+			<dt>boolean *</dt><dd>A true-or-false value, where values starting with <code>T</code>, <code>t</code>, <code>Y</code>, or <code>y</code> are true, numeric values other than zero are true, and all other values are false. Examples: <code>true</code>, <code>1</code>, <code>yes</code>; <code>false</code>, <code>0</code>, <code>no</code>.</dd>
+			<dt>color</dt><dd><ul>
+				<li>A hexadecimal RGB color number in <code>#RRGGBB</code> or <code>#RGB</code> format, such as <code style="color: #66ff99;">#66ff99</code> or <code style="color: #a73;">#a73</code>; or</li>
+				<li>a decimal RGB color triplet <code>R,G,B</code> where values range from <code>0</code> to <code>255</code>, such as <code style="color: #ff80ff">255,128,255</code>; or</li>
+				<li>one of the following named colors: <ul id="color-chart">
+					<li style="color: #00ffff;">aqua</li>
+					<li style="background-color: #666; color: #080808;">black</li>
+					<li style="color: #0000ff;">blue</li>
+					<li style="color: #80ff80;">chartreuse</li>
+					<li style="color: #ff8000;">dodger</li>
+					<li style="color: #ff00ff;">fuchsia</li>
+					<li style="color: #ffff80;">gold</li>
+					<li style="color: #808080;">gray</li>
+					<li style="color: #008000;">green</li>
+					<li style="color: #808080;">grey</li>
+					<li style="color: #80ff00;">lawn</li>
+					<li style="color: #00ff00;">lime</li>
+					<li style="color: #800000;">maroon</li>
+					<li style="color: #000080;">navy</li>
+					<li style="color: #808000;">olive</li>
+					<li style="color: #ff8000;">orange</li>
+					<li style="color: #ff80ff;">orchid</li>
+					<li style="color: #ff0080;">pink</li>
+					<li style="color: #800080;">purple</li>
+					<li style="color: #ff0000;">red</li>
+					<li style="color: #ff8080;">rose</li>
+					<li style="color: #c0c0c0;">silver</li>
+					<li style="color: #8080ff;">slate</li>
+					<li style="color: #00ff80;">spring</li>
+					<li style="color: #0080ff;">steel</li>
+					<li style="color: #008080;">teal</li>
+					<li style="color: #80ffff;">turquoise</li>
+					<li style="color: #8000ff;">violet</li>
+					<li style="color: #ffffff;">white</li>
+					<li style="color: #ffff00;">yellow</li>
+				</ul></li>
+			</ul></dd>
+			<dt>integer *</dt><dd>A number without any fractional or decimal part, whether positive, negative, or zero, such as <code>6128</code> or <code>-73</code>.</dd>
+			<dt>object *</dt><dd><ul>
+				<li>The DromEd name of a concrete object, metaproperty, or archetype (including stimuli, rooms, flow groups, etc.), such as <code>AirCrystal</code> or <code>Player</code>; or</li>
+				<li>the number of a concrete object, metaproperty, or archetype, such as <code>-8</code> or <code>127</code>.</li>
+			</ul></dd>
+			<dt>real *</dt><dd>A number with an <em>optional</em> fractional or decimal part, such as <code>82.34</code>, <code>-16</code>, or <code>0.4</code>.</dd>
+			<dt>string</dt><dd>Text of any kind, such as <code>"Besie something?"</code> or <code>obj\txt16\bottle1</code>. Quotation marks around the text are recommended if the text has spaces or special characters in it (see the rules above).</dd>
+			<dt>time *</dt><dd><ul>
+				<li>A positive integer number of milliseconds, such as <code>500</code> (half a second); or</li>
+				<li>a positive real number of seconds followed by <code>s</code>, such as <code>15s</code>; or</li>
+				<li>a positive real number of minutes followed by <code>m</code>, such as <code>5.2m</code>.</li>
+			</ul></dd>
+			<dt>vector</dt><dd>A triplet of three real numbers separated by commas, usually XYZ coordinates, such as <code>-10.0,2.5,4.0</code>.</dd>
+		</dl>
+		<address>This documentation is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<link rel="stylesheet" type="text/css" href="doc.css" />
-		<title>KDCarried  - KDScript</title>
+		<title>KDCarried - KDScript</title>
 	</head>
 	<body>
 		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
@@ -19,19 +19,20 @@
 		</tbody></table>
 		<p><code>KDCarried</code> manages physical objects that are carried or worn by AIs, but are dropped when appropriate. Objects with this script should be linked to an AI having the <a href="KDCarrier.html"><code>KDCarrier</code></a> script in one of the following ways:</p>
 		<ul>
-			<li>a <code>Contains</code> link of type <code>Alternate</code> or <code>Belt</code> from the AI to the object<br/>(The pickable pocket count will be decremented if the link is broken.)</li>
-			<li>a <code>CreatureAttachment</code> link from the AI to the object</li>
-			<li>a <code>DetailAttachement</code> link from the object to the AI<br/>(The new-to-NewDark <code>DetailAttachement</code> link only supports non-physical objects, but offers more flexible relative positioning. Due to a technical limitation, a clone of the object will be dropped while the original is destroyed. As with cloning in DromEd, links are not preserved. The object must not have or inherit a <code>Physics\Model\Type</code> property with the type <code>None</code>.)</li>
+			<li>a <em>Contains</em> link of type &ldquo;Alternate&rdquo; or &ldquo;Belt&rdquo; from the AI to the object<br/>(If the <code>inert_until_dropped</code> parameter is <code>true</code> and thus the object cannot be pickpocketed, the pickable pocket count will be reduced by one.)</li>
+			<li>a <em>CreatureAttachment</em> link from the AI to the object</li>
+			<li>a <em>DetailAttachement</em> link from the object to the AI<br/>(The new-to-NewDark <em>DetailAttachement</em> [sic] link only supports non-physical objects, but offers more flexible relative positioning. Due to a technical limitation, a clone of the object will be dropped while the original is destroyed. As with cloning in DromEd, links are not preserved. The object must not have or inherit a <em>Physics&rarr;Model&rarr;Type</em> property with the type &ldquo;None&rdquo;.)</li>
 		</ul>
 		<p>When triggered, this script will remove any links between its object and the AI and cause the object to drop (deadfall). It responds to the following triggers:</p>
 		<ul>
 			<li>a <code>Drop</code> message</li>
-			<li>a <code>CarrierBrainDead</code> message from <code>KDCarrier</code> (sent when the carrier AI is slain or knocked out)</li>
+			<li>a <code>CarrierBrainDead</code> message from <code>KDCarrier</code> (sent when the carrier AI is killed or knocked out)</li>
+			<li>a <code>CarrierSlain</code> message from <code>KDCarrier</code> (sent when the carrier AI is slain under certain other circumstances)</li>
 			<li>a <code>CarrierAlerted</code> message from <code>KDCarrier</code> (sent when the carrier AI is alerted), if the <code>drop_on_alert</code> parameter on this object is greater than <code>0</code> but less than or equal to the AI's new alert level</li>
 		</ul>
 		<p>If the <code>inert_until_dropped</code> parameter is <code>true</code>, this script will add the <code>FrobInert</code> metaproperty to its object on <code>Sim</code> (or <code>Create</code> for dynamically created objects) and remove it when the object is dropped.</p>
-		<p>If the <code>off_when_dropped</code> parameter is <code>true</code>, when this script drops the object it will send the <code>TurnOff</code> message to the object itself and along any <code>ControlDevice</code> links from the object.</p>
-		<p>If the object is non-physical, it will be given an appropriate physics model before it drops. If the object is in an invalid position (because e.g. the AI fell partially into a wall), the script will try not to drop it, but this cannot always be detected. In either case, <code>inert_until_dropped</code> and <code>off_when_dropped</code> will still be respected.</p>
+		<p>If the <code>off_when_dropped</code> parameter is <code>true</code>, when this script drops the object it will send the <code>TurnOff</code> message to the object itself and along any <em>ControlDevice</em> links from the object.</p>
+		<p>If the object is non-physical, it will be given an appropriate physics model before it drops. In T2 (TMA), if the object is in an invalid position (because e.g. the AI fell partially into a wall), the script will not allow it to drop. (<code>inert_until_dropped</code> and <code>off_when_dropped</code> will still be respected.)</p>
 		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
 	</body>
 </html>

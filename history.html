@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>Version history - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>Version history</h1>
+		<dl class="primary">
+			<dt id="v0.7.0" class="primary">Version 0.7.0 (2013-09-01)</dt><dd><ul>
+				<li class="notice">The module now requires the new support library <code>ThiefLib.osl</code> instead of <code>DH2.osl</code>.</li>
+				<li><code>KDCarried</code>: The pickable pocket count will now be reduced just after sim, but only when a <em>Contains</em>-linked object has <code>inert_until_dropped=true</code>.</li>
+				<li><code>KDCarrier</code>: The AI will now send messages just after the beginning of the knockout or death sequence, instead of at the end; thanks to The Watcher for suggesting the technique used.</li>
+				<li><code>KDJunkTool</code>: The tool's player arm model, if any, will now be displayed while it is carried. Any previously selected weapon will now be reselected when tool is dropped.</li>
+				<li><code>KDQuestArrow</code>: The arrow can now be optionally limited to a certain range of distance from the player.</li>
+				<li><code>KDRenewable</code>: The threshold and frequency are now preferably specified in parameters, though backwards compatibility has been kept. Created objects' physics models can now be optionally left intact.</li>
+				<li><code>KDSubtitledVO</code>: Align the start time of the sound and subtitle more precisely.</li>
+				<li><code>KDToolSight</code>: A stack of tool sight objects can now be optionally deselected when one is thrown.</li>
+				<li><code>KDTrapWeather</code>: The radius, opacity, brightness, and wind speed/direction of the precipitation can now be changed as well.</li>
+				<li class="important">All <a href="parameters.html">Design Note parameters</a> are now individually inheritable.</li>
+				<li>As such, HUD element scripts no longer check an object named <code>CustomHUD</code> for their parameters; instead, set those default parameter values on a sufficiently high-level archetype.</li>
+				<li class="important">All Design Note parameters can now vary by difficulty.</li>
+				<li>All color transitions and gradients are now calculated more smoothly (in the <a href="http://en.wikipedia.org/wiki/Lab_color_space">CIE L*a*b* color space</a>).</li>
+				<li>Fog and weather transitions now offer a <a href="rendering-effects.html#transitions">range of curves</a> other than linear.</li>
+				<li>The entire module has been rebuilt on top of my new ThiefLib wrapper library. While major changes have been noted above, there may be other minor differences in behavior from previous versions.</li>
+			</ul></dd>
+			<dt id="v0.5.0">Version 0.5.0 (2013-07-17)</dt><dd><ul>
+				<li><code>KDCustomHUD</code>: <span class="important">This script has been <strong>removed</strong> and is no longer needed by HUD element scripts.</span> It is still possible to place parameter defaults on an object named <code>CustomHUD</code>, but <code>ScriptParams</code> links with the data <code>CustomHUD</code> are no longer consulted.</li>
+				<li class="important"><code>KDQuestArrow</code>, <code>KDStatMeter</code>, <code>KDToolSight</code>: fix various disappearing issues.</li>
+				<li><code>KDQuestArrow</code>: determine initial enabled status intelligently.</li>
+				<li><code>KDStatMeter</code>: add optional text labels.</li>
+				<li><code>KDTrapFog</code>: improve transitions to/from disabled fog.</li>
+				<li><code>KDSyncGlobalFog</code>: properly handle views of sky from indoors.</li>
+				<li><code>KDJunkTool</code>: properly handle frobs in inventory without targets.</li>
+				<li class="important"><code>KDOptionalReverse</code>: new script.</li>
+				<li class="important"><code>KDRenewable</code>: new script.</li>
+				<li class="important">Support for Thief Gold (TG) and Thief: The Dark Project (T1/TDP) added.</li>
+				<li>Documentation overhauled.</li>
+			</ul></dd>
+			<dt id="v0.3.0">Version 0.3.0 (2013-07-11)</dt><dd><ul>
+				<li><code>KDQuestArrow</code>: draw shadow behind symbol/text for visibility.</li>
+				<li><code>KDStatMeter</code>: provide intelligent defaults for statistic range; add offset parameters.</li>
+				<li><code>KDToolSight</code>: add offset parameters.</li>
+				<li><code>KDTrapEnvMap</code>: disable script with NewDark 1.19.</li>
+				<li class="important"><code>KDTrapWeather</code>: fix crash when triggered.</li>
+				<li><code>KDCarried</code>: try not to drop objects outside the world.</li>
+				<li class="important"><code>KDJunkTool</code>: new script.</li>
+				<li>Preliminary work on TG/T1 compatibility.</li>
+			</ul></dd>
+			<dt id="v0.1.1">Version 0.1.1 (2013-07-08)</dt><dd><ul>
+				<li><code>KDSubtitledAI</code>, <code>KDSubtitledVO</code>: accept object name as data of <code>Subtitle</code> message.</li>
+				<li>Fixed issue preventing module from loading on Windows XP.</li>
+			</ul></dd>
+			<dt id="v0.1.0.1">Version 0.1.0.1 (2013-07-07)</dt><dd><ul>
+				<li>Included some missing source files.</li>
+			</ul></dd>
+			<dt id="v0.1.0">Version 0.1.0 (2013-07-06)</dt><dd><ul>
+				<li>Initial alpha release.</li>
+			</ul></dd>
+		</dl>
+		<address>This documentation is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

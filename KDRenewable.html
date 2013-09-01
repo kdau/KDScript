@@ -4,17 +4,30 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<link rel="stylesheet" type="text/css" href="doc.css" />
-		<title>KDRenewable  - KDScript</title>
+		<title>KDRenewable - KDScript</title>
 	</head>
 	<body>
 		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
 		<h1>KDRenewable</h1>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>renewable_frequency</code></td><td>time</td><td>how often to check the inventory, in milliseconds</td><td><code>180000</code> (3 minutes)</td></tr>
+			<tr><td><code>renewable_threshold</code></td><td>integer</td><td>maximum count of the object allowed in inventory</td><td><code>0</code></td></tr>
+			<tr><td><code>renewable_physical</code></td><td>boolean</td><td>whether to keep physics models on created objects</td><td><code>false</code></td></tr>
+		</tbody></table>
 		<p><code>KDRenewable</code> ensures that a supply of an object is always available to the player. Whenever the player's inventory stack count of the object drops below a threshold, a new instance of the object is created at the <code>KDRenewable</code> marker's position. Only one new instance may exist at a time, so another will not be created until the previous one has been picked up or destroyed.</p>
-		<p>The renewable object is identified by a <code>ScriptParams</code> link from the <code>KDRenewable</code> marker to an archetype. This script correctly handles the standard T2 crystal types, looking for the corresponding arrows in inventory. It also correctly handles archetypes (or their parents) with <code>Transmute</code> links, as used by the <a href="http://dromed.whoopdedo.org/public_scripts/transmogrify"><code>Transmogrify</code></a> script in Public Scripts.</p>
-		<p>Only one <code>ScriptParams</code> link may exist from the marker. The data of that link must be the stack count threshold: the maximum amount of the object that can be in the player's inventory.</p>
-		<p>By default, the inventory check is performed every 180 seconds (three minutes). If the inventory stack count is below the threshold and any previously created instance has been consumed, a new instance is created. To change the delay between checks, set the <code>Script\Timing</code> property to a different amount of time, in seconds.</p>
-		<p>The new instance is created without a physics model or velocity, so the marker should be positioned and rotated appropriately for the object being created.</p>
-		<p class="notice">This script is a replacement for the <code>RenewableResource</code> script in T2's <code>miss16.osm</code>, whose additional behaviors can lead to bugs in missions. It does <em>not</em> share that script's feature of notifying the managing object with a <code>TurnOn</code> message when a created object is picked up.</p>
+		<p>The renewable object is identified by a <em>ScriptParams</em> link with the data <code>Renewable</code> from the <code>KDRenewable</code> marker to an archetype. This script correctly handles the standard T2 crystal types, looking for the corresponding arrows in inventory. It also correctly handles archetypes (or their parents) with <em>Transmute</em> links, as used by the <a href="http://dromed.whoopdedo.org/public_scripts/transmogrify"><code>Transmogrify</code></a> script in Public Scripts.</p>
+		<p>The <code>renewable_threshold</code> parameter specifies the maximum stack count of the object that may be in the player's inventory. The <code>renewable_frequency</code> parameter specifies how often the inventory check is performed. At each interval, if the inventory stack count is below the threshold and any previously created instance has been consumed, a new instance is created.</p>
+		<p>By default, the new instance is created without a physics model to avoid, for example, a bomb or projectile immediately making impact. (Once an object has entered and left the player's inventory, the engine will make it physical again.) As such, the marker should be positioned and rotated appropriately for the object being created. If the <code>renewable_physical</code> parameter is <code>true</code>, however, any physics model on the created object will not be removed (though neither will one be added if the archetype does not specify one).</p>
+		<div class="notice">
+			<p>This script is a replacement for the <code>RenewableResource</code> script in T2's <code>miss16.osm</code>, whose additional behaviors can lead to bugs in missions. It does <em>not</em> share that script's feature of notifying the managing marker with a <code>TurnOn</code> message when a created object is picked up. For backwards compatibility with that script:</p>
+			<ul>
+				<li>The threshold may instead be specified in the data of the <em>ScriptParams</em> link (e.g. for a threshold of 3 the data would be <code>3</code> instead of <code>Renewable</code>).</li>
+				<li>The frequency may instead be specified in the <em>Script&rarr;Timing</em> property, in seconds instead of milliseconds. (The property will only be used if it is set and the <code>renewable_frequency</code> parameter is not explicitly set.)</li>
+			</ul>
+		</div>
 		<address>This script is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
 	</body>
 </html>

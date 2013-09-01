@@ -8,13 +8,24 @@
 	</head>
 	<body>
 		<h1>KDScript</h1>
-		<ul id="contents" class="primary">
-			<li><a href="#intro">Introduction</a><ul>
-				<li><a href="#requirements">Requirements</a></li>
-				<li><a href="#usage">Using the scripts</a></li>
-				<li><a href="#legal">Credits and legal notes</a></li>
+		<div class="notice">
+			<p>KDScript is a custom script module for the Dark Engine games <a href="https://en.wikipedia.org/wiki/Thief:_The_Dark_Project">Thief: The Dark Project</a> and <a href="https://en.wikipedia.org/wiki/Thief_II:_The_Metal_Age">Thief&nbsp;II: The Metal Age</a>.</p>
+			<ul class="primary">
+				<li>This is the documentation for version 0.7.0, released on 2013-09-01.</li>
+				<li>You can download the latest version of the module from <a href="http://www.ttlg.com/forums/showthread.php?t=141906">its thread on TTLG</a>.</li>
+				<li>If you want step-by-step instructions for using the scripts, go to <a href="quick-start.html">the quick start section</a>.</li>
+			</ul>
+		</div>
+		<h2 id="contents">Contents</h2>
+		<ul class="primary">
+			<li><a href="quick-start.html">Quick start</a></li>
+			<li><a href="introduction.html">Introduction</a><ul>
+				<li><a href="introduction.html#requirements">Requirements</a></li>
+				<li><a href="introduction.html#usage">Using the scripts</a></li>
+				<li><a href="introduction.html#legal">Credits and legal notes</a></li>
 			</ul></li>
-			<li><a href="#history">Version history</a></li>
+			<li><a href="history.html">Version history</a></li>
+			<li><a href="parameters.html">Design Note parameters</a></li>
 			<li><a href="custom-hud.html">Custom HUD elements</a><ul>
 				<li><a href="KDQuestArrow.html"><code>KDQuestArrow</code></a></li>
 				<li><a href="KDStatMeter.html"><code>KDStatMeter</code></a></li>
@@ -24,7 +35,7 @@
 				<li><a href="subtitles.html#KDSubtitledAI"><code>KDSubtitledAI</code></a></li>
 				<li><a href="subtitles.html#KDSubtitledVO"><code>KDSubtitledVO</code></a></li>
 			</ul></li>
-			<li>Rendering effects<ul>
+			<li><a href="rendering-effects.html">Rendering effects</a><ul>
 				<li><a href="KDTrapEnvMap.html"><code>KDTrapEnvMap</code></a></li>
 				<li><a href="KDTrapFog.html"><code>KDTrapFog</code></a></li>
 				<li><a href="KDSyncGlobalFog.html"><code>KDSyncGlobalFog</code></a></li>
@@ -41,85 +52,6 @@
 				<li><a href="KDTrapNextMission.html"><code>KDTrapNextMission</code></a></li>
 			</ul></li>
 		</ul>
-
-		<h2 id="intro">Introduction</h2>
-		<p>KDScript is a custom script module for the Dark Engine. It provides access to the new script services available with the unofficial <a href="http://www.ttlg.com/forums/showthread.php?t=141148">NewDark patch</a>, including dynamic weather and fog and nonlinear campaigns. It enables custom HUD elements including quest arrows, statistic meters, and tool sights. It also includes other useful features such as automatic subtitling of AI speech and voiceovers. The included mission demonstrates the scripts in this module; load this ZIP file as an FM to try it.</p>
-		<p>This is version <strong>0.5.0</strong> of KDScript, released on <strong>2013-07-17</strong> as <code>kdscript&#8209;0.5.0.zip</code>. (See the version history below for changes.) <strong>This module is in a public beta testing phase,</strong> and the script specifications below may change prior to the final version. For now, if you are interested in using any of these scripts in your mission, please contact me or follow my announcements on TTLG so you can have an up-to-date version. I would be glad to assist you in using these scripts and testing them in your mission. I am <a href="http://www.ttlg.com/forums/member.php?u=66136">kdau</a> on TTLG and can be reached by PM there or by email at <code>&lt;kevin&nbsp;AT&nbsp;kdau&nbsp;DOT&nbsp;com&gt;</code>.</p>
-		<p>This module owes its existence to Telliamed's well-designed base libraries and to our NewDark benefactor Le&nbsp;Corbeau. Thank you!</p>
-
-		<h3 id="requirements">Requirements</h3>
-		<p>This module works with one of the following games and engine versions on one of the following operating systems:</p>
-		<dl>
-			<dt>Game</dt><dd><img class="iconr" alt="" src="thief1.png" /><img class="iconr" alt="" src="thief2.png" /><ul>
-				<li>Thief II: The Metal Age (T2/TMA)</li>
-				<li>Thief Gold (TG) <strong>*</strong></li>
-				<li class="disabled">Thief: The Dark Project (T1/TDP) <span class="note">(Not tested.)</span> <strong>*</strong></li>
-			</ul></dd>
-			<dt>Engine</dt><dd><img class="iconr" alt="" src="newdark.png" /><ul>
-				<li><a href="http://www.ttlg.com/forums/showthread.php?t=141148">NewDark patch</a> version 1.20 or higher</li>
-				<li class="disabled">NewDark 1.19 <span class="note">(This version has significant bugs. Some features are not available.)</span></li>
-			</ul></dd>
-			<dt>Operating system</dt><dd><ul>
-				<li>Windows XP or later version</li>
-				<li>Linux with WINE</li>
-			</ul></dd>
-		</dl>
-		<p><strong>*</strong> A version of KDScript is available for use with Thief Gold (TG) and Thief: The Dark Project (T1/TDP). Not all of the scripts and features are available for these games; see individual scripts for details. <span class="important">Note that the module has not been tested with T1, only with TG.</span> The TG/T1 version of the module, along with a limited demo mission, is located in the <code>thief1</code> directory inside this ZIP file.</p>
-
-		<h3 id="usage">Using the scripts</h3>
-		<p>To use these scripts while creating a mission, they must be available to the Dark Engine. Place the <code>KDScript.osm</code> and (if not already present) <code>dh2.osl</code> files in your mission's root (main) directory, to be included in the distributed ZIP file. (No other files from the KDScript archive are required.) In DromEd, open your mission and add this module with the command <code>script_load kdscript</code>. You are now ready to add the scripts in this module to archetypes and objects.</p>
-		<p>Many of these scripts are configured using Design Note parameters. The parameters for KDScript have the same syntax as used in the other Dark Engine custom script modules (<a href="http://dromed.whoopdedo.org/public_scripts/index">Public Scripts</a>, <a href="http://dromed.whoopdedo.org/tnhscript/index">tnhScript</a>, <a href="http://www.ttlg.com/forums/showthread.php?t=134166">NVScript</a>, and <a href="http://thief.starforge.co.uk/twscript/README.html">TWScript</a>). See <a href="http://dromed.whoopdedo.org/public_scripts/designnote">Telliamed's documentation on Design Note parameters</a> for a full description of this syntax.</p>
-		<p>If you have any questions or issues related to these scripts, please post them in the <a href="http://www.ttlg.com/forums/showthread.php?t=141906">KDScript thread on TTLG</a> or contact me by PM or email.</p>
-
-		<h3 id="legal">Credits and legal notes</h3>
-		<p>Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge.  The script module is licensed under terms of the <a href="http://www.gnu.org/licenses/gpl.html">GNU General Public License</a>. The demo missions may be distributed in any way as long as it remains unmodified and I am credited for it. The module and missions are provided &ldquo;as is&rdquo; without warranty of any kind, either expressed or implied. This level was not made and is not supported by Looking Glass Studios or Eidos Interactive.</p>
-		<p>The following works of others are included in or inspired the script module or demo mission:</p>
-		<ul>
-			<li>The Dark Engine and the games running on it are the work of Looking Glass Studios. This module must be used in compliance with the game and DromEd licenses from LGS and Square Enix.</li>
-			<li>The &ldquo;NewDark&rdquo; patch (1.19, 1.20, 1.21) to the Dark Engine, including new features accessed by these scripts, is the work of the pseudonymous &ldquo;Le&nbsp;Corbeau&rdquo;. The demo mission contains corona designs and textures from the NewDark distribution.</li>
-			<li>KDScript is based in part on Public Scripts by <a href="http://dromed.whoopdedo.org/">Tom N. Harris (Telliamed)</a> and includes <code>dh2.osl</code> and modified versions of his <code>lg</code>, <code>DH2</code>, and <code>ScriptLib</code> libraries, which derive in part from earlier work by GayleSaver and Totality. His code is available at his website; mine is included in this archive.</li>
-			<li>Subtitle support is based on <a href="http://www.ttlg.com/forums/showthread.php?t=107554">ideas from Nameless Voice and others</a>.</li>
-			<li>The NewDark &ldquo;raven&rdquo; icon in this documentation is by <a href="http://unit66.deviantart.com/">Unit66</a> and available under <a href="http://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA 3.0</a>.</li>
-			 <li>The demo mission includes a smoking pipe object by Targa (<a title="Targa's first site" href="http://www.thiefmissions.com/targa/">1</a>, <a title="Targa's second site" href="http://www.grax.org/targa/">2</a>).</li>
-		</ul>
-
-		<h2 id="history">Version history</h2>
-		<ul class="primary">
-			<li><strong>Version 0.5.0</strong> (2013-07-17)<ul>
-				<li><code>KDCustomHUD</code>: <span class="important">This script has been <strong>removed</strong> and is no longer needed by HUD element scripts.</span> It is still possible to place parameter defaults on an object named <code>CustomHUD</code>, but <code>ScriptParams</code> links with the data <code>CustomHUD</code> are no longer consulted.</li>
-				<li class="important"><code>KDQuestArrow</code>, <code>KDStatMeter</code>, <code>KDToolSight</code>: fix various disappearing issues.</li>
-				<li><code>KDQuestArrow</code>: determine initial enabled status intelligently.</li>
-				<li><code>KDStatMeter</code>: add optional text labels.</li>
-				<li><code>KDTrapFog</code>: improve transitions to/from disabled fog.</li>
-				<li><code>KDSyncGlobalFog</code>: properly handle views of sky from indoors.</li>
-				<li><code>KDJunkTool</code>: properly handle frobs in inventory without targets.</li>
-				<li class="important"><code>KDOptionalReverse</code>: new script.</li>
-				<li class="important"><code>KDRenewable</code>: new script.</li>
-				<li class="important">Support for Thief Gold (TG) and Thief: The Dark Project (T1/TDP) added.</li>
-				<li>Documentation overhauled.</li>
-			</ul></li>
-			<li>Version 0.3.0 (2013-07-11)<ul>
-				<li><code>KDQuestArrow</code>: draw shadow behind symbol/text for visibility.</li>
-				<li><code>KDStatMeter</code>: provide intelligent defaults for statistic range; add offset parameters.</li>
-				<li><code>KDToolSight</code>: add offset parameters.</li>
-				<li><code>KDTrapEnvMap</code>: disable script with NewDark 1.19.</li>
-				<li class="important"><code>KDTrapWeather</code>: fix crash when triggered.</li>
-				<li><code>KDCarried</code>: try not to drop objects outside the world.</li>
-				<li class="important"><code>KDJunkTool</code>: new script.</li>
-				<li>Preliminary work on TG/T1 compatibility.</li>
-			</ul></li>
-			<li>Version 0.1.1 (2013-07-08)<ul>
-				<li><code>KDSubtitledAI</code>, <code>KDSubtitledVO</code>: accept object name as data of <code>Subtitle</code> message.</li>
-				<li>Fixed issue preventing module from loading on Windows XP.</li>
-			</ul></li>
-			<li>Version 0.1.0.1 (2013-07-07)<ul>
-				<li>Included some missing source files.</li>
-			</ul></li>
-			<li>Version 0.1.0 (2013-07-06)<ul>
-				<li>Initial alpha release.</li>
-			</ul></li>
-		</ul>
-
 		<address>Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge.</address>
 	</body>
 </html>

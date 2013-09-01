@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<link rel="stylesheet" type="text/css" href="doc.css" />
+		<title>Rendering effects - KDScript</title>
+	</head>
+	<body>
+		<div id="trail"><a href="index.html">KDScript</a> &rarr;</div>
+		<h1>Rendering effects</h1>
+		<p>The following scripts dynamically update the fog, precipitation, and environment map settings used by the Dark Engine's renderer.</p>
+		<ul class="primary">
+			<li><a href="KDTrapEnvMap.html"><code>KDTrapEnvMap</code></a></li>
+			<li><a href="KDTrapFog.html"><code>KDTrapFog</code></a></li>
+			<li><a href="KDSyncGlobalFog.html"><code>KDSyncGlobalFog</code></a></li>
+			<li><a href="KDTrapWeather.html"><code>KDTrapWeather</code></a></li>
+		</ul>
+		<h2 id="transitions">Transitions</h2>
+		<table>
+			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
+			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+		<tbody>
+			<tr><td><code>transition</code></td><td>time</td><td>length of transition between states, in milliseconds</td><td><code>0</code></td></tr>
+			<tr><td><code>curve</code></td><td>string</td><td>shape of curve to interpolate values along</td><td><code>linear</code></td></tr>
+		</tbody></table>
+		<p>The fog and weather scripts can provide smooth transitions between the old and new values. The <code>transition</code> parameter specifies the length, in milliseconds, of the transition. If that parameter is undefined or set to <code>0</code>, the transition will be instantaneous. The <code>curve</code> parameter specifies the shape of the interpolated curve, from among the values below. (<em>t</em> is the progress of the transition in the range [0.0, 1.0], while <em>&alpha;</em> is the multiplier used to interpolate between the starting and ending values at that time.)</p>
+		<dl>
+			<dt><code>linear</code></dt><dd>Straight line: <em>&alpha; = t</em></dd>
+			<dt><code>quadratic</code></dt><dd>Parabolic curve: <em>&alpha; = t<sup>2</sup></em></dd>
+			<dt><code>radical</code></dt><dd>Radical curve: <em>&alpha; = &radic;<span class="radical">t</span></em></dd>
+			<dt><code>log_10</code></dt><dd>Logarithmic curve (base 10): <em>&alpha; = log<sub>10</sub>(0.9t + 0.1) + 1</em></dd>
+			<dt><code>pow_10</code></dt><dd>Power curve (base 10): <em>&alpha; = (10<sup>t</sup> - 1) / 9</em></dd>
+			<dt><code>log_e</code></dt><dd>Logarithmic curve (base <em>e</em>): <em>&alpha; = log<sub>e</sub>((1 - 1/e)t + 1/e) + 1</em></dd>
+			<dt><code>pow_e</code></dt><dd>Power curve (base <em>e</em>): <em>&alpha; = (e<sup>t</sup> - 1) / (e - 1)</em></dd>
+		</dl>
+		<p>The usual trap control flags, locking, and timing (before the start of the transition, not its length) are also respected by these scripts.</p>
+		<address>This documentation is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+	</body>
+</html>
+

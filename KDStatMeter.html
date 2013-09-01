@@ -32,8 +32,8 @@
 			<tr><td><code>stat_source_field</code></td><td>string</td><td>which field within a property to use</td><td>&mdash;</td></tr>
 			<tr><td><code>stat_source_component</code></td><td>string</td><td>which component of a vector property/field to use</td><td>&mdash;</td></tr>
 			<tr><td><code>stat_source_object</code></td><td>object</td><td>which object to use for a property</td><td>(self)</td></tr>
-			<tr><td><code>stat_range_min</code></td><td>float</td><td>the lowest possible value of the statistic</td><td>(see&nbsp;below)</td></tr>
-			<tr><td><code>stat_range_max</code></td><td>float</td><td>the highest possible value of the statistic</td><td>(see&nbsp;below)</td></tr>
+			<tr><td><code>stat_range_min</code></td><td>real</td><td>the lowest possible value of the statistic</td><td>(see&nbsp;below)</td></tr>
+			<tr><td><code>stat_range_max</code></td><td>real</td><td>the highest possible value of the statistic</td><td>(see&nbsp;below)</td></tr>
 			<tr><td><code>stat_range_low</code></td><td>integer</td><td>the percentage at or below which a value is considered low</td><td><code>25</code></td></tr>
 			<tr><td><code>stat_range_high</code></td><td>integer</td><td>the percentage at or above which a value is considered high</td><td><code>75</code></td></tr>
 			<tr><td><code>stat_color_bg</code></td><td>color</td><td>color of the meter's background area</td><td><code>0x000000</code> (black)</td></tr>
@@ -59,8 +59,8 @@
 		<p>The <code>stat_meter_text</code> parameter determines what text, if any, is displayed next to the meter. Only horizontal meters may display text; on vertical meters, this parameter is ignored. This parameter does not contain the text itself; it is either one of the special values listed below or the name of a string in the <code>strings\hud.str</code> file.</p>
 		<dl>
 			<dt><code>@none</code></dt><dd>No text is displayed (meter only).</dd>
-			<dt><code>@name</code></dt><dd>For property sources, the name of the <code>stat_source_object</code>, as defined in the <code>Inventory\Object Name</code> property, is displayed. For quest variable sources, the value of <code>stat_source_qvar</code> is used as the name of a string in <code>strings\hud.str</code>.</dd>
-			<dt><code>@description</code></dt><dd>For property sources only, the description of the <code>stat_source_object</code>, as defined in the <code>Inventory\Long Description</code> property, is displayed.</dd>
+			<dt><code>@name</code></dt><dd>For property sources, the name of the <code>stat_source_object</code>, as defined in the <em>Inventory&rarr;Object Name</em> property, is displayed. For quest variable sources, the value of <code>stat_source_qvar</code> is used as the name of a string in <code>strings\hud.str</code>.</dd>
+			<dt><code>@description</code></dt><dd>For property sources only, the description of the <code>stat_source_object</code>, as defined in the <em>Inventory&rarr;Long Description</em> property, is displayed.</dd>
 		</dl>
 
 		<h2>Dimensions of meter</h2>
@@ -81,7 +81,7 @@
 		<h2>The source statistic</h2>
 		<p>The statistic displayed by the meter can be sourced from either an object property or a quest variable.</p>
 		<p>The <code>stat_source_qvar</code> parameter names a quest variable that provides the statistic. The variable may be set at mission or campaign level.</p>
-		<p>The <code>stat_source_property</code> parameter names a property that provides the statistic. Use an internal Dark Engine property name (e.g. <code>PhysState</code> for <code>Physics\Model\State</code>); these can be found using the <code>list_props</code> command (<em>Log&rarr;Dump&nbsp;property&nbsp;list</em>).</p>
+		<p>The <code>stat_source_property</code> parameter names a property that provides the statistic. Use an internal Dark Engine property name (e.g. <code>PhysState</code> for <em>Physics&rarr;Model&rarr;State</em>); these can be found using the <code>list_props</code> command (the <em>Log&rarr;Dump&nbsp;property&nbsp;list</em> menu item).</p>
 		<p>The <code>stat_source_field</code> parameter names the field within a property that provides the statistic. This parameter may only be and must be set if <code>stat_source_property</code> names a property with more than one field. The field name should be exactly as it appears in the property dialog (e.g. <code>Rot Velocity</code> within the <code>PhysState</code> property).</p>
 		<p>The <code>stat_source_component</code> parameter names the component of a vector value that provides the statistic. This parameter may only be and must be set if the property/field providing the statistic is a vector (has three values in a row). This parameter should then be set to <code>x</code>, <code>y</code>, or <code>z</code> (first, second, or third value, respectively).</p>
 		<p>The <code>stat_source_object</code> parameter determines the object that provides a property statistic. It may be an object name or an object number, though the former is recommended. This parameter may only be set if <code>stat_source_property</code> is set; its default is the object on which this script is placed.</p>
