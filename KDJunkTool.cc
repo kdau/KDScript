@@ -24,7 +24,7 @@ KDJunkTool::KDJunkTool (const String& _name, const Object& _host)
 	: Script (_name, _host),
 	  PARAMETER_ (lugged, "junk_tool_lugged", true),
 	  PARAMETER_ (drop, "junk_tool_drop", false),
-	  PERSISTENT (previous_weapon)
+	  PERSISTENT (previous_weapon, Object::NONE)
 {
 	listen_message ("Contained", &KDJunkTool::on_contained);
 	listen_message ("Destroy", &KDJunkTool::on_destroy);
@@ -94,7 +94,7 @@ KDJunkTool::finish_carry ()
 	Player player;
 
 	// If a weapon had been selected, reselect it.
-	if (previous_weapon.valid () && previous_weapon != Object::NONE)
+	if (previous_weapon != Object::NONE)
 		player.select_weapon (previous_weapon);
 
 	// For a lugged tool, restore player speed, hide carry model, and grunt.

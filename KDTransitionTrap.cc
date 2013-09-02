@@ -27,8 +27,8 @@ KDTransitionTrap::KDTransitionTrap (const String& _name, const Object& _host)
 	: TrapTrigger (_name, _host),
 	  PARAMETER (transition),
 	  PARAMETER (curve, Curve::LINEAR),
-	  PERSISTENT (timer),
-	  PERSISTENT (time_remaining)
+	  PERSISTENT_ (timer),
+	  PERSISTENT_ (time_remaining)
 {
 	listen_timer ("Increment", &KDTransitionTrap::on_increment);
 }
@@ -36,10 +36,10 @@ KDTransitionTrap::KDTransitionTrap (const String& _name, const Object& _host)
 void
 KDTransitionTrap::start ()
 {
-	if (timer.valid ()) // stop any previous transition
+	if (timer.exists ()) // stop any previous transition
 	{
 		Timer (timer).cancel ();
-		timer.clear ();
+		timer.remove ();
 	}
 
 	time_remaining = transition;
@@ -49,13 +49,13 @@ KDTransitionTrap::start ()
 bool
 KDTransitionTrap::incomplete () const
 {
-	return time_remaining.valid () && time_remaining != 0ul;
+	return time_remaining.exists () && time_remaining != 0ul;
 }
 
 float
 KDTransitionTrap::get_progress () const
 {
-	if (!time_remaining.valid ())
+	if (!time_remaining.exists ())
 		return 0.0f;
 	else if (transition == 0ul || time_remaining == 0ul)
 		return 1.0f;
@@ -103,7 +103,7 @@ void
 KDTransitionTrap::do_increment ()
 {
 	if (increment () &&
-	    time_remaining.valid () && Time (time_remaining) > 0ul)
+	    time_remaining.exists () && Time (time_remaining) > 0ul)
 	{
 		time_remaining = std::max (0l,
 			long (Time (time_remaining)) - long (INCREMENT_TIME));
@@ -111,8 +111,8 @@ KDTransitionTrap::do_increment ()
 	}
 	else
 	{
-		timer.clear ();
-		time_remaining.clear ();
+		timer.remove ();
+		time_remaining.remove ();
 	}
 }
 

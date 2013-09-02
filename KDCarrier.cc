@@ -23,8 +23,8 @@
 KDCarrier::KDCarrier (const String& _name, const Object& _host)
 	: Script (_name, _host),
 	  PARAMETER (create_attachments, true),
-	  PERSISTENT (detected_braindeath),
-	  PERSISTENT (detected_slaying)
+	  PERSISTENT (detected_braindeath, false),
+	  PERSISTENT (detected_slaying, false)
 {
 	listen_message ("Sim", &KDCarrier::on_sim);
 	listen_message ("Create", &KDCarrier::on_create);
@@ -36,16 +36,12 @@ KDCarrier::KDCarrier (const String& _name, const Object& _host)
 	listen_message ("PropertyChange", &KDCarrier::on_property_change);
 
 	listen_message ("Alertness", &KDCarrier::on_alertness);
-
 }
 
 void
 KDCarrier::initialize ()
 {
-	detected_braindeath.init (false);
-
 	ObjectProperty::subscribe ("DeathStage", host ());
-	detected_slaying.init (false);
 }
 
 

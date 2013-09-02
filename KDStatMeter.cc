@@ -69,7 +69,7 @@ KDStatMeter::MARGIN = 16;
 KDStatMeter::KDStatMeter (const String& _name, const Object& _host)
 	: KDHUDElement (_name, _host, PRIORITY),
 
-	  PERSISTENT (enabled),
+	  PERSISTENT_ (enabled),
 	  PARAMETER_ (style, "stat_meter_style", Style::PROGRESS),
 	  PARAMETER_ (image, "stat_meter_image", Symbol::NONE, true, false),
 	  PARAMETER_ (spacing, "stat_meter_spacing", 8),
@@ -117,7 +117,8 @@ KDStatMeter::initialize ()
 {
 	KDHUDElement::initialize ();
 
-	enabled.init (Parameter<bool> (host (), "stat_meter", true));
+	if (!enabled.exists ())
+		enabled = Parameter<bool> (host (), "stat_meter", true);
 
 	ObjectProperty::subscribe ("DesignNote", host ());
 	update_text ();

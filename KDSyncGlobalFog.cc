@@ -21,17 +21,17 @@
 #include "KDSyncGlobalFog.hh"
 
 KDSyncGlobalFog::KDSyncGlobalFog (const String& _name, const Object& _host)
-        : KDTransitionTrap (_name, _host),
-          PARAMETER (sync_fog_color, true),
-          PARAMETER (sync_fog_dist, true),
-          PARAMETER (sync_fog_disabled, false),
-          PARAMETER (fog_dist_mult, 1.0f),
-          PARAMETER (fog_dist_add, 0.0f),
-          PERSISTENT (last_room_zone),
-	  PERSISTENT (start_color),
-	  PERSISTENT (end_color),
-	  PERSISTENT (start_distance),
-	  PERSISTENT (end_distance)
+	: KDTransitionTrap (_name, _host),
+	  PARAMETER (sync_fog_color, true),
+	  PARAMETER (sync_fog_dist, true),
+	  PARAMETER (sync_fog_disabled, false),
+	  PARAMETER (fog_dist_mult, 1.0f),
+	  PARAMETER (fog_dist_add, 0.0f),
+	  PERSISTENT_ (last_room_zone),
+	  PERSISTENT_ (start_color),
+	  PERSISTENT_ (end_color),
+	  PERSISTENT_ (start_distance),
+	  PERSISTENT_ (end_distance)
 {
 	listen_message ("ObjRoomTransit", &KDSyncGlobalFog::on_room_transit);
 	listen_message ("FogZoneChange", &KDSyncGlobalFog::on_fog_zone_change);
@@ -80,7 +80,7 @@ KDSyncGlobalFog::on_room_transit (RoomMessage& message)
 	if (to_room == Object::NONE) return Message::HALT;
 
 	Fog::Zone new_zone = to_room.fog_zone;
-	if (last_room_zone.valid () && last_room_zone == new_zone)
+	if (last_room_zone.exists () && last_room_zone == new_zone)
 		return Message::HALT; // no change
 
 	Color color;
@@ -120,7 +120,7 @@ KDSyncGlobalFog::on_fog_zone_change (GenericMessage& message)
 	Color color = message.get_data<Color> (Message::DATA2);
 	float distance = message.get_data<float> (Message::DATA3);
 
-	if (!last_room_zone.valid () || last_room_zone != changed_zone)
+	if (!last_room_zone.exists () || last_room_zone != changed_zone)
 		return Message::HALT;
 
 	sync (color, distance);

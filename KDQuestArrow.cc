@@ -35,9 +35,9 @@ KDQuestArrow::PADDING = 8;
 
 KDQuestArrow::KDQuestArrow (const String& _name, const Object& _host)
 	: KDHUDElement (_name, _host, PRIORITY),
-	  PERSISTENT (enabled),
+	  PERSISTENT_ (enabled),
 	  PARAMETER_ (objective, "quest_arrow_goal"),
-	  PERSISTENT (old_objective),
+	  PERSISTENT (old_objective, Objective::NONE),
 	  PARAMETER_ (range, "quest_arrow_range", 0.0f),
 	  PARAMETER_ (obscured, "quest_arrow_obscured", false),
 	  PARAMETER_ (image, "quest_arrow_image", Symbol::ARROW, false, true),
@@ -65,9 +65,9 @@ KDQuestArrow::initialize ()
 {
 	KDHUDElement::initialize ();
 
-	enabled.init (Parameter<bool>
-		(host (), "quest_arrow", !Player ().has_touched (host ())));
-	old_objective.init (Objective::NONE);
+	if (!enabled.exists ())
+		enabled = Parameter<bool> (host (), "quest_arrow",
+			!Player ().has_touched (host ()));
 
 	ObjectProperty::subscribe ("DesignNote", host ());
 	update_objective ();

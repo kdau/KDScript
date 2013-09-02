@@ -21,16 +21,16 @@
 #include "KDTrapFog.hh"
 
 KDTrapFog::KDTrapFog (const String& _name, const Object& _host)
-        : KDTransitionTrap (_name, _host),
+	: KDTransitionTrap (_name, _host),
 	  PARAMETER (fog_zone, Fog::GLOBAL),
 	  PARAMETER (fog_color_on),
 	  PARAMETER (fog_color_off),
 	  PARAMETER (fog_dist_on, -1.0f),
 	  PARAMETER (fog_dist_off, -1.0f),
-	  PERSISTENT (start_color),
-	  PERSISTENT (end_color),
-	  PERSISTENT (start_distance),
-	  PERSISTENT (end_distance)
+	  PERSISTENT_ (start_color),
+	  PERSISTENT_ (end_color),
+	  PERSISTENT_ (start_distance),
+	  PERSISTENT_ (end_distance)
 {}
 
 bool

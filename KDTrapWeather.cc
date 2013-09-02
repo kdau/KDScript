@@ -21,31 +21,31 @@
 #include "KDTrapWeather.hh"
 
 KDTrapWeather::KDTrapWeather (const String& _name, const Object& _host)
-        : KDTransitionTrap (_name, _host),
+	: KDTransitionTrap (_name, _host),
 
 	  PARAMETER (precip_freq_on, -1.0f),
 	  PARAMETER (precip_freq_off, -1.0f),
-	  PERSISTENT (start_freq), PERSISTENT (end_freq),
+	  PERSISTENT_ (start_freq), PERSISTENT_ (end_freq),
 
 	  PARAMETER (precip_speed_on, -1.0f),
 	  PARAMETER (precip_speed_off, -1.0f),
-	  PERSISTENT (start_speed), PERSISTENT (end_speed),
+	  PERSISTENT_ (start_speed), PERSISTENT_ (end_speed),
 
 	  PARAMETER (precip_radius_on, -1.0f),
 	  PARAMETER (precip_radius_off, -1.0f),
-	  PERSISTENT (start_radius), PERSISTENT (end_radius),
+	  PERSISTENT_ (start_radius), PERSISTENT_ (end_radius),
 
 	  PARAMETER (precip_opacity_on, -1.0f),
 	  PARAMETER (precip_opacity_off, -1.0f),
-	  PERSISTENT (start_opacity), PERSISTENT (end_opacity),
+	  PERSISTENT_ (start_opacity), PERSISTENT_ (end_opacity),
 
 	  PARAMETER (precip_brightness_on, -1.0f),
 	  PARAMETER (precip_brightness_off, -1.0f),
-	  PERSISTENT (start_brightness), PERSISTENT (end_brightness),
+	  PERSISTENT_ (start_brightness), PERSISTENT_ (end_brightness),
 
 	  PARAMETER (precip_wind_on, Vector ()),
 	  PARAMETER (precip_wind_off, Vector ()),
-	  PERSISTENT (start_wind), PERSISTENT (end_wind)
+	  PERSISTENT_ (start_wind), PERSISTENT_ (end_wind)
 {}
 
 bool
