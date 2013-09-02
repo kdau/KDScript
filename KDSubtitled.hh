@@ -66,9 +66,9 @@ protected:
 	void finish_subtitle (const SoundSchema& schema = Object::ANY);
 
 private:
-	Message::Result on_subtitle (GenericMessage&);
+	Message::Result on_subtitle (Message&);
 	Message::Result on_finish_subtitle (TimerMessage&);
-	Message::Result on_end_script (GenericMessage&);
+	Message::Result on_end_script (Message&);
 
 	HUDSubtitle* element;
 };
@@ -93,7 +93,7 @@ public:
 	KDSubtitledVO (const String& name, const Object& host);
 
 private:
-	Message::Result on_turn_on (GenericMessage&);
+	Message::Result on_turn_on (Message&);
 	Message::Result on_initial_delay (TimerMessage&);
 };
 

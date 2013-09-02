@@ -71,7 +71,7 @@ protected:
 		Direction direction = Direction::NONE) const;
 
 private:
-	Message::Result on_end_script (GenericMessage&);
+	Message::Result on_end_script (Message&);
 
 	HUD::ZIndex priority;
 };

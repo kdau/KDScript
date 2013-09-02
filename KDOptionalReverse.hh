@@ -30,10 +30,10 @@ public:
 	KDOptionalReverse (const String& name, const Object& host);
 
 private:
-	Message::Result on_post_sim (GenericMessage&);
+	Message::Result on_post_sim (Message&);
 #ifdef IS_THIEF2
 	Message::Result on_quest_change (QuestChangeMessage&);
-	Message::Result on_end_script (GenericMessage&);
+	Message::Result on_end_script (Message&);
 
 	Objective get_negation (Objective objective);
 	void update_negation (Objective objective, bool final);

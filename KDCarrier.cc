@@ -55,7 +55,7 @@ KDCarrier::on_sim (SimMessage& message)
 }
 
 Message::Result
-KDCarrier::on_create (GenericMessage&)
+KDCarrier::on_create (Message&)
 {
 	do_create_attachments ();
 	return Message::CONTINUE;
@@ -104,7 +104,7 @@ KDCarrier::on_ai_mode_change (AIModeChangeMessage& message)
 }
 
 Message::Result
-KDCarrier::on_ignore_potion (GenericMessage&)
+KDCarrier::on_ignore_potion (Message&)
 {
 	// The AI is being knocked out.
 	detected_braindeath = true;
@@ -152,8 +152,7 @@ KDCarrier::on_alertness (AIAlertnessMessage& message)
 void
 KDCarrier::notify_carried (const char* _message, bool _delay, int data)
 {
-	GenericMessage message (_message);
-	message.set_data (Message::DATA1, data);
+	auto message = GenericMessage::with_data (_message, data);
 	Time delay = _delay ? 250ul : 0ul;
 	message.broadcast (host (), "Contains", delay);
 	message.broadcast (host (), "CreatureAttachment", delay);

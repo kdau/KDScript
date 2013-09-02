@@ -30,12 +30,12 @@ public:
 	KDCarried (const String& name, const Object& host);
 
 private:
-	Message::Result on_post_sim (GenericMessage&);
-	Message::Result on_create (GenericMessage&);
+	Message::Result on_post_sim (Message&);
+	Message::Result on_create (Message&);
 
-	Message::Result on_carrier_alerted (GenericMessage&);
-	Message::Result on_drop (GenericMessage&);
-	Message::Result on_fix_physics (GenericMessage&);
+	Message::Result on_carrier_alerted (Message&);
+	Message::Result on_drop (Message&);
+	Message::Result on_fix_physics (Message&);
 
 	Parameter<AI::Alert> drop_on_alert;
 	Parameter<bool> was_dropped, inert_until_dropped, off_when_dropped;

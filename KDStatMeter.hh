@@ -48,10 +48,10 @@ private:
 
 	CanvasSize get_request_size () const;
 
-	Message::Result on_post_sim (GenericMessage&);
+	Message::Result on_post_sim (Message&);
 
-	Message::Result on_on (GenericMessage&);
-	Message::Result on_off (GenericMessage&);
+	Message::Result on_on (Message&);
+	Message::Result on_off (Message&);
 
 	Message::Result on_property_change (PropertyChangeMessage&);
 	void update_text ();

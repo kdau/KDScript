@@ -30,7 +30,7 @@ public:
 	KDRenewable (const String& name, const Object& host);
 
 private:
-	Message::Result on_post_sim (GenericMessage&);
+	Message::Result on_post_sim (Message&);
 	Message::Result on_renew (TimerMessage&);
 
 	Parameter<Time> frequency;

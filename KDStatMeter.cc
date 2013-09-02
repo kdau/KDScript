@@ -395,7 +395,7 @@ KDStatMeter::get_request_size () const
 
 
 Message::Result
-KDStatMeter::on_post_sim (GenericMessage&)
+KDStatMeter::on_post_sim (Message&)
 {
 	// Update anything based on an object that may have been absent.
 
@@ -447,7 +447,7 @@ KDStatMeter::on_post_sim (GenericMessage&)
 
 
 Message::Result
-KDStatMeter::on_on (GenericMessage&)
+KDStatMeter::on_on (Message&)
 {
 	enabled = true;
 	return Message::CONTINUE;
@@ -455,7 +455,7 @@ KDStatMeter::on_on (GenericMessage&)
 
 
 Message::Result
-KDStatMeter::on_off (GenericMessage&)
+KDStatMeter::on_off (Message&)
 {
 	enabled = false;
 	return Message::CONTINUE;

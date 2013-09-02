@@ -109,7 +109,7 @@ KDSyncGlobalFog::on_room_transit (RoomMessage& message)
 }
 
 Message::Result
-KDSyncGlobalFog::on_fog_zone_change (GenericMessage& message)
+KDSyncGlobalFog::on_fog_zone_change (Message& message)
 {
 	if (!message.has_data (Message::DATA1) ||
 	    !message.has_data (Message::DATA2) ||

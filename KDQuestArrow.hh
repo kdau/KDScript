@@ -33,8 +33,8 @@ private:
 	virtual bool prepare ();
 	virtual void redraw ();
 
-	Message::Result on_on (GenericMessage&);
-	Message::Result on_off (GenericMessage&);
+	Message::Result on_on (Message&);
+	Message::Result on_off (Message&);
 	Message::Result on_contained (ContainmentMessage&);
 	Message::Result on_ai_mode_change (AIModeChangeMessage&);
 

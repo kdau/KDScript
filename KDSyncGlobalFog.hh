@@ -35,7 +35,7 @@ private:
 	virtual bool increment ();
 
 	Message::Result on_room_transit (RoomMessage&);
-	Message::Result on_fog_zone_change (GenericMessage&);
+	Message::Result on_fog_zone_change (Message&);
 
 	Parameter<bool> sync_fog_color, sync_fog_dist, sync_fog_disabled;
 	Parameter<float> fog_dist_mult, fog_dist_add;

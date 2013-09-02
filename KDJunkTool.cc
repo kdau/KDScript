@@ -59,7 +59,7 @@ KDJunkTool::on_contained (ContainmentMessage& message)
 }
 
 Message::Result
-KDJunkTool::on_destroy (GenericMessage&)
+KDJunkTool::on_destroy (Message&)
 {
 	if (Player ().is_in_inventory (host ()))
 		finish_carry ();
@@ -128,7 +128,7 @@ KDJunkTool::on_clear_weapon (TimerMessage&)
 
 
 Message::Result
-KDJunkTool::on_needs_reselect (GenericMessage&)
+KDJunkTool::on_needs_reselect (Message&)
 {
 	// Reselect the tool in the next cycle (won't work in this one).
 	GenericMessage ("Reselect").post (host (), host ());
@@ -136,7 +136,7 @@ KDJunkTool::on_needs_reselect (GenericMessage&)
 }
 
 Message::Result
-KDJunkTool::on_reselect (GenericMessage&)
+KDJunkTool::on_reselect (Message&)
 {
 	Player player;
 	if (player.is_in_inventory (host ()))
@@ -163,9 +163,8 @@ KDJunkTool::create_frobbable ()
 	// the conditions required by the command.
 
 	// Create the object and make it frobbable.
-	Rendered frobbable = Object::create_temp_fnord (100ul);
-	Interactive (frobbable).frob_world_action =
-		Interactive::FrobAction::FROB_SCRIPTS;
+	Interactive frobbable = Object::create_temp_fnord (100ul);
+	frobbable.frob_world_action = Interactive::FrobAction::FROB_SCRIPTS;
 
 	// Move and enlarge it to fill the player's view.
 	frobbable.set_position ({ 2.0f, 0.0f, 0.0f }, Vector (), Player ());
@@ -181,7 +180,7 @@ KDJunkTool::create_frobbable ()
 
 
 Message::Result
-KDJunkTool::on_needs_tool_use (GenericMessage&)
+KDJunkTool::on_needs_tool_use (Message&)
 {
 	start_timer ("StartToolUse", 1, false);
 	return Message::CONTINUE;

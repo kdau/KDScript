@@ -33,8 +33,8 @@ private:
 	virtual bool prepare ();
 	virtual void redraw ();
 
-	Message::Result on_inv_select (GenericMessage&);
-	Message::Result on_inv_deselect (GenericMessage&);
+	Message::Result on_inv_select (Message&);
+	Message::Result on_inv_deselect (Message&);
 
 	Message::Result on_frob_inv_end (FrobMessage&);
 

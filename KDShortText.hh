@@ -30,7 +30,7 @@ public:
 	KDShortText (const String& name, const Object& host);
 
 private:
-	Message::Result on_focus (GenericMessage&);
+	Message::Result on_focus (Message&);
 	Message::Result on_frob (FrobMessage&);
 
 	void show_text ();

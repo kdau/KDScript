@@ -30,7 +30,7 @@ KDGetInfo::KDGetInfo (const String& _name, const Object& _host)
 }
 
 Message::Result
-KDGetInfo::on_begin_script (GenericMessage&)
+KDGetInfo::on_begin_script (Message&)
 {
 	// Some settings aren't available yet, so wait for next message cycle.
 	GenericMessage ("UpdateVariables").post (host (), host ());
@@ -46,7 +46,7 @@ KDGetInfo::on_mode_change (GameModeChangeMessage& message)
 }
 
 Message::Result
-KDGetInfo::on_update_variables (GenericMessage&)
+KDGetInfo::on_update_variables (Message&)
 {
 	QuestVar ("info_directx_version").set (Engine::get_directx_version ());
 
@@ -90,7 +90,7 @@ KDGetInfo::on_update_variables (GenericMessage&)
 }
 
 Message::Result
-KDGetInfo::on_end_script (GenericMessage&)
+KDGetInfo::on_end_script (Message&)
 {
 	QuestVar ("info_directx_version").unset ();
 	QuestVar ("info_display_height").unset ();

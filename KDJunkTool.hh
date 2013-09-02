@@ -31,17 +31,17 @@ public:
 
 private:
 	Message::Result on_contained (ContainmentMessage&);
-	Message::Result on_destroy (GenericMessage&);
+	Message::Result on_destroy (Message&);
 	void start_carry ();
 	void finish_carry ();
 
 	Message::Result on_clear_weapon (TimerMessage&);
 
-	Message::Result on_needs_reselect (GenericMessage&);
-	Message::Result on_reselect (GenericMessage&);
+	Message::Result on_needs_reselect (Message&);
+	Message::Result on_reselect (Message&);
 	Object create_frobbable ();
 
-	Message::Result on_needs_tool_use (GenericMessage&);
+	Message::Result on_needs_tool_use (Message&);
 	Message::Result on_start_tool_use (TimerMessage&);
 
 	Message::Result on_slain (SlayMessage&);

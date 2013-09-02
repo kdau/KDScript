@@ -33,7 +33,7 @@ KDShortText::KDShortText (const String& _name, const Object& _host)
 }
 
 Message::Result
-KDShortText::on_focus (GenericMessage&)
+KDShortText::on_focus (Message&)
 {
 	if (text_on_focus)
 		show_text ();

@@ -37,7 +37,7 @@ KDCarried::KDCarried (const String& _name, const Object& _host)
 }
 
 Message::Result
-KDCarried::on_post_sim (GenericMessage&)
+KDCarried::on_post_sim (Message&)
 {
 	// Add the FrobInert metaproperty, if requested.
 	if (inert_until_dropped)
@@ -58,7 +58,7 @@ KDCarried::on_post_sim (GenericMessage&)
 }
 
 Message::Result
-KDCarried::on_create (GenericMessage&)
+KDCarried::on_create (Message&)
 {
 	// Only proceed for objects created in-game.
 	if (Engine::get_mode () != Engine::Mode::GAME)
@@ -76,7 +76,7 @@ KDCarried::on_create (GenericMessage&)
 }
 
 Message::Result
-KDCarried::on_carrier_alerted (GenericMessage& message)
+KDCarried::on_carrier_alerted (Message& message)
 {
 	AI::Alert new_alert = message.get_data<AI::Alert> (Message::DATA1);
 	if (drop_on_alert > AI::Alert::NONE && drop_on_alert <= new_alert)
@@ -86,7 +86,7 @@ KDCarried::on_carrier_alerted (GenericMessage& message)
 }
 
 Message::Result
-KDCarried::on_drop (GenericMessage&)
+KDCarried::on_drop (Message&)
 {
 	Physical dropped = host ();
 	was_dropped = true;
@@ -170,7 +170,7 @@ KDCarried::on_drop (GenericMessage&)
 }
 
 Message::Result
-KDCarried::on_fix_physics (GenericMessage&)
+KDCarried::on_fix_physics (Message&)
 {
 	// Get the object dimensions based on the temporary OBB model.
 	Vector dims = host_as<OBBPhysical> ().physics_size;

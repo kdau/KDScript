@@ -33,7 +33,7 @@ KDOptionalReverse::KDOptionalReverse (const String& _name, const Object& _host)
 #ifdef IS_THIEF2
 
 Message::Result
-KDOptionalReverse::on_post_sim (GenericMessage&)
+KDOptionalReverse::on_post_sim (Message&)
 {
 	// Subscribe to objectives with negations.
 	for (Objective objective = 0; objective.exists (); ++objective.number)
@@ -59,7 +59,7 @@ KDOptionalReverse::on_quest_change (QuestChangeMessage& message)
 }
 
 Message::Result
-KDOptionalReverse::on_end_script (GenericMessage&)
+KDOptionalReverse::on_end_script (Message&)
 {
 	// Fix anything that VictoryCheck did incorrectly.
 	for (Objective objective = 0; objective.exists (); ++objective.number)
@@ -107,7 +107,7 @@ KDOptionalReverse::update_negation (Objective objective, bool final)
 #else // !IS_THIEF2
 
 Message::Result
-KDOptionalReverse::on_post_sim (GenericMessage&)
+KDOptionalReverse::on_post_sim (Message&)
 {
 	mono () << "Error: This script is not available for this game." << std::endl;
 	return Message::ERROR;

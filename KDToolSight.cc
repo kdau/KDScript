@@ -82,14 +82,14 @@ KDToolSight::redraw ()
 }
 
 Message::Result
-KDToolSight::on_inv_select (GenericMessage&)
+KDToolSight::on_inv_select (Message&)
 {
 	selected = true;
 	return Message::CONTINUE;
 }
 
 Message::Result
-KDToolSight::on_inv_deselect (GenericMessage&)
+KDToolSight::on_inv_deselect (Message&)
 {
 	selected = false;
 	return Message::CONTINUE;

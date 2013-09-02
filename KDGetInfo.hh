@@ -30,10 +30,10 @@ public:
 	KDGetInfo (const String& name, const Object& host);
 
 private:
-	Message::Result on_begin_script (GenericMessage&);
+	Message::Result on_begin_script (Message&);
 	Message::Result on_mode_change (GameModeChangeMessage&);
-	Message::Result on_update_variables (GenericMessage&);
-	Message::Result on_end_script (GenericMessage&);
+	Message::Result on_update_variables (Message&);
+	Message::Result on_end_script (Message&);
 };
 
 #endif // KDGETINFO_HH

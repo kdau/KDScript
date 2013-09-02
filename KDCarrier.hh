@@ -33,12 +33,12 @@ private:
 	virtual void initialize ();
 
 	Message::Result on_sim (SimMessage&);
-	Message::Result on_create (GenericMessage&);
+	Message::Result on_create (Message&);
 	void do_create_attachments ();
 	Parameter<bool> create_attachments;
 
 	Message::Result on_ai_mode_change (AIModeChangeMessage&);
-	Message::Result on_ignore_potion (GenericMessage&);
+	Message::Result on_ignore_potion (Message&);
 	Persistent<bool> detected_braindeath;
 
 	Message::Result on_slain (SlayMessage&);

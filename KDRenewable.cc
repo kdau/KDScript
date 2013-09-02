@@ -31,7 +31,7 @@ KDRenewable::KDRenewable (const String& _name, const Object& _host)
 }
 
 Message::Result
-KDRenewable::on_post_sim (GenericMessage&)
+KDRenewable::on_post_sim (Message&)
 {
 	// This non-standard use of the Script->Timing property is kept for
 	// backwards compatibility with miss16.osm's RenewableResource.

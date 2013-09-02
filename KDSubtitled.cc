@@ -185,7 +185,7 @@ KDSubtitled::finish_subtitle (const SoundSchema& schema)
 }
 
 Message::Result
-KDSubtitled::on_subtitle (GenericMessage& message)
+KDSubtitled::on_subtitle (Message& message)
 {
 	SoundSchema schema = message.has_data (Message::DATA1)
 		? message.get_data<Object> (Message::DATA1)
@@ -205,7 +205,7 @@ KDSubtitled::on_finish_subtitle (TimerMessage& message)
 }
 
 Message::Result
-KDSubtitled::on_end_script (GenericMessage&)
+KDSubtitled::on_end_script (Message&)
 {
 	finish_subtitle ();
 	return Message::CONTINUE;
@@ -272,7 +272,7 @@ KDSubtitledVO::KDSubtitledVO (const String& _name, const Object& _host)
 }
 
 Message::Result
-KDSubtitledVO::on_turn_on (GenericMessage&)
+KDSubtitledVO::on_turn_on (Message&)
 {
 	// Identify the schema.
 	SoundSchema schema =

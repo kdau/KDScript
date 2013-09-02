@@ -47,7 +47,7 @@ KDHUDElement::initialize ()
 }
 
 Message::Result
-KDHUDElement::on_end_script (GenericMessage&)
+KDHUDElement::on_end_script (Message&)
 {
 	HUDElement::deinitialize ();
 	return Message::CONTINUE;

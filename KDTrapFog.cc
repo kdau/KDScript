@@ -50,11 +50,9 @@ KDTrapFog::prepare (bool on)
 	end_distance = (_end_distance >= 0.0f) ? _end_distance : start_distance;
 
 	// Notify the Player object in case KDSyncGlobalFog is present.
-	GenericMessage notice ("FogZoneChange");
-	notice.set_data (Message::DATA1, Fog::Zone (fog_zone));
-	notice.set_data (Message::DATA2, Color (end_color));
-	notice.set_data (Message::DATA3, float (end_distance));
-	notice.send (host (), Player ());
+	GenericMessage::with_data ("FogZoneChange",
+		Fog::Zone (fog_zone), Color (end_color), float (end_distance))
+			.send (host (), Player ());
 
 	return true;
 }

@@ -166,7 +166,7 @@ KDQuestArrow::redraw ()
 
 
 Message::Result
-KDQuestArrow::on_on (GenericMessage&)
+KDQuestArrow::on_on (Message&)
 {
 	enabled = true;
 	return Message::CONTINUE;
@@ -174,7 +174,7 @@ KDQuestArrow::on_on (GenericMessage&)
 
 
 Message::Result
-KDQuestArrow::on_off (GenericMessage&)
+KDQuestArrow::on_off (Message&)
 {
 	enabled = false;
 	return Message::CONTINUE;

@@ -38,7 +38,7 @@ KDTransitionTrap::start ()
 {
 	if (timer.exists ()) // stop any previous transition
 	{
-		Timer (timer).cancel ();
+		timer->cancel ();
 		timer.remove ();
 	}
 
