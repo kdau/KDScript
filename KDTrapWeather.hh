@@ -21,16 +21,19 @@
 #ifndef KDTRAPWEATHER_HH
 #define KDTRAPWEATHER_HH
 
-#include "KDTransitionTrap.hh"
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-class KDTrapWeather : public KDTransitionTrap
+class KDTrapWeather : public TrapTrigger
 {
 public:
 	KDTrapWeather (const String& name, const Object& host);
 
 private:
-	virtual bool prepare (bool on);
-	virtual bool increment ();
+	virtual Message::Result on_trap (bool on, Message&);
+	bool step ();
+
+	Transition transition;
 
 	Parameter<float> precip_freq_on, precip_freq_off;
 	Persistent<float> start_freq, end_freq;

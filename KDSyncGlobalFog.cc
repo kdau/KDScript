@@ -21,7 +21,8 @@
 #include "KDSyncGlobalFog.hh"
 
 KDSyncGlobalFog::KDSyncGlobalFog (const String& _name, const Object& _host)
-	: KDTransitionTrap (_name, _host),
+	: Script (_name, _host),
+	  transition (*this, &KDSyncGlobalFog::step, "SyncGlobalFog"),
 	  PARAMETER (sync_fog_color, true),
 	  PARAMETER (sync_fog_dist, true),
 	  PARAMETER (sync_fog_disabled, false),
@@ -56,16 +57,16 @@ KDSyncGlobalFog::sync (const Color& color, float distance, bool sync_color,
 	start_distance = global.distance;
 	end_distance = sync_distance ? distance : global.distance;
 
-	start ();
+	transition.start ();
 }
 
 bool
-KDSyncGlobalFog::increment ()
+KDSyncGlobalFog::step ()
 {
 	Mission::set_fog (Fog::GLOBAL, {
-		interpolate (start_color, end_color),
+		transition.interpolate (start_color, end_color),
 		Fog::interpolate_distance (true, start_distance, end_distance,
-			get_progress (), curve)
+			transition.get_progress (), transition.curve)
 	});
 	return true;
 }

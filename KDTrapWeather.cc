@@ -21,7 +21,8 @@
 #include "KDTrapWeather.hh"
 
 KDTrapWeather::KDTrapWeather (const String& _name, const Object& _host)
-	: KDTransitionTrap (_name, _host),
+	: TrapTrigger (_name, _host),
+	  transition (*this, &KDTrapWeather::step, "Weather"),
 
 	  PARAMETER (precip_freq_on, -1.0f),
 	  PARAMETER (precip_freq_off, -1.0f),
@@ -48,8 +49,8 @@ KDTrapWeather::KDTrapWeather (const String& _name, const Object& _host)
 	  PERSISTENT_ (start_wind), PERSISTENT_ (end_wind)
 {}
 
-bool
-KDTrapWeather::prepare (bool on)
+Message::Result
+KDTrapWeather::on_trap (bool on, Message&)
 {
 	Parameter<float>
 		&freq = on ? precip_freq_on : precip_freq_off,
@@ -74,20 +75,24 @@ KDTrapWeather::prepare (bool on)
 	end_brightness = (brightness >= 0.0f) ? brightness : start_brightness;
 	end_wind = wind.exists () ? Vector (wind) : start_wind;
 
-	return freq.exists () || speed.exists () || radius.exists () ||
-		opacity.exists () || brightness.exists () || wind.exists ();
+	if (freq.exists () || speed.exists () || radius.exists () ||
+	    opacity.exists () || brightness.exists () || wind.exists ())
+		transition.start ();
+
+	return Message::CONTINUE;
 }
 
 bool
-KDTrapWeather::increment ()
+KDTrapWeather::step ()
 {
 	Precipitation precip = Mission::get_precipitation ();
-	precip.frequency = interpolate (start_freq, end_freq);
-	precip.speed = interpolate (start_speed, end_speed);
-	precip.radius = interpolate (start_radius, end_radius);
-	precip.opacity = interpolate (start_opacity, end_opacity);
-	precip.brightness = interpolate (start_brightness, end_brightness);
-	precip.wind = interpolate (start_wind, end_wind);
+	precip.frequency = transition.interpolate (start_freq, end_freq);
+	precip.speed = transition.interpolate (start_speed, end_speed);
+	precip.radius = transition.interpolate (start_radius, end_radius);
+	precip.opacity = transition.interpolate (start_opacity, end_opacity);
+	precip.brightness = transition.interpolate
+		(start_brightness, end_brightness);
+	precip.wind = transition.interpolate (start_wind, end_wind);
 	Mission::set_precipitation (precip);
 	return true;
 }

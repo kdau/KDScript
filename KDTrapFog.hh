@@ -21,16 +21,19 @@
 #ifndef KDTRAPFOG_HH
 #define KDTRAPFOG_HH
 
-#include "KDTransitionTrap.hh"
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-class KDTrapFog : public KDTransitionTrap
+class KDTrapFog : public TrapTrigger
 {
 public:
 	KDTrapFog (const String& name, const Object& host);
 
 private:
-	virtual bool prepare (bool on);
-	virtual bool increment ();
+	virtual Message::Result on_trap (bool on, Message&);
+	bool step ();
+
+	Transition transition;
 
 	Parameter<Fog::Zone> fog_zone;
 	Parameter<Color> fog_color_on, fog_color_off;

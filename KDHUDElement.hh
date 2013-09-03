@@ -96,7 +96,7 @@ struct ParameterConfig<KDHUDElement::Image> : public ParameterBase::Config
 };
 
 template<> bool Parameter<KDHUDElement::Image>::decode (const String& raw) const;
-template<> String Parameter<KDHUDElement::Image>::encode () const;
+template<> String Parameter<KDHUDElement::Image>::encode () const; // undefined
 
 } // namespace Thief
 

@@ -78,7 +78,7 @@ KDCarried::on_create (Message&)
 Message::Result
 KDCarried::on_carrier_alerted (Message& message)
 {
-	AI::Alert new_alert = message.get_data<AI::Alert> (Message::DATA1);
+	AI::Alert new_alert = message.get_data (Message::DATA1, AI::Alert::NONE);
 	if (drop_on_alert > AI::Alert::NONE && drop_on_alert <= new_alert)
 		return on_drop (message);
 	else

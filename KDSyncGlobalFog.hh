@@ -21,9 +21,10 @@
 #ifndef KDSYNCGLOBALFOG_HH
 #define KDSYNCGLOBALFOG_HH
 
-#include "KDTransitionTrap.hh"
+#include <Thief/Thief.hh>
+using namespace Thief;
 
-class KDSyncGlobalFog : public KDTransitionTrap
+class KDSyncGlobalFog : public Script
 {
 public:
 	KDSyncGlobalFog (const String& name, const Object& host);
@@ -32,7 +33,9 @@ private:
 	void sync (const Color& color, float distance, bool sync_color = true,
 		bool sync_distance = true);
 
-	virtual bool increment ();
+	bool step ();
+
+	Transition transition;
 
 	Message::Result on_room_transit (RoomMessage&);
 	Message::Result on_fog_zone_change (Message&);

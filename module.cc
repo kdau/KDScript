@@ -31,7 +31,6 @@
 #include "KDSubtitled.hh"
 #include "KDSyncGlobalFog.hh"
 #include "KDToolSight.hh"
-#include "KDTransitionTrap.hh"
 #include "KDTrapEnvMap.hh"
 #include "KDTrapFog.hh"
 #include "KDTrapNextMission.hh"
@@ -52,11 +51,11 @@ THIEF_MODULE_BEGIN (MODULE_NAME)
 	THIEF_SCRIPT ("KDStatMeter", "KDHUDElement", KDStatMeter)
 	THIEF_SCRIPT ("KDSubtitledAI", "KDSubtitled", KDSubtitledAI)
 	THIEF_SCRIPT ("KDSubtitledVO", "KDSubtitled", KDSubtitledVO)
-	THIEF_SCRIPT ("KDSyncGlobalFog", "KDTransitionTrap", KDSyncGlobalFog)
+	THIEF_SCRIPT ("KDSyncGlobalFog", "Script", KDSyncGlobalFog)
 	THIEF_SCRIPT ("KDToolSight", "KDHUDElement", KDToolSight)
 	THIEF_SCRIPT ("KDTrapEnvMap", "TrapTrigger", KDTrapEnvMap)
-	THIEF_SCRIPT ("KDTrapFog", "KDTransitionTrap", KDTrapFog)
+	THIEF_SCRIPT ("KDTrapFog", "TrapTrigger", KDTrapFog)
 	THIEF_SCRIPT ("KDTrapNextMission", "TrapTrigger", KDTrapNextMission)
-	THIEF_SCRIPT ("KDTrapWeather", "KDTransitionTrap", KDTrapWeather)
+	THIEF_SCRIPT ("KDTrapWeather", "TrapTrigger", KDTrapWeather)
 THIEF_MODULE_END
 

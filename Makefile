@@ -38,7 +38,6 @@ SCRIPT_HEADERS = \
 	KDSubtitled.hh \
 	KDSyncGlobalFog.hh \
 	KDToolSight.hh \
-	KDTransitionTrap.hh \
 	KDTrapEnvMap.hh \
 	KDTrapFog.hh \
 	KDTrapNextMission.hh \
@@ -52,11 +51,4 @@ $(bindir1)/KDStatMeter.o: KDHUDElement.hh
 $(bindir2)/KDStatMeter.o: KDHUDElement.hh
 $(bindir1)/KDToolSight.o: KDHUDElement.hh
 $(bindir2)/KDToolSight.o: KDHUDElement.hh
-
-$(bindir1)/KDSyncGlobalFog.o: KDTransitionTrap.hh
-$(bindir2)/KDSyncGlobalFog.o: KDTransitionTrap.hh
-$(bindir1)/KDTrapFog.o: KDTransitionTrap.hh
-$(bindir2)/KDTrapFog.o: KDTransitionTrap.hh
-$(bindir1)/KDTrapWeather.o: KDTransitionTrap.hh
-$(bindir2)/KDTrapWeather.o: KDTransitionTrap.hh
 

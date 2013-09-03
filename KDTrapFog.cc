@@ -21,7 +21,8 @@
 #include "KDTrapFog.hh"
 
 KDTrapFog::KDTrapFog (const String& _name, const Object& _host)
-	: KDTransitionTrap (_name, _host),
+	: TrapTrigger (_name, _host),
+	  transition (*this, &KDTrapFog::step, "Fog"),
 	  PARAMETER (fog_zone, Fog::GLOBAL),
 	  PARAMETER (fog_color_on),
 	  PARAMETER (fog_color_off),
@@ -33,15 +34,15 @@ KDTrapFog::KDTrapFog (const String& _name, const Object& _host)
 	  PERSISTENT_ (end_distance)
 {}
 
-bool
-KDTrapFog::prepare (bool on)
+Message::Result
+KDTrapFog::on_trap (bool on, Message&)
 {
 	Color _end_color = on ? fog_color_on : fog_color_off;
 	float _end_distance = on ? fog_dist_on : fog_dist_off;
 
 	if (fog_zone < Fog::GLOBAL || fog_zone > Fog::_MAX_ZONE ||
 	    (_end_color == Color () && _end_distance < 0.0f))
-		return false;
+		return Message::HALT;
 
 	Fog current = Mission::get_fog (fog_zone);
 	start_color = current.color;
@@ -54,16 +55,18 @@ KDTrapFog::prepare (bool on)
 		Fog::Zone (fog_zone), Color (end_color), float (end_distance))
 			.send (host (), Player ());
 
-	return true;
+	transition.start ();
+	return Message::CONTINUE;
 }
 
 bool
-KDTrapFog::increment ()
+KDTrapFog::step ()
 {
 	Mission::set_fog (fog_zone, Fog {
-		interpolate (start_color, end_color),
+		transition.interpolate (start_color, end_color),
 		Fog::interpolate_distance (fog_zone == Fog::GLOBAL,
-			start_distance, end_distance, get_progress (), curve)
+			start_distance, end_distance,
+			transition.get_progress (), transition.curve)
 	});
 	return true;
 }

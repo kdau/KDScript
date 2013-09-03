@@ -187,12 +187,8 @@ KDSubtitled::finish_subtitle (const SoundSchema& schema)
 Message::Result
 KDSubtitled::on_subtitle (Message& message)
 {
-	SoundSchema schema = message.has_data (Message::DATA1)
-		? message.get_data<Object> (Message::DATA1)
-		: Object::NONE;
-	Being speaker = message.has_data (Message::DATA2)
-		? message.get_data<Object> (Message::DATA2)
-		: message.get_from ();
+	SoundSchema schema = message.get_data (Message::DATA1, Object ());
+	Being speaker = message.get_data (Message::DATA2, message.get_from ());
 	start_subtitle (speaker, schema);
 	return Message::HALT;
 }
@@ -200,7 +196,7 @@ KDSubtitled::on_subtitle (Message& message)
 Message::Result
 KDSubtitled::on_finish_subtitle (TimerMessage& message)
 {
-	finish_subtitle (message.get_data<Object> (Message::DATA1));
+	finish_subtitle (message.get_data (Message::DATA1, Object ()));
 	return Message::HALT;
 }
 
@@ -305,7 +301,8 @@ Message::Result
 KDSubtitledVO::on_initial_delay (TimerMessage& message)
 {
 	// Display the subtitle.
-	start_subtitle (Player (), message.get_data<Object> (Message::DATA1));
+	start_subtitle (Player (),
+		message.get_data (Message::DATA1, Object ()));
 	return Message::CONTINUE;
 }
 
