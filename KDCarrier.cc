@@ -51,14 +51,14 @@ KDCarrier::on_sim (SimMessage& message)
 {
 	if (message.is_starting ())
 		do_create_attachments ();
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
 KDCarrier::on_create (Message&)
 {
 	do_create_attachments ();
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 void
@@ -100,7 +100,7 @@ KDCarrier::on_ai_mode_change (AIModeChangeMessage& message)
 		else
 			notify_carried ("CarrierBrainDead");
 	}
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -109,7 +109,7 @@ KDCarrier::on_ignore_potion (Message&)
 	// The AI is being knocked out.
 	detected_braindeath = true;
 	notify_carried ("CarrierBrainDead", true);
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 
@@ -121,7 +121,7 @@ KDCarrier::on_slain (SlayMessage&)
 		detected_slaying = false;
 	else
 		notify_carried ("CarrierSlain");
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -133,7 +133,7 @@ KDCarrier::on_property_change (PropertyChangeMessage& message)
 		detected_slaying = true;
 		notify_carried ("CarrierSlain", true);
 	}
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 
@@ -144,7 +144,7 @@ KDCarrier::on_alertness (AIAlertnessMessage& message)
 	AI::Alert level = message.get_new_level ();
 	if (level > AI::Alert::NONE)
 		notify_carried ("CarrierAlerted", false, int (level));
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 

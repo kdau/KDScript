@@ -34,7 +34,7 @@ KDGetInfo::on_begin_script (Message&)
 {
 	// Some settings aren't available yet, so wait for next message cycle.
 	GenericMessage ("UpdateVariables").post (host (), host ());
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -42,7 +42,7 @@ KDGetInfo::on_mode_change (GameModeChangeMessage& message)
 {
 	if (message.is_resuming ())
 		GenericMessage ("UpdateVariables").send (host (), host ());
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -86,7 +86,7 @@ KDGetInfo::on_update_variables (Message&)
 	QuestVar ("info_version_major").set (version.major);
 	QuestVar ("info_version_minor").set (version.minor);
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -104,6 +104,6 @@ KDGetInfo::on_end_script (Message&)
 	QuestVar ("info_mode").unset ();
 	QuestVar ("info_version_major").unset ();
 	QuestVar ("info_version_minor").unset ();
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 

@@ -20,6 +20,8 @@
 
 #include "KDJunkTool.hh"
 
+
+
 KDJunkTool::KDJunkTool (const String& _name, const Object& _host)
 	: Script (_name, _host),
 	  PARAMETER_ (lugged, "junk_tool_lugged", true),
@@ -40,7 +42,6 @@ KDJunkTool::KDJunkTool (const String& _name, const Object& _host)
 	listen_timer ("StartToolUse", &KDJunkTool::on_start_tool_use);
 
 	listen_message ("Slain", &KDJunkTool::on_slain);
-
 }
 
 
@@ -55,7 +56,7 @@ KDJunkTool::on_contained (ContainmentMessage& message)
 		case ContainmentMessage::REMOVE: finish_carry (); break;
 		default: break;
 		}
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -63,7 +64,7 @@ KDJunkTool::on_destroy (Message&)
 {
 	if (Player ().is_in_inventory (host ()))
 		finish_carry ();
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 void
@@ -132,7 +133,7 @@ KDJunkTool::on_needs_reselect (Message&)
 {
 	// Reselect the tool in the next cycle (won't work in this one).
 	GenericMessage ("Reselect").post (host (), host ());
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -183,7 +184,7 @@ Message::Result
 KDJunkTool::on_needs_tool_use (Message&)
 {
 	start_timer ("StartToolUse", 1, false);
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -207,8 +208,6 @@ KDJunkTool::on_slain (SlayMessage&)
 		// Drop the tool.
 		player.drop_item ();
 	}
-	return Message::CONTINUE;
+	return Message::HALT;
 }
-
-
 

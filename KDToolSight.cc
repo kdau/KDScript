@@ -32,7 +32,7 @@ KDToolSight::KDToolSight (const String& _name, const Object& _host)
 	  PARAMETER_ (deselect_on_use, "tool_sight_deselect", false),
 	  PARAMETER_ (image, "tool_sight_image",
 	  	Symbol::CROSSHAIRS, false, false),
-	  PARAMETER_ (color, "tool_sight_color", Color (128, 128, 128)),
+	  PARAMETER_ (color, "tool_sight_color", Color (0x808080)),
 	  PARAMETER_ (offset_x, "tool_sight_offset_x", 0),
 	  PARAMETER_ (offset_y, "tool_sight_offset_y", 0)
 {
@@ -85,14 +85,14 @@ Message::Result
 KDToolSight::on_inv_select (Message&)
 {
 	selected = true;
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
 KDToolSight::on_inv_deselect (Message&)
 {
 	selected = false;
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -100,7 +100,7 @@ KDToolSight::on_frob_inv_end (FrobMessage&)
 {
 	if (deselect_on_use)
 		Player ().clear_item ();
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -108,6 +108,6 @@ KDToolSight::on_property_change (PropertyChangeMessage& message)
 {
 	if (message.get_property () == Property ("DesignNote"))
 		schedule_redraw ();
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 

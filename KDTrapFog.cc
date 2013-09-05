@@ -56,7 +56,7 @@ KDTrapFog::on_trap (bool on, Message&)
 			.send (host (), Player ());
 
 	transition.start ();
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 bool

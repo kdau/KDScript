@@ -42,7 +42,7 @@ KDQuestArrow::KDQuestArrow (const String& _name, const Object& _host)
 	  PARAMETER_ (obscured, "quest_arrow_obscured", false),
 	  PARAMETER_ (image, "quest_arrow_image", Symbol::ARROW, false, true),
 	  PARAMETER_ (_text, "quest_arrow_text", "@name"),
-	  PARAMETER_ (color, "quest_arrow_color", Color (255, 255, 255)),
+	  PARAMETER_ (color, "quest_arrow_color", Color (0xffffff)),
 	  PARAMETER_ (shadow, "quest_arrow_shadow", true),
 	  direction (Direction::NONE),
 	  image_pos (),
@@ -169,7 +169,7 @@ Message::Result
 KDQuestArrow::on_on (Message&)
 {
 	enabled = true;
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 
@@ -177,7 +177,7 @@ Message::Result
 KDQuestArrow::on_off (Message&)
 {
 	enabled = false;
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -186,7 +186,7 @@ KDQuestArrow::on_contained (ContainmentMessage& message)
 	if (message.get_event () == ContainmentMessage::ADD &&
 	    message.get_container () == Player ())
 		enabled = false;
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -194,7 +194,7 @@ KDQuestArrow::on_ai_mode_change (AIModeChangeMessage& message)
 {
 	if (message.get_new_mode () == AI::Mode::DEAD)
 		enabled = false;
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 
@@ -213,7 +213,7 @@ KDQuestArrow::on_property_change (PropertyChangeMessage& message)
 		schedule_redraw ();
 		update_text ();
 	}
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -222,7 +222,7 @@ KDQuestArrow::on_quest_change (QuestChangeMessage&)
 	if (objective->number != Objective::NONE)
 		enabled = (objective->is_visible () &&
 			objective->get_state () == Objective::State::INCOMPLETE);
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 

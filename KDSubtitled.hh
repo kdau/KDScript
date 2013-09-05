@@ -29,8 +29,10 @@ using namespace Thief;
 class HUDSubtitle : public HUDElement
 {
 public:
+	typedef std::unique_ptr<HUDSubtitle> Ptr;
+
 	HUDSubtitle (const Being& speaker, const SoundSchema& schema,
-		const String& text, Color color);
+		const String& text, const Color& color);
 	virtual ~HUDSubtitle ();
 
 	SoundSchema get_schema () const { return schema; }
@@ -70,7 +72,7 @@ private:
 	Message::Result on_finish_subtitle (TimerMessage&);
 	Message::Result on_end_script (Message&);
 
-	HUDSubtitle* element;
+	HUDSubtitle::Ptr element;
 };
 
 

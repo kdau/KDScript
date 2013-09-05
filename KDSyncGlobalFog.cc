@@ -106,7 +106,7 @@ KDSyncGlobalFog::on_room_transit (RoomMessage& message)
 
 	last_room_zone = new_zone;
 	sync (color, distance, sync_color);
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -121,10 +121,9 @@ KDSyncGlobalFog::on_fog_zone_change (Message& message)
 	Color color = message.get_data<Color> (Message::DATA2);
 	float distance = message.get_data<float> (Message::DATA3);
 
-	if (!last_room_zone.exists () || last_room_zone != changed_zone)
-		return Message::HALT;
+	if (last_room_zone.exists () && last_room_zone == changed_zone)
+		sync (color, distance);
 
-	sync (color, distance);
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 

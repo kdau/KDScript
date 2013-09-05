@@ -79,7 +79,7 @@ KDTrapWeather::on_trap (bool on, Message&)
 	    opacity.exists () || brightness.exists () || wind.exists ())
 		transition.start ();
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 bool

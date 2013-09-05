@@ -34,10 +34,10 @@ const int
 HUDSubtitle::PADDING = 8;
 
 const Color
-HUDSubtitle::BACKGROUND_COLOR (0, 0, 0);
+HUDSubtitle::BACKGROUND_COLOR = Color (0x000000);
 
 HUDSubtitle::HUDSubtitle (const Being& _speaker, const SoundSchema& _schema,
-		const String& _text, Color _color)
+		const String& _text, const Color& _color)
 	: HUDElement (),
 	  speaker (_speaker), schema (_schema), text (_text), color (_color)
 {
@@ -102,10 +102,10 @@ const float
 KDSubtitled::EARSHOT = 80.0f;
 
 const Color
-KDSubtitled::DEFAULT_COLOR (255, 255, 255);
+KDSubtitled::DEFAULT_COLOR = Color (0xffffff);
 
 KDSubtitled::KDSubtitled (const String& _name, const Object& _host)
-	: Script (_name, _host), element (nullptr)
+	: Script (_name, _host)
 {
 	listen_message ("Subtitle", &KDSubtitled::on_subtitle);
 	listen_timer ("FinishSubtitle", &KDSubtitled::on_finish_subtitle);
@@ -152,12 +152,12 @@ KDSubtitled::start_subtitle (const Being& speaker, const SoundSchema& schema)
 	{
 		// Create a HUD subtitle element, if desired.
 		if (QuestVar ("subtitles_use_hud").get ())
-			element = new HUDSubtitle
-				(speaker, schema, text, color);
+			element.reset (new HUDSubtitle
+				(speaker, schema, text, color));
 	}
 	catch (...)
 	{
-		element = nullptr;
+		element.reset ();
 	}
 
 	if (element)
@@ -180,8 +180,7 @@ KDSubtitled::finish_subtitle (const SoundSchema& schema)
 	if (schema != Object::ANY && element->get_schema () != schema) return;
 
 	// Destroy the HUD element.
-	delete element;
-	element = nullptr;
+	element.reset ();
 }
 
 Message::Result
@@ -231,7 +230,7 @@ KDSubtitledAI::on_property_change (PropertyChangeMessage& message)
 	// Confirm that the relevant property has changed.
 	if (message.get_object () != ai ||
 	    message.get_property () != Property ("Speech"))
-		return Message::CONTINUE;
+		return Message::HALT;
 
 	// Confirm that the speech schema is valid.
 	SoundSchema schema = ai.last_speech_schema;
@@ -241,7 +240,7 @@ KDSubtitledAI::on_property_change (PropertyChangeMessage& message)
 	if (!ai.is_speaking)
 	{
 		finish_subtitle (schema);
-		return Message::CONTINUE;
+		return Message::HALT;
 	}
 
 	// Confirm that the speech is in the player's (estimated) earshot.
@@ -252,7 +251,7 @@ KDSubtitledAI::on_property_change (PropertyChangeMessage& message)
 
 	// Display the subtitle.
 	start_subtitle (ai, schema);
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 
@@ -294,7 +293,7 @@ KDSubtitledVO::on_turn_on (Message&)
 
 	// Wait until the initial delay is over before displaying the subtitle.
 	start_timer ("InitialDelay", schema.initial_delay, false, schema);
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -303,6 +302,6 @@ KDSubtitledVO::on_initial_delay (TimerMessage& message)
 	// Display the subtitle.
 	start_subtitle (Player (),
 		message.get_data (Message::DATA1, Object ()));
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 

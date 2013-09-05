@@ -54,7 +54,7 @@ KDCarried::on_post_sim (Message&)
 		}
 	}
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -72,7 +72,7 @@ KDCarried::on_create (Message&)
 	if (inert_until_dropped)
 		host ().add_metaprop (Object ("FrobInert"));
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -82,7 +82,7 @@ KDCarried::on_carrier_alerted (Message& message)
 	if (drop_on_alert > AI::Alert::NONE && drop_on_alert <= new_alert)
 		return on_drop (message);
 	else
-		return Message::CONTINUE;
+		return Message::HALT;
 }
 
 Message::Result
@@ -179,8 +179,8 @@ KDCarried::on_fix_physics (Message&)
 	// Switch to a sphere model and set the appropriate radius.
 	SpherePhysical sphere = host ();
 	sphere.physics_type = Physical::PhysicsType::SPHERE;
-	sphere.submodel_count = 1;
-	if (radius > 0.0f) sphere.physics_radius_1 = radius;
+	sphere.submodel_count = 1u;
+	if (radius > 0.0f) sphere.physics_radius [0u] = radius;
 
 	return Message::HALT;
 }

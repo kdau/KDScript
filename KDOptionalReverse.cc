@@ -40,7 +40,7 @@ KDOptionalReverse::on_post_sim (Message&)
 		if (get_negation (objective).number != Objective::NONE)
 			objective.subscribe (host (), Objective::Field::STATE);
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -55,7 +55,7 @@ KDOptionalReverse::on_quest_change (QuestChangeMessage& message)
 	if (objective.field == Objective::Field::STATE)
 		update_negation (objective.number, false);
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -65,7 +65,7 @@ KDOptionalReverse::on_end_script (Message&)
 	for (Objective objective = 0; objective.exists (); ++objective.number)
 		update_negation (objective, true);
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Objective

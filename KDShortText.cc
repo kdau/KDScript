@@ -23,7 +23,7 @@
 KDShortText::KDShortText (const String& _name, const Object& _host)
 	: Script (_name, _host),
 	  PARAMETER (text),
-	  PARAMETER (text_color, Color (255, 255, 255)),
+	  PARAMETER (text_color, Color (0xffffff)),
 	  PARAMETER (text_time),
 	  PARAMETER (text_on_focus, true),
 	  PARAMETER (text_on_frob, true)
@@ -37,7 +37,7 @@ KDShortText::on_focus (Message&)
 {
 	if (text_on_focus)
 		show_text ();
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -45,7 +45,7 @@ KDShortText::on_frob (FrobMessage&)
 {
 	if (text_on_frob)
 		show_text ();
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 void

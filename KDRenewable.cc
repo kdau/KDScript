@@ -45,7 +45,7 @@ KDRenewable::on_post_sim (Message&)
 		start_timer ("Renew", delay, true);
 	}
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 Message::Result
@@ -120,6 +120,6 @@ KDRenewable::on_renew (TimerMessage&)
 	if (!physical)
 		instance.remove_physics ();
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 

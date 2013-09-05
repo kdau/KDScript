@@ -46,6 +46,6 @@ KDTrapEnvMap::on_trap (bool on, Message&)
 	if (!texture.empty ())
 		Mission::set_envmap_texture (env_map_zone, texture);
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 

@@ -94,10 +94,10 @@ KDStatMeter::KDStatMeter (const String& _name, const Object& _host)
 	  PARAMETER_ (low, "stat_range_low", 25),
 	  PARAMETER_ (high, "stat_range_high", 75),
 
-	  PARAMETER_ (color_bg, "stat_color_bg", Color (0, 0, 0)),
-	  PARAMETER_ (color_low, "stat_color_low", Color (255, 0, 0)),
-	  PARAMETER_ (color_med, "stat_color_med", Color (255, 255, 0)),
-	  PARAMETER_ (color_high, "stat_color_high", Color (0, 255, 0)),
+	  PARAMETER_ (color_bg, "stat_color_bg", Color (0x000000)),
+	  PARAMETER_ (color_low, "stat_color_low", Color (0x0000ff)),
+	  PARAMETER_ (color_med, "stat_color_med", Color (0x00ffff)),
+	  PARAMETER_ (color_high, "stat_color_high", Color (0x00ff00)),
 
 	  value (0.0f),
 	  value_pct (0.0f),
@@ -441,7 +441,7 @@ KDStatMeter::on_post_sim (Message&)
 		mono () << "Warning: Low bracket " << low << "% is greater than "
 			"or equal to high bracket " << high << "%." << std::endl;
 
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 
@@ -450,7 +450,7 @@ Message::Result
 KDStatMeter::on_on (Message&)
 {
 	enabled = true;
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 
@@ -458,7 +458,7 @@ Message::Result
 KDStatMeter::on_off (Message&)
 {
 	enabled = false;
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 
@@ -474,7 +474,7 @@ KDStatMeter::on_property_change (PropertyChangeMessage& message)
 		update_text ();
 		update_range ();
 	}
-	return Message::CONTINUE;
+	return Message::HALT;
 }
 
 void
