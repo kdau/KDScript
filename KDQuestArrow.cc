@@ -190,7 +190,7 @@ KDQuestArrow::on_contained (ContainmentMessage& message)
 }
 
 Message::Result
-KDQuestArrow::on_ai_mode_change (AIModeChangeMessage& message)
+KDQuestArrow::on_ai_mode_change (AIModeMessage& message)
 {
 	if (message.get_new_mode () == AI::Mode::DEAD)
 		enabled = false;
@@ -200,7 +200,7 @@ KDQuestArrow::on_ai_mode_change (AIModeChangeMessage& message)
 
 
 Message::Result
-KDQuestArrow::on_property_change (PropertyChangeMessage& message)
+KDQuestArrow::on_property_change (PropertyMessage& message)
 {
 	if (message.get_property () == Property ("DesignNote"))
 	{
@@ -217,7 +217,7 @@ KDQuestArrow::on_property_change (PropertyChangeMessage& message)
 }
 
 Message::Result
-KDQuestArrow::on_quest_change (QuestChangeMessage&)
+KDQuestArrow::on_quest_change (QuestMessage&)
 {
 	if (objective->number != Objective::NONE)
 		enabled = (objective->is_visible () &&

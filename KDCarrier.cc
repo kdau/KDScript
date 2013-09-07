@@ -69,7 +69,7 @@ KDCarrier::do_create_attachments ()
 	for (auto& attachment : CreatureAttachmentLink::get_all
 		(host (), Object::ANY, Link::Inheritance::SOURCE))
 	{
-		CreatureAttachmentLink::Joint joint = attachment.joint;
+		AI::Joint joint = attachment.joint;
 
 		// Don't attach two objects to the same joint.
 		bool has_existing = false;
@@ -91,7 +91,7 @@ KDCarrier::do_create_attachments ()
 
 
 Message::Result
-KDCarrier::on_ai_mode_change (AIModeChangeMessage& message)
+KDCarrier::on_ai_mode_change (AIModeMessage& message)
 {
 	if (message.get_new_mode () == AI::Mode::DEAD)
 	{ // The AI has been killed or knocked out.
@@ -125,7 +125,7 @@ KDCarrier::on_slain (SlayMessage&)
 }
 
 Message::Result
-KDCarrier::on_property_change (PropertyChangeMessage& message)
+KDCarrier::on_property_change (PropertyMessage& message)
 {
 	if (message.get_property () == Property ("DeathStage") &&
 	    host_as<Damageable> ().death_stage == 12) // The AI is being slain.

@@ -44,7 +44,7 @@ KDOptionalReverse::on_post_sim (Message&)
 }
 
 Message::Result
-KDOptionalReverse::on_quest_change (QuestChangeMessage& message)
+KDOptionalReverse::on_quest_change (QuestMessage& message)
 {
 	if (message.get_old_value () == message.get_new_value ())
 		return Message::HALT;

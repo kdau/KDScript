@@ -53,7 +53,7 @@ private:
 	Message::Result on_on (Message&);
 	Message::Result on_off (Message&);
 
-	Message::Result on_property_change (PropertyChangeMessage&);
+	Message::Result on_property_change (PropertyMessage&);
 	void update_text ();
 	void update_range ();
 

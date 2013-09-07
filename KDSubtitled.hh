@@ -84,7 +84,7 @@ public:
 
 private:
 	virtual void initialize ();
-	Message::Result on_property_change (PropertyChangeMessage&);
+	Message::Result on_property_change (PropertyMessage&);
 };
 
 

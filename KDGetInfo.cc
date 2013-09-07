@@ -38,7 +38,7 @@ KDGetInfo::on_begin_script (Message&)
 }
 
 Message::Result
-KDGetInfo::on_mode_change (GameModeChangeMessage& message)
+KDGetInfo::on_mode_change (GameModeMessage& message)
 {
 	if (message.is_resuming ())
 		GenericMessage ("UpdateVariables").send (host (), host ());

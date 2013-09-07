@@ -36,10 +36,10 @@ private:
 	Message::Result on_on (Message&);
 	Message::Result on_off (Message&);
 	Message::Result on_contained (ContainmentMessage&);
-	Message::Result on_ai_mode_change (AIModeChangeMessage&);
+	Message::Result on_ai_mode_change (AIModeMessage&);
 
-	Message::Result on_property_change (PropertyChangeMessage&);
-	Message::Result on_quest_change (QuestChangeMessage&);
+	Message::Result on_property_change (PropertyMessage&);
+	Message::Result on_quest_change (QuestMessage&);
 
 	void update_image ();
 	void update_objective ();

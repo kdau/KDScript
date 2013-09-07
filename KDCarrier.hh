@@ -37,12 +37,12 @@ private:
 	void do_create_attachments ();
 	Parameter<bool> create_attachments;
 
-	Message::Result on_ai_mode_change (AIModeChangeMessage&);
+	Message::Result on_ai_mode_change (AIModeMessage&);
 	Message::Result on_ignore_potion (Message&);
 	Persistent<bool> detected_braindeath;
 
 	Message::Result on_slain (SlayMessage&);
-	Message::Result on_property_change (PropertyChangeMessage&);
+	Message::Result on_property_change (PropertyMessage&);
 	Persistent<bool> detected_slaying;
 
 	Message::Result on_alertness (AIAlertnessMessage&);

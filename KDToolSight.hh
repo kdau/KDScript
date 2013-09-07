@@ -38,7 +38,7 @@ private:
 
 	Message::Result on_frob_inv_end (FrobMessage&);
 
-	Message::Result on_property_change (PropertyChangeMessage&);
+	Message::Result on_property_change (PropertyMessage&);
 
 	static const HUD::ZIndex PRIORITY;
 	static const CanvasSize SYMBOL_SIZE;

@@ -223,7 +223,7 @@ KDSubtitledAI::initialize ()
 }
 
 Message::Result
-KDSubtitledAI::on_property_change (PropertyChangeMessage& message)
+KDSubtitledAI::on_property_change (PropertyMessage& message)
 {
 	AI ai = host_as<AI> ();
 

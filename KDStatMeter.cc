@@ -464,7 +464,7 @@ KDStatMeter::on_off (Message&)
 
 
 Message::Result
-KDStatMeter::on_property_change (PropertyChangeMessage& message)
+KDStatMeter::on_property_change (PropertyMessage& message)
 {
 	if (message.get_property () == Property ("DesignNote"))
 	{
