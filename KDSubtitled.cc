@@ -88,10 +88,12 @@ HUDSubtitle::redraw ()
 
 	// draw border
 	set_drawing_color (color);
-	draw_box ();
+	CanvasSize elem_size = get_size ();
+	for (int i = 0; i < BORDER; ++i)
+		draw_box ({ i, i, elem_size.w - 2 * i, elem_size.h - 2 * i });
 
 	// draw text
-	draw_text (text, CanvasPoint (BORDER+PADDING, BORDER+PADDING));
+	draw_text (text, { BORDER + PADDING, BORDER + PADDING });
 }
 
 
