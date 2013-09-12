@@ -278,10 +278,9 @@ KDQuestArrow::update_text ()
 #ifdef IS_THIEF2
 	{
 		if (Engine::is_editor ())
-			mono () << "Note: The \"@objective\" value for "
+			log (Log::INFO, "The \"@objective\" value for "
 				"quest_arrow_text is not available in DromEd. "
-				"Test this arrow in the real game."
-				<< std::endl;
+				"Test this arrow in the real game.");
 		else if (objective->number != Objective::NONE)
 		{
 			std::ostringstream dir, msgid;
@@ -292,12 +291,12 @@ KDQuestArrow::update_text ()
 		}
 	}
 #else // !IS_THIEF2
-		mono () << "Warning: quest_arrow_text cannot be \"@objective\" "
-			"in this game. No text will be shown." << std::endl;
+		log (Log::WARNING, "quest_arrow_text cannot be \"@objective\" "
+			"in this game. No text will be shown.");
 #endif // IS_THIEF2
 
 	else
-		mono () << "Warning: \"" << _text << "\" is not a valid quest "
-			"arrow text source." << std::endl;
+		log (Log::WARNING, "\"%1\" is not a valid quest arrow text "
+			"source.", _text);
 }
 

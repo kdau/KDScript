@@ -36,8 +36,7 @@ KDTrapNextMission::on_trap (bool on, Message&)
 	Mission::set_next (next_mission);
 	return Message::HALT;
 #else // !IS_THIEF2
-	mono () << "Error: This script is not available for this game."
-		<< std::endl;
+	log (Log::ERROR, "This script is not available for this game.");
 	return Message::ERROR;
 #endif // IS_THIEF2
 }

@@ -32,9 +32,9 @@ KDTrapEnvMap::on_trap (bool on, Message&)
 {
 	if (Engine::get_version () < Version (1, 20))
 	{
-		mono () << "Error: This script cannot be used with this version "
+		log (Log::ERROR, "This script cannot be used with this version "
 			"of the Dark Engine. Upgrade to NewDark version 1.20 or "
-			"higher." << std::endl;
+			"higher.");
 		return Message::ERROR;
 	}
 

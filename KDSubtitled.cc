@@ -125,9 +125,9 @@ KDSubtitled::start_subtitle (const Being& speaker, const SoundSchema& schema)
 	// Confirm speaker and schema objects are valid.
 	if (!speaker.is_being () || !schema.is_sound_schema ())
 	{
-		mono () << "Warning: Can't subtitle invalid speaker/schema pair "
-			<< speaker.number << "/" << schema.number << "."
-			<< std::endl;
+		log (Log::WARNING,
+			"Can't subtitle invalid speaker/schema pair %1%/%2%.",
+			speaker.get_editor_name (), schema.get_editor_name ());
 		return false;
 	}
 

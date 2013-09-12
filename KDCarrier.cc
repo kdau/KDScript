@@ -78,10 +78,8 @@ KDCarrier::do_create_attachments ()
 				{ has_existing = true; break; }
 		if (has_existing) continue;
 
-		mono () << "Attaching a new "
-			<< attachment.get_dest ().get_editor_name ()
-			<< " to joint " << int (joint) << "."
-			<< std::endl;
+		log (Log::INFO, "Attaching a new %1% to joint %2%.",
+			attachment.get_dest ().get_editor_name (), int (joint));
 
 		CreatureAttachmentLink::create (host (),
 			Object::create (attachment.get_dest ()), joint);

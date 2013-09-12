@@ -109,7 +109,7 @@ KDOptionalReverse::update_negation (Objective objective, bool final)
 Message::Result
 KDOptionalReverse::on_post_sim (Message&)
 {
-	mono () << "Error: This script is not available for this game." << std::endl;
+	log (Log::ERROR, "This script is not available for this game.");
 	return Message::ERROR;
 }
 

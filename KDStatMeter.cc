@@ -395,39 +395,37 @@ KDStatMeter::on_post_sim (Message&)
 	// Issue any one-time warnings on configuration.
 
 	if (style == Style::PROGRESS && image->bitmap)
-		mono () << "Warning: Bitmap image \"" << image.get_raw ()
-			<< "\" will be ignored for a progress-style meter."
-			<< std::endl;
+		log (Log::WARNING, "Bitmap image \"%1%\" will be ignored for a "
+			"progress-style meter.", image.get_raw ());
 
 	if (style != Style::UNITS && image->symbol != Symbol::NONE)
-		mono () << "Warning: Symbol \"" << image.get_raw () << "\" will "
-			"be ignored for a non-units-style meter." << std::endl;
+		log (Log::WARNING, "Symbol \"%1%\" will be ignored for a "
+			"non-units-style meter.", image.get_raw ());
 
 	if (!quest_var->empty () && !prop_name->empty ())
-		mono () << "Warning: Both a quest variable and a property were "
+		log (Log::WARNING, "Both a quest variable and a property were "
 			"specified; will use the quest variable and ignore the "
-			"property." << std::endl;
+			"property.");
 
 	if (quest_var->empty () && prop_name->empty ())
-		mono () << "Warning: Neither a quest variable nor a property "
-			"was specified; the stat meter will not be displayed."
-			<< std::endl;
+		log (Log::WARNING, "Neither a quest variable nor a property "
+			"was specified; the stat meter will not be displayed.");
 
 	if (min > max)
-		mono () << "Warning: Minimum value " << min << " is greater "
-			"than maximum value " << max << "." << std::endl;
+		log (Log::WARNING, "Minimum value %1% is greater than maximum "
+			"value %2%.", min, max);
 
 	if (low < 0 || low > 100)
-		mono () << "Warning: Low bracket " << low << "% is out of the "
-			"range [0,100]." << std::endl;
+		log (Log::WARNING, "Low bracket %1%%% is outside the range "
+			"[0,100].", low);
 
 	if (high < 0 || high > 100)
-		mono () << "Warning: High bracket " << high << "% is out of the "
-			"range [0,100]." << std::endl;
+		log (Log::WARNING, "High bracket %1%%% is outside the range "
+			"[0,100].", high);
 
 	if (low >= high)
-		mono () << "Warning: Low bracket " << low << "% is greater than "
-			"or equal to high bracket " << high << "%." << std::endl;
+		log (Log::WARNING, "Low bracket %1%%% is greater than or equal "
+			"to high bracket %2%%%.", low, high);
 
 	return Message::HALT;
 }
@@ -489,14 +487,14 @@ KDStatMeter::update_text ()
 		if (prop_obj != Object::NONE)
 			text = prop_obj->get_description ();
 		else
-			mono () << "Warning: \"@description\" is not a valid "
+			log (Log::WARNING, "\"@description\" is not a valid "
 				"stat meter text source for a quest variable "
-				"statistic." << std::endl;
+				"statistic.");
 	}
 
 	else
-		mono () << "Warning: \"" << _text << "\" is not a valid stat "
-			"meter text source." << std::endl;
+		log (Log::WARNING, "\"%1%\" is not a valid stat meter text "
+			"source.", _text);
 }
 
 void

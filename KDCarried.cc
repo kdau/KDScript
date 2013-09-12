@@ -118,8 +118,8 @@ KDCarried::on_drop (Message&)
 	}
 	if (!position_test.is_position_valid ())
 	{
-		mono () << "Not dropping from invalid location " << location
-			<< "." << std::endl;
+		log (Log::WARNING, "Not dropping from invalid location %1%.",
+			location);
 		return Message::HALT;
 	}
 #endif // IS_THIEF2
@@ -136,8 +136,8 @@ KDCarried::on_drop (Message&)
 	if (detail != Link::NONE)
 	{
 		dropped = dropped.clone ();
-		mono () << "Replacing self with clone: "
-			<< dropped.get_editor_name () << std::endl;
+		log (Log::INFO, "Replacing self with clone %1%.",
+			dropped.get_editor_name ());
 
 		// Add a reference link to the ex-carrying AI.
 		Link::create ("CulpableFor", detail.get_dest (), dropped);
