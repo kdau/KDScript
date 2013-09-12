@@ -47,13 +47,6 @@ THIEF_ENUM_CODING (KDStatMeter::Orient, CODE, CODE,
 	THIEF_ENUM_VALUE (VERT, "vert"),
 )
 
-THIEF_ENUM_CODING (KDStatMeter::Component, CODE, CODE,
-	THIEF_ENUM_VALUE (NONE),
-	THIEF_ENUM_VALUE (X, "x"),
-	THIEF_ENUM_VALUE (Y, "y"),
-	THIEF_ENUM_VALUE (Z, "z"),
-)
-
 } // namespace Thief
 
 
@@ -85,7 +78,8 @@ KDStatMeter::KDStatMeter (const String& _name, const Object& _host)
 	  PARAMETER_ (quest_var, "stat_source_qvar"),
 	  PARAMETER_ (prop_name, "stat_source_property"),
 	  PARAMETER_ (prop_field, "stat_source_field"),
-	  PARAMETER_ (prop_comp, "stat_source_component", Component::NONE),
+	  PARAMETER_ (prop_comp, "stat_source_component",
+		Vector::Component::NONE),
 	  PARAMETER_ (prop_obj, "stat_source_object", host ()),
 
 	  PARAMETER_ (_min, "stat_range_min", 0.0f),
@@ -154,17 +148,11 @@ KDStatMeter::prepare ()
 		}
 		catch (...) {} // not a float
 
-		if (!have_value && prop_comp != Component::NONE)
+		if (!have_value && prop_comp != Vector::Component::NONE)
 		try
 		{
-			Vector _value = property.get_field<Vector> (prop_field);
-			switch (prop_comp)
-			{
-			case Component::X: value = _value.x; break;
-			case Component::Y: value = _value.y; break;
-			case Component::Z: value = _value.z; break;
-			default: return false;
-			}
+			value = property.get_field<Vector> (prop_field)
+				[prop_comp];
 			have_value = true;
 		}
 		catch (...) {} // not a vector

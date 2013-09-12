@@ -112,7 +112,7 @@ KDRenewable::on_renew (TimerMessage&)
 		return Message::HALT;
 
 	// Create new instance.
-	Physical instance = Object::create (archetype);
+	Physical instance = Object::start_create (archetype);
 	instance.set_position (Vector (), Vector (), host ());
 	Link::create ("Owns", host (), instance);
 
@@ -120,6 +120,7 @@ KDRenewable::on_renew (TimerMessage&)
 	if (!physical)
 		instance.remove_physics ();
 
+	instance.finish_create ();
 	return Message::HALT;
 }
 

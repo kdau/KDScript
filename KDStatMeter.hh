@@ -39,8 +39,6 @@ public:
 
 	enum class Orient { HORIZ, VERT };
 
-	enum class Component { NONE, X, Y, Z };
-
 private:
 	virtual void initialize ();
 	virtual bool prepare ();
@@ -75,7 +73,7 @@ private:
 	Parameter<int> request_w, request_h;
 
 	Parameter<String> quest_var, prop_name, prop_field;
-	Parameter<Component> prop_comp;
+	Parameter<Vector::Component> prop_comp;
 	Parameter<Object> prop_obj;
 
 	Parameter<float> _min, _max; float min, max;
