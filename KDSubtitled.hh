@@ -41,7 +41,7 @@ private:
 	virtual bool prepare ();
 	virtual void redraw ();
 
-	static const HUD::ZIndex PRIORITY;
+	static const ZIndex PRIORITY;
 	static const int BORDER, PADDING;
 	static const Color BACKGROUND_COLOR;
 

@@ -83,8 +83,8 @@ KDOptionalReverse::update_negation (Objective objective, bool final)
 	Objective negation = get_negation (objective);
 	if (negation.number == Objective::NONE) return;
 
-	Objective::State obj_state = objective.get_state (), neg_state;
-	switch (obj_state)
+	Objective::State neg_state;
+	switch (objective.get_state ())
 	{
 	case Objective::State::INCOMPLETE:
 		neg_state = final
@@ -101,7 +101,12 @@ KDOptionalReverse::update_negation (Objective objective, bool final)
 		break;
 	}
 
-	negation.set_state (neg_state);
+	if (negation.get_state () != neg_state)
+	{
+		log (Log::NORMAL, "Updating optional reverse objective %|| to "
+			"state %||.", negation.number, int (neg_state));
+		negation.set_state (neg_state);
+	}
 }
 
 #else // !IS_THIEF2

@@ -121,6 +121,7 @@ KDRenewable::on_renew (TimerMessage&)
 		instance.remove_physics ();
 
 	instance.finish_create ();
+	log (Log::NORMAL, "Created new renewable instance %||.", instance);
 	return Message::HALT;
 }
 

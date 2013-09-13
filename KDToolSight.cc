@@ -20,7 +20,7 @@
 
 #include "KDToolSight.hh"
 
-const HUD::ZIndex
+const HUDElement::ZIndex
 KDToolSight::PRIORITY = 30;
 
 const CanvasSize

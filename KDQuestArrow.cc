@@ -22,7 +22,7 @@
 
 
 
-const HUD::ZIndex
+const HUDElement::ZIndex
 KDQuestArrow::PRIORITY = 10;
 
 const CanvasSize

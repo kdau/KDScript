@@ -33,6 +33,7 @@ KDTrapNextMission::on_trap (bool on, Message&)
 	if (next_mission < 1) return Message::HALT;
 
 #ifdef IS_THIEF2
+	log (Log::NORMAL, "Setting next mission to %||.", next_mission);
 	Mission::set_next (next_mission);
 	return Message::HALT;
 #else // !IS_THIEF2

@@ -77,7 +77,11 @@ KDTrapWeather::on_trap (bool on, Message&)
 
 	if (freq.exists () || speed.exists () || radius.exists () ||
 	    opacity.exists () || brightness.exists () || wind.exists ())
+	{
+		log (Log::NORMAL, "Starting weather transition over %|| ms.",
+			transition.length);
 		transition.start ();
+	}
 
 	return Message::HALT;
 }

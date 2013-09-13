@@ -55,6 +55,10 @@ KDTrapFog::on_trap (bool on, Message&)
 		Fog::Zone (fog_zone), Color (end_color), float (end_distance))
 			.send (host (), Player ());
 
+	log (Log::NORMAL, "Starting fog transition for zone %|| from color %|| "
+		"at distance %|| to color %|| at distance %|| over %|| ms.",
+		int (fog_zone), start_color, start_distance, end_color,
+		end_distance, transition.length);
 	transition.start ();
 	return Message::HALT;
 }

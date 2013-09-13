@@ -24,7 +24,7 @@
 
 // HUDSubtitle
 
-const HUD::ZIndex
+const HUDElement::ZIndex
 HUDSubtitle::PRIORITY = 20;
 
 const int
@@ -125,9 +125,8 @@ KDSubtitled::start_subtitle (const Being& speaker, const SoundSchema& schema)
 	// Confirm speaker and schema objects are valid.
 	if (!speaker.is_being () || !schema.is_sound_schema ())
 	{
-		log (Log::WARNING,
-			"Can't subtitle invalid speaker/schema pair %1%/%2%.",
-			speaker.get_editor_name (), schema.get_editor_name ());
+		log (Log::WARNING, "Can't subtitle invalid speaker/schema pair "
+			"%||/%||.", speaker, schema);
 		return false;
 	}
 
@@ -169,6 +168,8 @@ KDSubtitled::start_subtitle (const Being& speaker, const SoundSchema& schema)
 		// Go the old-fashioned way.
 		Mission::show_text (text, duration, color);
 
+	log (Log::VERBOSE, "Subtitled schema %|| on speaker %||.", schema,
+		speaker);
 	return true;
 }
 

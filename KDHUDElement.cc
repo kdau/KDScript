@@ -33,7 +33,7 @@ THIEF_ENUM_CODING (KDHUDElement::Symbol, CODE, CODE,
 } // namespace Thief
 
 KDHUDElement::KDHUDElement (const String& _name, const Object& _host,
-		HUD::ZIndex _priority)
+		ZIndex _priority)
 	: Script (_name, _host), priority (_priority)
 {
 	listen_message ("EndScript", &KDHUDElement::on_end_script);
@@ -183,7 +183,7 @@ Parameter<KDHUDElement::Image>::decode (const String& raw) const
 	else // Interpret as a path to a bitmap.
 	{
 		value.symbol = KDHUDElement::Symbol::NONE;
-		value.bitmap = HUD::load_bitmap (raw, config.animated);
+		value.bitmap = HUDBitmap::load (raw, config.animated);
 		if (!value.bitmap)
 			throw std::runtime_error ("Could not load bitmap.");
 	}

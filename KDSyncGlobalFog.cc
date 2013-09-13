@@ -57,6 +57,8 @@ KDSyncGlobalFog::sync (const Color& color, float distance, bool sync_color,
 	start_distance = global.distance;
 	end_distance = sync_distance ? distance : global.distance;
 
+	log (Log::NORMAL, "Synchronizing global fog to color %|| at distance "
+		"%|| over %|| ms.", end_color, end_distance, transition.length);
 	transition.start ();
 }
 

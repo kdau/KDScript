@@ -45,7 +45,7 @@ private:
 	void update_objective ();
 	void update_text ();
 
-	static const HUD::ZIndex PRIORITY;
+	static const ZIndex PRIORITY;
 	static const CanvasSize SYMBOL_SIZE;
 	static const int PADDING;
 

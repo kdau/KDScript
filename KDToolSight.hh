@@ -40,7 +40,7 @@ private:
 
 	Message::Result on_property_change (PropertyMessage&);
 
-	static const HUD::ZIndex PRIORITY;
+	static const ZIndex PRIORITY;
 	static const CanvasSize SYMBOL_SIZE;
 
 	bool selected; // not persistent because selection isn't

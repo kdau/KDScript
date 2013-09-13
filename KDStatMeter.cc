@@ -51,7 +51,7 @@ THIEF_ENUM_CODING (KDStatMeter::Orient, CODE, CODE,
 
 
 
-const HUD::ZIndex
+const HUDElement::ZIndex
 KDStatMeter::PRIORITY = 0;
 
 const int

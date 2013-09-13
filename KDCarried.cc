@@ -50,6 +50,10 @@ KDCarried::on_post_sim (Message&)
 		    container.type != Container::Type::GENERIC)
 		{
 			QuestVar pockets ("DrSPocketCnt");
+			log (Log::NORMAL, "Adjusting the pickable pocket count "
+				"from %|| to %|| since the carried object is "
+				"Contains-attached and FrobInert.",
+				pockets.get (), pockets.get () - 1);
 			pockets.set (pockets.get () - 1);
 		}
 	}
@@ -118,7 +122,7 @@ KDCarried::on_drop (Message&)
 	}
 	if (!position_test.is_position_valid ())
 	{
-		log (Log::WARNING, "Not dropping from invalid location %1%.",
+		log (Log::WARNING, "Not dropping from invalid location %||.",
 			location);
 		return Message::HALT;
 	}
@@ -136,8 +140,8 @@ KDCarried::on_drop (Message&)
 	if (detail != Link::NONE)
 	{
 		dropped = dropped.clone ();
-		log (Log::INFO, "Replacing self with clone %1%.",
-			dropped.get_editor_name ());
+		log (Log::INFO, "Replacing self with droppable clone %||.",
+			dropped);
 
 		// Add a reference link to the ex-carrying AI.
 		Link::create ("CulpableFor", detail.get_dest (), dropped);

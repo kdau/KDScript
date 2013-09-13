@@ -53,7 +53,7 @@ public:
 
 protected:
 	KDHUDElement (const String& name, const Object& host,
-		HUD::ZIndex priority);
+		ZIndex priority);
 
 	virtual void initialize ();
 
@@ -73,7 +73,7 @@ protected:
 private:
 	Message::Result on_end_script (Message&);
 
-	HUD::ZIndex priority;
+	ZIndex priority;
 };
 
 namespace Thief {

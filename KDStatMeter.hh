@@ -55,7 +55,7 @@ private:
 	void update_text ();
 	void update_range ();
 
-	static const HUD::ZIndex PRIORITY;
+	static const ZIndex PRIORITY;
 	static const int MARGIN;
 
 	Persistent<bool> enabled;

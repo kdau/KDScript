@@ -44,7 +44,11 @@ KDTrapEnvMap::on_trap (bool on, Message&)
 
 	const String& texture = on ? env_map_on : env_map_off;
 	if (!texture.empty ())
+	{
+		log (Log::NORMAL, "Setting environment map zone %|| to "
+			"texture %||.", int (env_map_zone), texture);
 		Mission::set_envmap_texture (env_map_zone, texture);
+	}
 
 	return Message::HALT;
 }
