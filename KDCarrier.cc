@@ -41,6 +41,7 @@ KDCarrier::KDCarrier (const String& _name, const Object& _host)
 void
 KDCarrier::initialize ()
 {
+	Script::initialize ();
 	ObjectProperty::subscribe ("DeathStage", host ());
 }
 
@@ -49,7 +50,7 @@ KDCarrier::initialize ()
 Message::Result
 KDCarrier::on_sim (SimMessage& message)
 {
-	if (message.is_starting ())
+	if (message.event == SimMessage::START)
 		do_create_attachments ();
 	return Message::HALT;
 }
@@ -91,8 +92,8 @@ KDCarrier::do_create_attachments ()
 Message::Result
 KDCarrier::on_ai_mode_change (AIModeMessage& message)
 {
-	if (message.get_new_mode () == AI::Mode::DEAD)
-	{ // The AI has been killed or knocked out.
+	if (message.new_mode == AI::Mode::DEAD) // killed or knocked out
+	{
 		if (detected_braindeath) // The message has already been sent.
 			detected_braindeath = false;
 		else
@@ -125,7 +126,7 @@ KDCarrier::on_slain (SlayMessage&)
 Message::Result
 KDCarrier::on_property_change (PropertyMessage& message)
 {
-	if (message.get_property () == Property ("DeathStage") &&
+	if (message.property == Property ("DeathStage") &&
 	    host_as<Damageable> ().death_stage == 12) // The AI is being slain.
 	{
 		detected_slaying = true;
@@ -139,9 +140,9 @@ KDCarrier::on_property_change (PropertyMessage& message)
 Message::Result
 KDCarrier::on_alertness (AIAlertnessMessage& message)
 {
-	AI::Alert level = message.get_new_level ();
-	if (level > AI::Alert::NONE)
-		notify_carried ("CarrierAlerted", false, int (level));
+	if (message.new_level > AI::Alert::NONE)
+		notify_carried ("CarrierAlerted", false,
+			int (message.new_level));
 	return Message::HALT;
 }
 

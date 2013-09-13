@@ -222,6 +222,7 @@ KDSubtitledAI::KDSubtitledAI (const String& _name, const Object& _host)
 void
 KDSubtitledAI::initialize ()
 {
+	Script::initialize ();
 	ObjectProperty::subscribe ("Speech", host ());
 }
 
@@ -231,8 +232,7 @@ KDSubtitledAI::on_property_change (PropertyMessage& message)
 	AI ai = host_as<AI> ();
 
 	// Confirm that the relevant property has changed.
-	if (message.get_object () != ai ||
-	    message.get_property () != Property ("Speech"))
+	if (message.object != ai || message.property != Property ("Speech"))
 		return Message::HALT;
 
 	// Confirm that the speech schema is valid.

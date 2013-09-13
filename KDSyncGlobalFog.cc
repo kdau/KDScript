@@ -76,13 +76,12 @@ KDSyncGlobalFog::step ()
 Message::Result
 KDSyncGlobalFog::on_room_transit (RoomMessage& message)
 {
-	if (message.get_object_type () != RoomMessage::PLAYER)
+	if (message.object_type != RoomMessage::PLAYER)
 		return Message::HALT; // The starting point is still our host.
+	if (message.to_room == Object::NONE)
+		return Message::HALT; // This is not a valid transit message.
 
-	Room to_room = message.get_to_room ();
-	if (to_room == Object::NONE) return Message::HALT;
-
-	Fog::Zone new_zone = to_room.fog_zone;
+	Fog::Zone new_zone = message.to_room.fog_zone;
 	if (last_room_zone.exists () && last_room_zone == new_zone)
 		return Message::HALT; // no change
 

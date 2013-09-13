@@ -42,6 +42,7 @@ KDHUDElement::KDHUDElement (const String& _name, const Object& _host,
 void
 KDHUDElement::initialize ()
 {
+	Script::initialize ();
 	if (Engine::get_mode () == Engine::Mode::GAME)
 		HUDElement::initialize (priority);
 }

@@ -49,8 +49,8 @@ KDJunkTool::KDJunkTool (const String& _name, const Object& _host)
 Message::Result
 KDJunkTool::on_contained (ContainmentMessage& message)
 {
-	if (message.get_container ().inherits_from (Object ("Avatar")))
-		switch (message.get_event ())
+	if (message.container.inherits_from (Object ("Avatar")))
+		switch (message.event)
 		{
 		case ContainmentMessage::ADD: start_carry (); break;
 		case ContainmentMessage::REMOVE: finish_carry (); break;

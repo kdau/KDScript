@@ -452,7 +452,7 @@ KDStatMeter::on_off (Message&)
 Message::Result
 KDStatMeter::on_property_change (PropertyMessage& message)
 {
-	if (message.get_property () == Property ("DesignNote"))
+	if (message.property == Property ("DesignNote"))
 	{
 		// Too many to check, so just assume the meter is affected.
 		schedule_redraw ();

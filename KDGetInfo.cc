@@ -40,7 +40,7 @@ KDGetInfo::on_begin_script (Message&)
 Message::Result
 KDGetInfo::on_mode_change (GameModeMessage& message)
 {
-	if (message.is_resuming ())
+	if (message.event == GameModeMessage::RESUME)
 		GenericMessage ("UpdateVariables").send (host (), host ());
 	return Message::HALT;
 }

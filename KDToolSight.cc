@@ -106,7 +106,7 @@ KDToolSight::on_frob_inv_end (FrobMessage&)
 Message::Result
 KDToolSight::on_property_change (PropertyMessage& message)
 {
-	if (message.get_property () == Property ("DesignNote"))
+	if (message.property == Property ("DesignNote"))
 		schedule_redraw ();
 	return Message::HALT;
 }

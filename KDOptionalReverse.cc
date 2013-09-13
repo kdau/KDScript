@@ -46,14 +46,13 @@ KDOptionalReverse::on_post_sim (Message&)
 Message::Result
 KDOptionalReverse::on_quest_change (QuestMessage& message)
 {
-	if (message.get_old_value () == message.get_new_value ())
+	if (message.old_value == message.new_value)
 		return Message::HALT;
 
 	// Translate from the objective to its negation.
-	auto objective =
-		Objective::parse_quest_var (message.get_quest_var ());
-	if (objective.field == Objective::Field::STATE)
-		update_negation (objective.number, false);
+	auto obj_qvar = Objective::parse_quest_var (message.quest_var);
+	if (obj_qvar.field == Objective::Field::STATE)
+		update_negation (obj_qvar.number, false);
 
 	return Message::HALT;
 }

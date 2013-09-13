@@ -183,8 +183,8 @@ KDQuestArrow::on_off (Message&)
 Message::Result
 KDQuestArrow::on_contained (ContainmentMessage& message)
 {
-	if (message.get_event () == ContainmentMessage::ADD &&
-	    message.get_container () == Player ())
+	if (message.event == ContainmentMessage::ADD &&
+	    message.container == Player ())
 		enabled = false;
 	return Message::HALT;
 }
@@ -192,7 +192,7 @@ KDQuestArrow::on_contained (ContainmentMessage& message)
 Message::Result
 KDQuestArrow::on_ai_mode_change (AIModeMessage& message)
 {
-	if (message.get_new_mode () == AI::Mode::DEAD)
+	if (message.new_mode == AI::Mode::DEAD)
 		enabled = false;
 	return Message::HALT;
 }
@@ -202,13 +202,13 @@ KDQuestArrow::on_ai_mode_change (AIModeMessage& message)
 Message::Result
 KDQuestArrow::on_property_change (PropertyMessage& message)
 {
-	if (message.get_property () == Property ("DesignNote"))
+	if (message.property == Property ("DesignNote"))
 	{
 		schedule_redraw ();
 		update_objective ();
 		update_text ();
 	}
-	else if (message.get_property () == Property ("GameName"))
+	else if (message.property == Property ("GameName"))
 	{
 		schedule_redraw ();
 		update_text ();
