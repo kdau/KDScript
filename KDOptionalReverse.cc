@@ -25,7 +25,8 @@ KDOptionalReverse::KDOptionalReverse (const String& _name, const Object& _host)
 {
 	listen_message ("PostSim", &KDOptionalReverse::on_post_sim);
 #ifdef IS_THIEF2
-	listen_message ("QuestChange", &KDOptionalReverse::on_quest_change);
+	listen_message ("ObjectiveChange",
+		&KDOptionalReverse::on_objective_change);
 	listen_message ("EndScript", &KDOptionalReverse::on_end_script);
 #endif // IS_THIEF2
 }
@@ -38,21 +39,18 @@ KDOptionalReverse::on_post_sim (Message&)
 	// Subscribe to objectives with negations.
 	for (Objective objective = 0; objective.exists (); ++objective.number)
 		if (get_negation (objective).number != Objective::NONE)
-			objective.subscribe (host (), Objective::Field::STATE);
+			objective.state.subscribe (host ());
 
 	return Message::HALT;
 }
 
 Message::Result
-KDOptionalReverse::on_quest_change (QuestMessage& message)
+KDOptionalReverse::on_objective_change (ObjectiveMessage& message)
 {
-	if (message.old_value == message.new_value)
-		return Message::HALT;
-
-	// Translate from the objective to its negation.
-	auto obj_qvar = Objective::parse_quest_var (message.quest_var);
-	if (obj_qvar.field == Objective::Field::STATE)
-		update_negation (obj_qvar.number, false);
+	if (message.field == ObjectiveMessage::Field::STATE &&
+	    message.old_raw_value != message.new_raw_value )
+		// Translate from the objective to its negation.
+		update_negation (message.objective, false);
 
 	return Message::HALT;
 }
@@ -83,7 +81,7 @@ KDOptionalReverse::update_negation (Objective objective, bool final)
 	if (negation.number == Objective::NONE) return;
 
 	Objective::State neg_state;
-	switch (objective.get_state ())
+	switch (objective.state)
 	{
 	case Objective::State::INCOMPLETE:
 		neg_state = final
@@ -100,11 +98,11 @@ KDOptionalReverse::update_negation (Objective objective, bool final)
 		break;
 	}
 
-	if (negation.get_state () != neg_state)
+	if (negation.state != neg_state)
 	{
 		log (Log::NORMAL, "Updating optional reverse objective %|| to "
 			"state %||.", negation.number, int (neg_state));
-		negation.set_state (neg_state);
+		negation.state = neg_state;
 	}
 }
 

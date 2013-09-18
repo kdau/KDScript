@@ -152,7 +152,7 @@ KDSubtitled::start_subtitle (const Being& speaker, const SoundSchema& schema)
 	try
 	{
 		// Create a HUD subtitle element, if desired.
-		if (QuestVar ("subtitles_use_hud").get ())
+		if (QuestVar ("subtitles_use_hud"))
 			element.reset (new HUDSubtitle
 				(speaker, schema, text, color));
 	}

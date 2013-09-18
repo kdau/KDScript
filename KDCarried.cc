@@ -53,8 +53,8 @@ KDCarried::on_post_sim (Message&)
 			log (Log::NORMAL, "Adjusting the pickable pocket count "
 				"from %|| to %|| since the carried object is "
 				"Contains-attached and FrobInert.",
-				pockets.get (), pockets.get () - 1);
-			pockets.set (pockets.get () - 1);
+				pockets, pockets - 1);
+			pockets = pockets - 1;
 		}
 	}
 

@@ -48,43 +48,41 @@ KDGetInfo::on_mode_change (GameModeMessage& message)
 Message::Result
 KDGetInfo::on_update_variables (Message&)
 {
-	QuestVar ("info_directx_version").set (Engine::get_directx_version ());
+	QuestVar ("info_directx_version") = Engine::get_directx_version ();
 
 	CanvasSize canvas = Engine::get_canvas_size ();
-	QuestVar ("info_display_height").set (canvas.h);
-	QuestVar ("info_display_width").set (canvas.w);
+	QuestVar ("info_display_height") = canvas.h;
+	QuestVar ("info_display_width") = canvas.w;
 
 	if (Engine::has_config ("sfx_eax"))
-		QuestVar ("info_has_eax").set
-			(Engine::get_config<int> ("sfx_eax"));
+		QuestVar ("info_has_eax") = Engine::get_config<int> ("sfx_eax");
 
 	if (Engine::has_config ("fogging"))
-		QuestVar ("info_has_fog").set
-			(Engine::get_config<int> ("fogging"));
+		QuestVar ("info_has_fog") = Engine::get_config<int> ("fogging");
 
 	if (Engine::has_config ("game_hardware"))
-		QuestVar ("info_has_hw3d").set
-			(Engine::get_config<int> ("game_hardware"));
+		QuestVar ("info_has_hw3d") =
+			Engine::get_config<int> ("game_hardware");
 
 	if (Engine::has_config ("enhanced_sky"))
-		QuestVar ("info_has_sky").set
-			(Engine::get_config<int> ("enhanced_sky"));
+		QuestVar ("info_has_sky") =
+			Engine::get_config<int> ("enhanced_sky");
 
 	if (Engine::has_config ("render_weather"))
-		QuestVar ("info_has_weather").set
-			(Engine::get_config<int> ("render_weather"));
+		QuestVar ("info_has_weather") =
+			Engine::get_config<int> ("render_weather");
 
 #ifdef IS_THIEF2
 	if (Engine::get_mode () == Engine::Mode::GAME)
-		QuestVar ("info_mission").set (Mission::get_number ());
+		QuestVar ("info_mission") = Mission::get_number ();
 #endif // IS_THIEF2
 
-	QuestVar ("info_mode").set ((Engine::get_mode () == Engine::Mode::EDIT)
-		? 1 : Engine::is_editor () ? 2 : 0);
+	QuestVar ("info_mode") = (Engine::get_mode () == Engine::Mode::EDIT)
+		? 1 : Engine::is_editor () ? 2 : 0;
 
 	Version version = Engine::get_version ();
-	QuestVar ("info_version_major").set (version.major);
-	QuestVar ("info_version_minor").set (version.minor);
+	QuestVar ("info_version_major") = version.major;
+	QuestVar ("info_version_minor") = version.minor;
 
 	return Message::HALT;
 }
@@ -92,18 +90,18 @@ KDGetInfo::on_update_variables (Message&)
 Message::Result
 KDGetInfo::on_end_script (Message&)
 {
-	QuestVar ("info_directx_version").unset ();
-	QuestVar ("info_display_height").unset ();
-	QuestVar ("info_display_width").unset ();
-	QuestVar ("info_has_eax").unset ();
-	QuestVar ("info_has_fog").unset ();
-	QuestVar ("info_has_hw3d").unset ();
-	QuestVar ("info_has_sky").unset ();
-	QuestVar ("info_has_weather").unset ();
-	QuestVar ("info_mission").unset ();
-	QuestVar ("info_mode").unset ();
-	QuestVar ("info_version_major").unset ();
-	QuestVar ("info_version_minor").unset ();
+	QuestVar ("info_directx_version").clear ();
+	QuestVar ("info_display_height").clear ();
+	QuestVar ("info_display_width").clear ();
+	QuestVar ("info_has_eax").clear ();
+	QuestVar ("info_has_fog").clear ();
+	QuestVar ("info_has_hw3d").clear ();
+	QuestVar ("info_has_sky").clear ();
+	QuestVar ("info_has_weather").clear ();
+	QuestVar ("info_mission").clear ();
+	QuestVar ("info_mode").clear ();
+	QuestVar ("info_version_major").clear ();
+	QuestVar ("info_version_minor").clear ();
 	return Message::HALT;
 }
 

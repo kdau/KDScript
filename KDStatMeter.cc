@@ -128,7 +128,7 @@ KDStatMeter::prepare ()
 	QuestVar qvar (quest_var->data ());
 	ObjectProperty property (prop_name->data (), prop_obj);
 	if (qvar.exists ())
-		value = qvar.get ();
+		value = qvar;
 	else if (property.exists ())
 	{
 		bool have_value = false;

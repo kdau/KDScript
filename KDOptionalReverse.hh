@@ -32,7 +32,7 @@ public:
 private:
 	Message::Result on_post_sim (Message&);
 #ifdef IS_THIEF2
-	Message::Result on_quest_change (QuestMessage&);
+	Message::Result on_objective_change (ObjectiveMessage&);
 	Message::Result on_end_script (Message&);
 
 	Objective get_negation (Objective objective);

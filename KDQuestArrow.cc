@@ -220,8 +220,8 @@ Message::Result
 KDQuestArrow::on_quest_change (QuestMessage&)
 {
 	if (objective->number != Objective::NONE)
-		enabled = (objective->is_visible () &&
-			objective->get_state () == Objective::State::INCOMPLETE);
+		enabled = (objective->visible &&
+			objective->state == Objective::State::INCOMPLETE);
 	return Message::HALT;
 }
 
@@ -237,8 +237,8 @@ KDQuestArrow::update_objective ()
 	if (old_objective != Objective::NONE)
 	{
 		Objective old (old_objective);
-		old.unsubscribe (host (), Objective::Field::STATE);
-		old.unsubscribe (host (), Objective::Field::VISIBLE);
+		old.state.unsubscribe (host ());
+		old.visible.unsubscribe (host ());
 	}
 
 	// Identify the new objective, if any.
@@ -246,12 +246,12 @@ KDQuestArrow::update_objective ()
 	if (objective->number == Objective::NONE) return;
 
 	// Update the enabled state.
-	enabled = (objective->is_visible () &&
-		objective->get_state () == Objective::State::INCOMPLETE);
+	enabled = (objective->visible &&
+		objective->state == Objective::State::INCOMPLETE);
 
 	// Subscribe to the new objective.
-	objective->subscribe (host (), Objective::Field::STATE);
-	objective->subscribe (host (), Objective::Field::VISIBLE);
+	objective->state.subscribe (host ());
+	objective->visible.subscribe (host ());
 
 	// In case text == "@objective", update it.
 	update_text ();
