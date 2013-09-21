@@ -68,22 +68,21 @@ KDRenewable::on_renew (TimerMessage&)
 	size_t my_threshold = 0u;
 	for (auto& script_param : ScriptParamsLink::get_all (host ()))
 	{
-		CIString data = String (script_param.data).data ();
-		if (data == "Renewable")
+		if (CIString ("Renewable") == script_param.data)
 		{
-			archetype = script_param.get_dest ();
 			my_threshold = threshold;
+			archetype = script_param.get_dest ();
 			break;
 		}
 
 		// For backwards compatibility, look in the link data.
-		char* end = nullptr;
-		my_threshold = strtoul (data.data (), &end, 10);
-		if (end != data.data ())
+		try
 		{
+			my_threshold = std::stoul (script_param.data);
 			archetype = script_param.get_dest ();
 			break;
 		}
+		catch (...) {}
 	}
 	if (archetype == Object::NONE)
 		return Message::HALT;

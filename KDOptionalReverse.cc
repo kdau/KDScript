@@ -68,10 +68,8 @@ KDOptionalReverse::on_end_script (Message&)
 Objective
 KDOptionalReverse::get_negation (Objective objective)
 {
-	std::ostringstream _negation;
-	_negation << "goal_negation_" << objective.number;
-	QuestVar negation (_negation.str ());
-	return negation.get (Objective::NONE);
+	return QuestVar ("goal_negation_" + std::to_string (objective.number))
+		.get (Objective::NONE);
 }
 
 void

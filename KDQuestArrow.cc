@@ -283,11 +283,11 @@ KDQuestArrow::update_text ()
 				"Test this arrow in the real game.");
 		else if (objective->number != Objective::NONE)
 		{
-			std::ostringstream dir, msgid;
-			dir << "intrface\\miss" << Mission::get_number ();
-			msgid << "text_" << objective->number;
-			text = Mission::get_text
-				(dir.str (), "goals", msgid.str ());
+			String dir = "intrface\\miss" +
+				std::to_string (Mission::get_number ());
+			String msgid = "text_" +
+				std::to_string (objective->number);
+			text = Mission::get_text (dir, "goals", msgid);
 		}
 	}
 #else // !IS_THIEF2
