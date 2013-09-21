@@ -50,6 +50,7 @@ table { margin: 2em 2em 2em 2em; border-collapse: collapse; font-size: 10pt; }
 	caption { font-style: italic; }
 	th, td { border: 1px dotted #667; padding: 0.5em 0.75em; vertical-align: middle; text-align: left; }
 		thead th { background-color: #667; color: #000; border-style: solid; }
+			thead th a:link, thead th a:visited { color: #228; border-color: #228; border-width: 2px; }
 	col.identifier { width: 15em; }
 	col.type { width: 8em; }
 	col.description { width: 35em; }

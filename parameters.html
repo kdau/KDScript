@@ -22,7 +22,7 @@
 		<p>Since Dark Engine script modules cannot create their own special properties, custom scripts are instead configured with &ldquo;parameters&rdquo; stored in the <em>Editor&rarr;Design Note</em> property. These parameters have a similar syntax across the various custom script modules (<a href="http://dromed.whoopdedo.org/public_scripts/index">Public Scripts</a>, <a href="http://dromed.whoopdedo.org/tnhscript/index">tnhScript</a>, <a href="http://www.ttlg.com/forums/showthread.php?t=134166">NVScript</a>, <a href="http://thief.starforge.co.uk/twscript/README.html">TWScript</a>, and KDScript). Since there are some differences, however, the KDScript parameter syntax is documented here.</p>
 		<p>In KDScript, an object inherits Design Note parameter values individually from its metaproperties, archetype, and ancestors. For example, if a parameter is set on an object's distant parent archetype and not set on any lower archetypes or the concrete object itself, the object will inherit that parameter regardless of which parents have Design Notes of their own.</p>
 		<p>Further, Design Note parameters in KDScript may be changed during the course of the mission. Wherever possible, KDScript scripts will use the new values from then on.</p>
-		<h2>General syntax</h2>
+		<h2 id="syntax">General syntax</h2>
 		<p>The <em>Design Note</em> property is a string; it is separated into individual parameters with semicolons (<code>;</code>). Each parameter consists of:</p>
 		<dl>
 			<dt>a parameter name</dt><dd>such as <code>renewable_threshold</code>,</dd>
@@ -32,7 +32,7 @@
 		</dl>
 		<p>Whitespace (spaces, tabs, line breaks) may appear between parameters and between parts of parameters, and will be ignored. Parameter names are not case-sensitive. The value may be surrounded by single (<code>''</code>) or double (<code>""</code>) quotation marks, and must be quoted if it is to include any semicolons or quotation marks itself. Backslashes, single quotes, and double quotes should be preceded by a backslash (i.e. <code>\\</code>, <code>\'</code>, and <code>\"</code>). Here is an example of a longer Design Note:</p>
 		<pre class="wrap">renewable_threshold[0] = 6; renewable_threshold [1,2]=3  ; renewable_physical=true; transition=30s; curve=quadratic; precip_freq_on=100.5;precip_wind_on=10,-2.5,0; fog_color_on=#c862a3; message =   "  He called me a \"taffer\"!"</pre>
-		<h2>Difficulty variation</h2>
+		<h2 id="difficulty">Difficulty variation</h2>
 		<p>In KDScript, all parameter values may vary based on the player's chosen difficulty level. Any of the difficulty indexes below may appear between square brackets (<code>[]</code>) after any parameter name. The following value will only be used if the difficulty matches. If a parameter appears more than once in a Design Note, the last value for the parameter with a matching difficulty will be used. See the example Design Note above for an example.</p>
 		<dl>
 			<dt><code>0</code>, <code>n</code>, or <code>normal</code></dt><dd>Normal difficulty, such as <code>renewable_threshold[0]=6</code></dd>
@@ -42,7 +42,7 @@
 			<dt><code>1,2</code>, <code>1-2</code>, or <code>h,e</code></dt><dd>Hard or Expert difficulty, such as <code>drop_on_alert[1,2]=false</code></dd>
 			<dt><code>0,1,2</code>, <code>0-2</code>, <code>n,h,e</code>, <code>any</code></dt><dd>any difficulty (default if no index given)</dd>
 		</dl>
-		<h2>Value types</h2>
+		<h2 id="types">Value types</h2>
 		<p>Each parameter has one of the types described below. Its value must be formatted accordingly. Types marked with an asterisk (<strong>*</strong>) can be set via a quest variable; to do this, set the parameter value to a dollar sign (<code>$</code>) followed by the quest variable name, for example <code>renewable_threshold=$max_arrows</code>.</p>
 		<dl class="primary">
 			<dt>boolean *</dt><dd>A true-or-false value, where values starting with <code>T</code>, <code>t</code>, <code>Y</code>, or <code>y</code> are true, numeric values other than zero are true, and all other values are false. Examples: <code>true</code>, <code>1</code>, <code>yes</code>; <code>false</code>, <code>0</code>, <code>no</code>.</dd>

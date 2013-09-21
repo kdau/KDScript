@@ -19,12 +19,12 @@
 		<h2 id="transitions">Transitions</h2>
 		<table>
 			<colgroup><col class="identifier"/><col class="type"/><col class="description"/><col class="values"/></colgroup>
-			<thead><tr><th>Parameter</th><th>Type</th><th>Description</th><th>Default value</th></tr></thead>
+			<thead><tr><th>Parameter</th><th><a href="parameters.html#types">Type</a></th><th>Description</th><th>Default value</th></tr></thead>
 		<tbody>
-			<tr><td><code>transition</code></td><td>time</td><td>length of transition between states, in milliseconds</td><td><code>0</code></td></tr>
+			<tr><td><code>transition</code></td><td>time</td><td>length of transition between states</td><td><code>0</code> (instantaneous)</td></tr>
 			<tr><td><code>curve</code></td><td>string</td><td>shape of curve to interpolate values along</td><td><code>linear</code></td></tr>
 		</tbody></table>
-		<p>The fog and weather scripts can provide smooth transitions between the old and new values. The <code>transition</code> parameter specifies the length, in milliseconds, of the transition. If that parameter is undefined or set to <code>0</code>, the transition will be instantaneous. The <code>curve</code> parameter specifies the shape of the interpolated curve, from among the values below. (<em>t</em> is the progress of the transition in the range [0.0, 1.0], while <em>&alpha;</em> is the multiplier used to interpolate between the starting and ending values at that time.)</p>
+		<p>The fog and weather scripts can provide smooth transitions between the old and new values. The <code>transition</code> parameter specifies the length of the transition. If that parameter is undefined or set to <code>0</code>, the transition will be instantaneous. The <code>curve</code> parameter specifies the shape of the interpolated curve, from among the values below. (<em>t</em> is the progress of the transition in the range [0.0, 1.0], while <em>&alpha;</em> is the multiplier used to interpolate between the starting and ending values at that time.)</p>
 		<dl>
 			<dt><code>linear</code></dt><dd>Straight line: <em>&alpha; = t</em></dd>
 			<dt><code>quadratic</code></dt><dd>Parabolic curve: <em>&alpha; = t<sup>2</sup></em></dd>
