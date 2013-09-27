@@ -285,36 +285,36 @@ KDStatMeter::redraw ()
 	// Draw a progress bar meter.
 	if (style == Style::PROGRESS)
 	{
-		CanvasRect area (request_size);
+		CanvasRect bar_area (request_size);
 		if (orient == Orient::VERT) // invert dimensions
 		{
-			area.w = request_size.h;
-			area.h = request_size.w;
+			bar_area.w = request_size.h;
+			bar_area.h = request_size.w;
 		}
 
 		set_drawing_color (color_bg);
-		fill_area (area);
+		fill_area (bar_area);
 
 		set_drawing_color (tier_color);
-		draw_box (area);
+		draw_box (bar_area);
 
 		if (orient == Orient::HORIZ)
 		{
-			area.w = std::lround (area.w * value_pct);
+			bar_area.w = std::lround (bar_area.w * value_pct);
 			if (position == Position::NE ||
 			    position == Position::EAST ||
 			    position == Position::SE) // right to left
-				area.x = request_size.w - area.w;
+				bar_area.x = request_size.w - bar_area.w;
 		}
 		else // Orient::VERT
 		{
-			area.h = std::lround (area.h * value_pct);
+			bar_area.h = std::lround (bar_area.h * value_pct);
 			if (position != Position::NW &&
 			    position != Position::NORTH &&
 			    position != Position::NE) // bottom to top
-				area.y = request_size.w - area.h;
+				bar_area.y = request_size.w - bar_area.h;
 		}
-		fill_area (area);
+		fill_area (bar_area);
 	}
 
 	// Draw a meter with individual units.
@@ -347,16 +347,16 @@ KDStatMeter::redraw ()
 				(image->bitmap->count_frames () - 1)));
 		else
 		{
-			CanvasRect area (request_size);
+			CanvasRect gem_area (request_size);
 			if (orient == Orient::VERT)
 			{
-				area.w = request_size.h;
-				area.h = request_size.w;
+				gem_area.w = request_size.h;
+				gem_area.h = request_size.w;
 			}
 			set_drawing_color (color_blend);
-			fill_area (area);
+			fill_area (gem_area);
 			set_drawing_color (color_bg);
-			draw_box (area);
+			draw_box (gem_area);
 		}
 	}
 

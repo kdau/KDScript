@@ -27,7 +27,7 @@ KDOptionalReverse::KDOptionalReverse (const String& _name, const Object& _host)
 #ifdef IS_THIEF2
 	listen_message ("ObjectiveChange",
 		&KDOptionalReverse::on_objective_change);
-	listen_message ("EndScript", &KDOptionalReverse::on_end_script);
+	listen_message ("Sim", &KDOptionalReverse::on_sim);
 #endif // IS_THIEF2
 }
 
@@ -37,7 +37,7 @@ Message::Result
 KDOptionalReverse::on_post_sim (Message&)
 {
 	// Subscribe to objectives with negations.
-	for (Objective objective = 0; objective.exists (); ++objective.number)
+	for (Objective objective = 0; objective.exists (); ++objective)
 		if (get_negation (objective).number != Objective::NONE)
 			objective.state.subscribe (host ());
 
@@ -56,11 +56,12 @@ KDOptionalReverse::on_objective_change (ObjectiveMessage& message)
 }
 
 Message::Result
-KDOptionalReverse::on_end_script (Message&)
+KDOptionalReverse::on_sim (SimMessage& message)
 {
 	// Fix anything that VictoryCheck did incorrectly.
-	for (Objective objective = 0; objective.exists (); ++objective.number)
-		update_negation (objective, true);
+	if (message.event == SimMessage::FINISH)
+		for (Objective objective = 0; objective.exists (); ++objective)
+			update_negation (objective, true);
 
 	return Message::HALT;
 }

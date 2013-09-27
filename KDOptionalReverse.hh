@@ -33,7 +33,7 @@ private:
 	Message::Result on_post_sim (Message&);
 #ifdef IS_THIEF2
 	Message::Result on_objective_change (ObjectiveMessage&);
-	Message::Result on_end_script (Message&);
+	Message::Result on_sim (SimMessage&);
 
 	Objective get_negation (Objective objective);
 	void update_negation (Objective objective, bool final);
