@@ -32,7 +32,7 @@ public:
 private:
 	virtual Message::Result on_trap (bool on, Message&);
 
-	Parameter<EnvironmentMapZone> env_map_zone;
+	Parameter<int> env_map_zone;
 	Parameter<String> env_map_on, env_map_off;
 };
 

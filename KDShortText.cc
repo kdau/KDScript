@@ -22,11 +22,11 @@
 
 KDShortText::KDShortText (const String& _name, const Object& _host)
 	: Script (_name, _host),
-	  PARAMETER (text),
-	  PARAMETER (text_color, Color (0xffffff)),
-	  PARAMETER (text_time),
-	  PARAMETER (text_on_focus, true),
-	  PARAMETER (text_on_frob, true)
+	  THIEF_PARAMETER (text),
+	  THIEF_PARAMETER (text_color, Color (0xffffff)),
+	  THIEF_PARAMETER (text_time),
+	  THIEF_PARAMETER (text_on_focus, true),
+	  THIEF_PARAMETER (text_on_frob, true)
 {
 	listen_message ("WorldSelect", &KDShortText::on_focus);
 	listen_message ("FrobWorldEnd", &KDShortText::on_frob);

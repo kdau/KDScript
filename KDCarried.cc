@@ -22,10 +22,10 @@
 
 KDCarried::KDCarried (const String& _name, const Object& _host)
 	: Script (_name, _host),
-	  PARAMETER (drop_on_alert, AI::Alert::NONE),
-	  PARAMETER (was_dropped, false),
-	  PARAMETER (inert_until_dropped, false),
-	  PARAMETER (off_when_dropped, false)
+	  THIEF_PARAMETER (drop_on_alert, AI::Alert::NONE),
+	  THIEF_PARAMETER (was_dropped, false),
+	  THIEF_PARAMETER (inert_until_dropped, false),
+	  THIEF_PARAMETER (off_when_dropped, false)
 {
 	listen_message ("PostSim", &KDCarried::on_post_sim);
 	listen_message ("Create", &KDCarried::on_create);

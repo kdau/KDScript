@@ -22,9 +22,9 @@
 
 KDTrapEnvMap::KDTrapEnvMap (const String& _name, const Object& _host)
 	: TrapTrigger (_name, _host),
-	  PARAMETER (env_map_zone, EnvironmentMapZone::GLOBAL),
-	  PARAMETER (env_map_on),
-	  PARAMETER (env_map_off)
+	  THIEF_PARAMETER (env_map_zone, 0u),
+	  THIEF_PARAMETER (env_map_on),
+	  THIEF_PARAMETER (env_map_off)
 {}
 
 Message::Result
@@ -38,15 +38,18 @@ KDTrapEnvMap::on_trap (bool on, Message&)
 		return Message::ERROR;
 	}
 
-	if (env_map_zone < EnvironmentMapZone::GLOBAL ||
-	    env_map_zone > EnvironmentMapZone::_MAX_ZONE)
+	if (env_map_zone < 0 || env_map_zone >= 64)
+	{
+		log (Log::ERROR, "The environment map zone %|| is invalid. It "
+			"must be between 0 and 63, inclusive.", env_map_zone);
 		return Message::ERROR;
+	}
 
 	const String& texture = on ? env_map_on : env_map_off;
 	if (!texture.empty ())
 	{
 		log (Log::NORMAL, "Setting environment map zone %|| to "
-			"texture %||.", int (env_map_zone), texture);
+			"texture %||.", env_map_zone, texture);
 		Mission::set_envmap_texture (env_map_zone, texture);
 	}
 

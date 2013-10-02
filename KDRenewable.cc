@@ -22,9 +22,9 @@
 
 KDRenewable::KDRenewable (const String& _name, const Object& _host)
 	: Script (_name, _host),
-	  PARAMETER_ (frequency, "renewable_frequency", 180000ul),
-	  PARAMETER_ (threshold, "renewable_threshold", 0),
-	  PARAMETER_ (physical, "renewable_physical", false)
+	  THIEF_PARAMETER_FULL (frequency, "renewable_frequency", 180000ul),
+	  THIEF_PARAMETER_FULL (threshold, "renewable_threshold", 0),
+	  THIEF_PARAMETER_FULL (physical, "renewable_physical", false)
 {
 	listen_message ("PostSim", &KDRenewable::on_post_sim);
 	listen_timer ("Renew", &KDRenewable::on_renew);

@@ -23,15 +23,15 @@
 KDTrapFog::KDTrapFog (const String& _name, const Object& _host)
 	: TrapTrigger (_name, _host),
 	  transition (*this, &KDTrapFog::step, "Fog"),
-	  PARAMETER (fog_zone, Fog::GLOBAL),
-	  PARAMETER (fog_color_on),
-	  PARAMETER (fog_color_off),
-	  PARAMETER (fog_dist_on, -1.0f),
-	  PARAMETER (fog_dist_off, -1.0f),
-	  PERSISTENT_ (start_color),
-	  PERSISTENT_ (end_color),
-	  PERSISTENT_ (start_distance),
-	  PERSISTENT_ (end_distance)
+	  THIEF_PARAMETER (fog_zone, Fog::GLOBAL),
+	  THIEF_PARAMETER (fog_color_on),
+	  THIEF_PARAMETER (fog_color_off),
+	  THIEF_PARAMETER (fog_dist_on, -1.0f),
+	  THIEF_PARAMETER (fog_dist_off, -1.0f),
+	  THIEF_PERSISTENT (start_color),
+	  THIEF_PERSISTENT (end_color),
+	  THIEF_PERSISTENT (start_distance),
+	  THIEF_PERSISTENT (end_distance)
 {}
 
 Message::Result

@@ -24,9 +24,9 @@
 
 KDJunkTool::KDJunkTool (const String& _name, const Object& _host)
 	: Script (_name, _host),
-	  PARAMETER_ (lugged, "junk_tool_lugged", true),
-	  PARAMETER_ (drop, "junk_tool_drop", false),
-	  PERSISTENT (previous_weapon, Object::NONE)
+	  THIEF_PARAMETER_FULL (lugged, "junk_tool_lugged", true),
+	  THIEF_PARAMETER_FULL (drop, "junk_tool_drop", false),
+	  THIEF_PERSISTENT_FULL (previous_weapon, Object::NONE)
 {
 	listen_message ("Contained", &KDJunkTool::on_contained);
 	listen_message ("Destroy", &KDJunkTool::on_destroy);

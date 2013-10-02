@@ -22,9 +22,9 @@
 
 KDCarrier::KDCarrier (const String& _name, const Object& _host)
 	: Script (_name, _host),
-	  PARAMETER (create_attachments, true),
-	  PERSISTENT (detected_braindeath, false),
-	  PERSISTENT (detected_slaying, false)
+	  THIEF_PARAMETER (create_attachments, true),
+	  THIEF_PERSISTENT_FULL (detected_braindeath, false),
+	  THIEF_PERSISTENT_FULL (detected_slaying, false)
 {
 	listen_message ("Sim", &KDCarrier::on_sim);
 	listen_message ("Create", &KDCarrier::on_create);

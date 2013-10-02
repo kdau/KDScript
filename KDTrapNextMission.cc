@@ -22,8 +22,8 @@
 
 KDTrapNextMission::KDTrapNextMission (const String& _name, const Object& _host)
 	: TrapTrigger (_name, _host),
-	  PARAMETER (next_mission_on, 0),
-	  PARAMETER (next_mission_off, 0)
+	  THIEF_PARAMETER (next_mission_on, 0),
+	  THIEF_PARAMETER (next_mission_off, 0)
 {}
 
 Message::Result

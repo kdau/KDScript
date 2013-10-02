@@ -24,29 +24,35 @@ KDTrapWeather::KDTrapWeather (const String& _name, const Object& _host)
 	: TrapTrigger (_name, _host),
 	  transition (*this, &KDTrapWeather::step, "Weather"),
 
-	  PARAMETER (precip_freq_on, -1.0f),
-	  PARAMETER (precip_freq_off, -1.0f),
-	  PERSISTENT_ (start_freq), PERSISTENT_ (end_freq),
+	  THIEF_PARAMETER (precip_freq_on, -1.0f),
+	  THIEF_PARAMETER (precip_freq_off, -1.0f),
+	  THIEF_PERSISTENT (start_freq),
+	  THIEF_PERSISTENT (end_freq),
 
-	  PARAMETER (precip_speed_on, -1.0f),
-	  PARAMETER (precip_speed_off, -1.0f),
-	  PERSISTENT_ (start_speed), PERSISTENT_ (end_speed),
+	  THIEF_PARAMETER (precip_speed_on, -1.0f),
+	  THIEF_PARAMETER (precip_speed_off, -1.0f),
+	  THIEF_PERSISTENT (start_speed),
+	  THIEF_PERSISTENT (end_speed),
 
-	  PARAMETER (precip_radius_on, -1.0f),
-	  PARAMETER (precip_radius_off, -1.0f),
-	  PERSISTENT_ (start_radius), PERSISTENT_ (end_radius),
+	  THIEF_PARAMETER (precip_radius_on, -1.0f),
+	  THIEF_PARAMETER (precip_radius_off, -1.0f),
+	  THIEF_PERSISTENT (start_radius),
+	  THIEF_PERSISTENT (end_radius),
 
-	  PARAMETER (precip_opacity_on, -1.0f),
-	  PARAMETER (precip_opacity_off, -1.0f),
-	  PERSISTENT_ (start_opacity), PERSISTENT_ (end_opacity),
+	  THIEF_PARAMETER (precip_opacity_on, -1.0f),
+	  THIEF_PARAMETER (precip_opacity_off, -1.0f),
+	  THIEF_PERSISTENT (start_opacity),
+	  THIEF_PERSISTENT (end_opacity),
 
-	  PARAMETER (precip_brightness_on, -1.0f),
-	  PARAMETER (precip_brightness_off, -1.0f),
-	  PERSISTENT_ (start_brightness), PERSISTENT_ (end_brightness),
+	  THIEF_PARAMETER (precip_brightness_on, -1.0f),
+	  THIEF_PARAMETER (precip_brightness_off, -1.0f),
+	  THIEF_PERSISTENT (start_brightness),
+	  THIEF_PERSISTENT (end_brightness),
 
-	  PARAMETER (precip_wind_on, Vector ()),
-	  PARAMETER (precip_wind_off, Vector ()),
-	  PERSISTENT_ (start_wind), PERSISTENT_ (end_wind)
+	  THIEF_PARAMETER (precip_wind_on, Vector ()),
+	  THIEF_PARAMETER (precip_wind_off, Vector ()),
+	  THIEF_PERSISTENT (start_wind),
+	  THIEF_PERSISTENT (end_wind)
 {}
 
 Message::Result

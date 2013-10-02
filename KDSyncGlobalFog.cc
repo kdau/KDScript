@@ -23,16 +23,16 @@
 KDSyncGlobalFog::KDSyncGlobalFog (const String& _name, const Object& _host)
 	: Script (_name, _host),
 	  transition (*this, &KDSyncGlobalFog::step, "SyncGlobalFog"),
-	  PARAMETER (sync_fog_color, true),
-	  PARAMETER (sync_fog_dist, true),
-	  PARAMETER (sync_fog_disabled, false),
-	  PARAMETER (fog_dist_mult, 1.0f),
-	  PARAMETER (fog_dist_add, 0.0f),
-	  PERSISTENT_ (last_room_zone),
-	  PERSISTENT_ (start_color),
-	  PERSISTENT_ (end_color),
-	  PERSISTENT_ (start_distance),
-	  PERSISTENT_ (end_distance)
+	  THIEF_PARAMETER (sync_fog_color, true),
+	  THIEF_PARAMETER (sync_fog_dist, true),
+	  THIEF_PARAMETER (sync_fog_disabled, false),
+	  THIEF_PARAMETER (fog_dist_mult, 1.0f),
+	  THIEF_PARAMETER (fog_dist_add, 0.0f),
+	  THIEF_PERSISTENT (last_room_zone),
+	  THIEF_PERSISTENT (start_color),
+	  THIEF_PERSISTENT (end_color),
+	  THIEF_PERSISTENT (start_distance),
+	  THIEF_PERSISTENT (end_distance)
 {
 	listen_message ("ObjRoomTransit", &KDSyncGlobalFog::on_room_transit);
 	listen_message ("FogZoneChange", &KDSyncGlobalFog::on_fog_zone_change);

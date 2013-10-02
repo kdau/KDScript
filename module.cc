@@ -18,6 +18,9 @@
  *
  *****************************************************************************/
 
+#include <Thief/Thief.hh>
+#include "version.rc"
+
 #include "KDCarried.hh"
 #include "KDCarrier.hh"
 #include "KDGetInfo.hh"
@@ -36,26 +39,23 @@
 #include "KDTrapNextMission.hh"
 #include "KDTrapWeather.hh"
 
-#include "version.rc"
-#include <Thief/module.hh>
-
-THIEF_MODULE_BEGIN (MODULE_NAME)
-	THIEF_SCRIPT ("KDCarried", "Script", KDCarried)
-	THIEF_SCRIPT ("KDCarrier", "Script", KDCarrier)
-	THIEF_SCRIPT ("KDGetInfo", "Script", KDGetInfo)
-	THIEF_SCRIPT ("KDJunkTool", "Script", KDJunkTool)
-	THIEF_SCRIPT ("KDOptionalReverse", "Script", KDOptionalReverse)
-	THIEF_SCRIPT ("KDQuestArrow", "KDHUDElement", KDQuestArrow)
-	THIEF_SCRIPT ("KDRenewable", "Script", KDRenewable)
-	THIEF_SCRIPT ("KDShortText", "Script", KDShortText)
-	THIEF_SCRIPT ("KDStatMeter", "KDHUDElement", KDStatMeter)
-	THIEF_SCRIPT ("KDSubtitledAI", "KDSubtitled", KDSubtitledAI)
-	THIEF_SCRIPT ("KDSubtitledVO", "KDSubtitled", KDSubtitledVO)
-	THIEF_SCRIPT ("KDSyncGlobalFog", "Script", KDSyncGlobalFog)
-	THIEF_SCRIPT ("KDToolSight", "KDHUDElement", KDToolSight)
-	THIEF_SCRIPT ("KDTrapEnvMap", "TrapTrigger", KDTrapEnvMap)
-	THIEF_SCRIPT ("KDTrapFog", "TrapTrigger", KDTrapFog)
-	THIEF_SCRIPT ("KDTrapNextMission", "TrapTrigger", KDTrapNextMission)
-	THIEF_SCRIPT ("KDTrapWeather", "TrapTrigger", KDTrapWeather)
-THIEF_MODULE_END
+THIEF_MODULE (MODULE_NAME,
+	THIEF_SCRIPT ("KDCarried", "Script", KDCarried),
+	THIEF_SCRIPT ("KDCarrier", "Script", KDCarrier),
+	THIEF_SCRIPT ("KDGetInfo", "Script", KDGetInfo),
+	THIEF_SCRIPT ("KDJunkTool", "Script", KDJunkTool),
+	THIEF_SCRIPT ("KDOptionalReverse", "Script", KDOptionalReverse),
+	THIEF_SCRIPT ("KDQuestArrow", "KDHUDElement", KDQuestArrow),
+	THIEF_SCRIPT ("KDRenewable", "Script", KDRenewable),
+	THIEF_SCRIPT ("KDShortText", "Script", KDShortText),
+	THIEF_SCRIPT ("KDStatMeter", "KDHUDElement", KDStatMeter),
+	THIEF_SCRIPT ("KDSubtitledAI", "KDSubtitled", KDSubtitledAI),
+	THIEF_SCRIPT ("KDSubtitledVO", "KDSubtitled", KDSubtitledVO),
+	THIEF_SCRIPT ("KDSyncGlobalFog", "Script", KDSyncGlobalFog),
+	THIEF_SCRIPT ("KDToolSight", "KDHUDElement", KDToolSight),
+	THIEF_SCRIPT ("KDTrapEnvMap", "TrapTrigger", KDTrapEnvMap),
+	THIEF_SCRIPT ("KDTrapFog", "TrapTrigger", KDTrapFog),
+	THIEF_SCRIPT ("KDTrapNextMission", "TrapTrigger", KDTrapNextMission),
+	THIEF_SCRIPT ("KDTrapWeather", "TrapTrigger", KDTrapWeather),
+)
 

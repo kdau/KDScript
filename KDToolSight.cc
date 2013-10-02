@@ -29,12 +29,12 @@ KDToolSight::SYMBOL_SIZE = { 24, 24 };
 KDToolSight::KDToolSight (const String& _name, const Object& _host)
 	: KDHUDElement (_name, _host, PRIORITY),
 	  selected (false),
-	  PARAMETER_ (deselect_on_use, "tool_sight_deselect", false),
-	  PARAMETER_ (image, "tool_sight_image",
+	  THIEF_PARAMETER_FULL (deselect_on_use, "tool_sight_deselect", false),
+	  THIEF_PARAMETER_FULL (image, "tool_sight_image",
 	  	Symbol::CROSSHAIRS, false, false),
-	  PARAMETER_ (color, "tool_sight_color", Color (0x808080)),
-	  PARAMETER_ (offset_x, "tool_sight_offset_x", 0),
-	  PARAMETER_ (offset_y, "tool_sight_offset_y", 0)
+	  THIEF_PARAMETER_FULL (color, "tool_sight_color", Color (0x808080)),
+	  THIEF_PARAMETER_FULL (offset_x, "tool_sight_offset_x", 0),
+	  THIEF_PARAMETER_FULL (offset_y, "tool_sight_offset_y", 0)
 {
 	listen_message ("InvSelect", &KDToolSight::on_inv_select);
 	listen_message ("InvFocus", &KDToolSight::on_inv_select);
