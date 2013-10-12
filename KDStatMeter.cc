@@ -119,6 +119,15 @@ KDStatMeter::initialize ()
 	update_range ();
 }
 
+void
+KDStatMeter::deinitialize ()
+{
+	KDHUDElement::deinitialize ();
+	ObjectProperty::unsubscribe ("DesignNote", host ());
+}
+
+
+
 bool
 KDStatMeter::prepare ()
 {

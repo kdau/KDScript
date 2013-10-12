@@ -32,12 +32,12 @@ THIEF_ENUM_CODING (KDHUDElement::Symbol, CODE, CODE,
 
 } // namespace Thief
 
+
+
 KDHUDElement::KDHUDElement (const String& _name, const Object& _host,
 		ZIndex _priority)
 	: Script (_name, _host), priority (_priority)
-{
-	listen_message ("EndScript", &KDHUDElement::on_end_script);
-}
+{}
 
 void
 KDHUDElement::initialize ()
@@ -47,12 +47,14 @@ KDHUDElement::initialize ()
 		HUDElement::initialize (priority);
 }
 
-Message::Result
-KDHUDElement::on_end_script (Message&)
+void
+KDHUDElement::deinitialize ()
 {
+	Script::deinitialize ();
 	HUDElement::deinitialize ();
-	return Message::CONTINUE;
 }
+
+
 
 const Color
 KDHUDElement::SHADOW_COLOR (0, 0, 0);
@@ -69,6 +71,8 @@ KDHUDElement::draw_text_shadowed (const String& text, CanvasPoint position)
 	set_drawing_color (real_color);
 	draw_text (text, position);
 }
+
+
 
 void
 KDHUDElement::draw_symbol (Symbol symbol, CanvasSize size,

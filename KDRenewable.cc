@@ -89,7 +89,7 @@ KDRenewable::on_renew (TimerMessage&)
 
 	// Transmogrify the archetype for the inventory check.
 	Object inv_type = archetype;
-	Links transmute = Link::get_all ("Transmute", archetype, Object::ANY,
+	auto transmute = Link::get_all ("Transmute", archetype, Object::ANY,
 		Link::Inheritance::SOURCE);
 	if (!transmute.empty ())
 		inv_type = transmute.front ().get_dest ();

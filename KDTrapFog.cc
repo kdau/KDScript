@@ -22,7 +22,8 @@
 
 KDTrapFog::KDTrapFog (const String& _name, const Object& _host)
 	: TrapTrigger (_name, _host),
-	  transition (*this, &KDTrapFog::step, "Fog"),
+	  transition (*this, &KDTrapFog::step, "Fog", 50ul,
+		0ul, Curve::LINEAR, "transition", "curve"),
 	  THIEF_PARAMETER (fog_zone, Fog::GLOBAL),
 	  THIEF_PARAMETER (fog_color_on),
 	  THIEF_PARAMETER (fog_color_off),

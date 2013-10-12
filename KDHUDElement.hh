@@ -56,6 +56,7 @@ protected:
 		ZIndex priority);
 
 	virtual void initialize ();
+	virtual void deinitialize ();
 
 	static const Color SHADOW_COLOR;
 	static const CanvasPoint SHADOW_OFFSET;
@@ -71,8 +72,6 @@ protected:
 		Direction direction = Direction::NONE) const;
 
 private:
-	Message::Result on_end_script (Message&);
-
 	ZIndex priority;
 };
 

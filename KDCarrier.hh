@@ -31,6 +31,7 @@ public:
 
 private:
 	virtual void initialize ();
+	virtual void deinitialize ();
 
 	Message::Result on_sim (SimMessage&);
 	Message::Result on_create (Message&);

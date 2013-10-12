@@ -30,6 +30,8 @@ public:
 
 private:
 	virtual void initialize ();
+	virtual void deinitialize ();
+
 	virtual bool prepare ();
 	virtual void redraw ();
 

@@ -22,7 +22,8 @@
 
 KDTrapWeather::KDTrapWeather (const String& _name, const Object& _host)
 	: TrapTrigger (_name, _host),
-	  transition (*this, &KDTrapWeather::step, "Weather"),
+	  transition (*this, &KDTrapWeather::step, "Weather", 50ul,
+		0ul, Curve::LINEAR, "transition", "curve"),
 
 	  THIEF_PARAMETER (precip_freq_on, -1.0f),
 	  THIEF_PARAMETER (precip_freq_off, -1.0f),

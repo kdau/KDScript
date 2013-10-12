@@ -38,11 +38,20 @@ KDCarrier::KDCarrier (const String& _name, const Object& _host)
 	listen_message ("Alertness", &KDCarrier::on_alertness);
 }
 
+
+
 void
 KDCarrier::initialize ()
 {
 	Script::initialize ();
 	ObjectProperty::subscribe ("DeathStage", host ());
+}
+
+void
+KDCarrier::deinitialize ()
+{
+	Script::deinitialize ();
+	ObjectProperty::unsubscribe ("DeathStage", host ());
 }
 
 

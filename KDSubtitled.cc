@@ -111,11 +111,12 @@ KDSubtitled::KDSubtitled (const String& _name, const Object& _host)
 {
 	listen_message ("Subtitle", &KDSubtitled::on_subtitle);
 	listen_timer ("FinishSubtitle", &KDSubtitled::on_finish_subtitle);
-	listen_message ("EndScript", &KDSubtitled::on_end_script);
 }
 
-KDSubtitled::~KDSubtitled ()
+void
+KDSubtitled::deinitialize ()
 {
+	Script::deinitialize ();
 	finish_subtitle ();
 }
 
@@ -202,13 +203,6 @@ KDSubtitled::on_finish_subtitle (TimerMessage& message)
 	return Message::HALT;
 }
 
-Message::Result
-KDSubtitled::on_end_script (Message&)
-{
-	finish_subtitle ();
-	return Message::CONTINUE;
-}
-
 
 
 // KDSubtitledAI
@@ -222,8 +216,15 @@ KDSubtitledAI::KDSubtitledAI (const String& _name, const Object& _host)
 void
 KDSubtitledAI::initialize ()
 {
-	Script::initialize ();
+	KDSubtitled::initialize ();
 	ObjectProperty::subscribe ("Speech", host ());
+}
+
+void
+KDSubtitledAI::deinitialize ()
+{
+	KDSubtitled::deinitialize ();
+	ObjectProperty::unsubscribe ("Speech", host ());
 }
 
 Message::Result

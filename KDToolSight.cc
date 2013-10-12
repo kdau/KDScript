@@ -51,6 +51,13 @@ KDToolSight::initialize ()
 	ObjectProperty::subscribe ("DesignNote", host ());
 }
 
+void
+KDToolSight::deinitialize ()
+{
+	KDHUDElement::deinitialize ();
+	ObjectProperty::unsubscribe ("DesignNote", host ());
+}
+
 bool
 KDToolSight::prepare ()
 {

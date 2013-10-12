@@ -22,7 +22,8 @@
 
 KDSyncGlobalFog::KDSyncGlobalFog (const String& _name, const Object& _host)
 	: Script (_name, _host),
-	  transition (*this, &KDSyncGlobalFog::step, "SyncGlobalFog"),
+	  transition (*this, &KDSyncGlobalFog::step, "SyncGlobalFog", 50ul,
+		0ul, Curve::LINEAR, "transition", "curve"),
 	  THIEF_PARAMETER (sync_fog_color, true),
 	  THIEF_PARAMETER (sync_fog_dist, true),
 	  THIEF_PARAMETER (sync_fog_disabled, false),

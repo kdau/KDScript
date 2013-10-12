@@ -78,6 +78,23 @@ KDQuestArrow::initialize ()
 	ObjectProperty::subscribe ("GameName", host ());
 }
 
+void
+KDQuestArrow::deinitialize ()
+{
+	KDHUDElement::deinitialize ();
+	ObjectProperty::unsubscribe ("DesignNote", host ());
+	ObjectProperty::unsubscribe ("GameName", host ());
+
+	if (old_objective != Objective::NONE)
+	{
+		Objective old (old_objective);
+		old.state.unsubscribe (host ());
+		old.visible.unsubscribe (host ());
+	}
+}
+
+
+
 bool
 KDQuestArrow::prepare ()
 {

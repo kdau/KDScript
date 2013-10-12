@@ -55,11 +55,10 @@ private:
 
 class KDSubtitled : public Script
 {
-public:
-	virtual ~KDSubtitled ();
-
 protected:
 	KDSubtitled (const String& name, const Object& host);
+
+	virtual void deinitialize ();
 
 	static const float EARSHOT;
 	static const Color DEFAULT_COLOR;
@@ -70,7 +69,6 @@ protected:
 private:
 	Message::Result on_subtitle (Message&);
 	Message::Result on_finish_subtitle (TimerMessage&);
-	Message::Result on_end_script (Message&);
 
 	HUDSubtitle::Ptr element;
 };
@@ -84,6 +82,7 @@ public:
 
 private:
 	virtual void initialize ();
+	virtual void deinitialize ();
 	Message::Result on_property_change (PropertyMessage&);
 };
 
