@@ -25,17 +25,18 @@
 			<tr><td><code>curve</code></td><td>string</td><td>shape of curve to interpolate values along</td><td><code>linear</code></td></tr>
 		</tbody></table>
 		<p>The fog and weather scripts can provide smooth transitions between the old and new values. The <code>transition</code> parameter specifies the length of the transition. If that parameter is undefined or set to <code>0</code>, the transition will be instantaneous. The <code>curve</code> parameter specifies the shape of the interpolated curve, from among the values below. (<em>t</em> is the progress of the transition in the range [0.0, 1.0], while <em>&alpha;</em> is the multiplier used to interpolate between the starting and ending values at that time.)</p>
-		<dl>
-			<dt><code>linear</code></dt><dd>Straight line: <em>&alpha; = t</em></dd>
-			<dt><code>quadratic</code></dt><dd>Parabolic curve: <em>&alpha; = t<sup>2</sup></em></dd>
-			<dt><code>radical</code></dt><dd>Radical curve: <em>&alpha; = &radic;<span class="radical">t</span></em></dd>
-			<dt><code>log_10</code></dt><dd>Logarithmic curve (base 10): <em>&alpha; = log<sub>10</sub>(0.9t + 0.1) + 1</em></dd>
-			<dt><code>pow_10</code></dt><dd>Power curve (base 10): <em>&alpha; = (10<sup>t</sup> - 1) / 9</em></dd>
-			<dt><code>log_e</code></dt><dd>Logarithmic curve (base <em>e</em>): <em>&alpha; = log<sub>e</sub>((1 - 1/e)t + 1/e) + 1</em></dd>
-			<dt><code>pow_e</code></dt><dd>Power curve (base <em>e</em>): <em>&alpha; = (e<sup>t</sup> - 1) / (e - 1)</em></dd>
+		<dl class="compact">
+			<img title="Cartesian graph illustrating the functions available for transition curves." src="curves.png" class="figure right" />
+			<dt><code>linear</code></dt><dd>Straight line: <em>&alpha; = t</em> <span class="note" style="color: #667;">(solid black line)</span></dd>
+			<dt><code>quadratic</code></dt><dd>Parabolic curve: <em>&alpha; = t<sup>2</sup></em> <span class="note" style="color: #b96b7c;">(solid red curve)</span></dd>
+			<dt><code>radical</code></dt><dd>Radical curve: <em>&alpha; = &radic;<span class="radical">t</span></em> <span class="note" style="color: #6f92d0;">(solid blue curve)</span></dd>
+			<dt><code>log_10</code></dt><dd>Logarithmic curve (base 10):<br/><em>&alpha; = log<sub>10</sub>(0.9t + 0.1) + 1</em> <span class="note" style="color: #a4bb8a;">(solid green curve)</span></dd>
+			<dt><code>pow_10</code></dt><dd>Power curve (base 10): <em>&alpha; = (10<sup>t</sup> - 1) / 9</em> <span class="note" style="color: #e2a285;">(solid orange curve)</span></dd>
+			<dt><code>log_e</code></dt><dd>Logarithmic curve (base <em>e</em>):<br/><em>&alpha; = log<sub>e</sub>((1 - 1/e)t + 1/e) + 1</em> <span class="note" style="color: #a4bb8a;">(dashed green curve)</span></dd>
+			<dt><code>pow_e</code></dt><dd>Power curve (base <em>e</em>): <em>&alpha; = (e<sup>t</sup> - 1) / (e - 1)</em> <span class="note" style="color: #e2a285;">(dashed orange curve)</span></dd>
 		</dl>
 		<p>The usual trap control flags, locking, and timing (before the start of the transition, not its length) are also respected by these scripts.</p>
-		<address>This documentation is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2013 Kevin Daughtridge. See introduction for details.</address>
+		<address>This documentation is part of the <a href="index.html">KDScript</a> module. Copyright&nbsp;&copy;&nbsp;2012&ndash;2014 Kevin Daughtridge. See introduction for details.</address>
 	</body>
 </html>
 

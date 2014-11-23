@@ -45,6 +45,8 @@ dl
 		dl.primary > dt { clear: none: float: none; width: 100%; padding-top: 2em; margin-bottom: 1em; }
 		dl.primary > dd { margin: 1em 2em 2em 2em; border: none; }
 	dt.primary { text-decoration: underline; font-size: 11pt; color: inherit; }
+	dl.compact dt { width: 10em; }
+	dl.compact dd { margin-left: 10em; }
 
 table { margin: 2em 2em 2em 2em; border-collapse: collapse; font-size: 10pt; }
 	caption { font-style: italic; }
@@ -76,9 +78,18 @@ strong, .important, .notice { color: #bbf; border-color: #bbf; }
 
 .disabled { color: #667; }
 
-.icon, .iconr { width: 58px; height: 58px; }
-	.icon { float: left; margin-right: 1em; }
-	.iconr { float: right; margin-left: 1em; }
+img.figure { border: 1px dotted #667; padding: 2px; background-color: #080810; }
+	a:link img.figure, a:visited img.figure { border-color: #77f; }
+	a:link img.figure:hover, a:visited img.figure:hover { border-style: solid; }
+	img.figure.left { margin-left: 0em; }
+
+img.icon { width: 58px; height: 58px; }
+	img.icon.right { margin-right: 0em; }
+
+.left, img.icon { float: left; margin-right: 1em; }
+	.left { float: left !important; }
+.right, img.figure { float: right; margin-left: 1em; }
+	.right { float: right !important; }
 
 .note { font-size: 90%; }
 
