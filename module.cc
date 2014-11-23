@@ -1,7 +1,7 @@
 /******************************************************************************
  *  module.cc
  *
- *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
+ *  Copyright (C) 2012-2014 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,6 +39,15 @@
 #include "KDTrapNextMission.hh"
 #include "KDTrapWeather.hh"
 
+class KDScriptDemo : public Script
+{
+public:
+	KDScriptDemo (const String& name, const Object& host);
+
+private:
+	Message::Result on_sim (SimMessage&);
+};
+
 THIEF_MODULE (MODULE_NAME,
 	THIEF_SCRIPT ("KDCarried", "Script", KDCarried),
 	THIEF_SCRIPT ("KDCarrier", "Script", KDCarrier),
@@ -57,5 +66,29 @@ THIEF_MODULE (MODULE_NAME,
 	THIEF_SCRIPT ("KDTrapFog", "TrapTrigger", KDTrapFog),
 	THIEF_SCRIPT ("KDTrapNextMission", "TrapTrigger", KDTrapNextMission),
 	THIEF_SCRIPT ("KDTrapWeather", "TrapTrigger", KDTrapWeather),
+	THIEF_SCRIPT ("KDScriptDemo", "Script", KDScriptDemo),
 )
+
+
+
+// KDScriptDemo
+
+KDScriptDemo::KDScriptDemo (const String& _name, const Object& _host)
+	: Script (_name, _host)
+{
+	listen_message ("Sim", &KDScriptDemo::on_sim);
+}
+
+Message::Result
+KDScriptDemo::on_sim (SimMessage& message)
+{
+	if (message.event == SimMessage::START)
+	{
+		for (auto& enable : ScriptParamsLink::get_all_by_data
+				(host (), "Enable"))
+			enable.get_dest ().remove_metaprop (Object ("FrobInert"));
+		host ().destroy ();
+	}
+	return Message::HALT;
+}
 

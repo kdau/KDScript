@@ -1,7 +1,7 @@
 /******************************************************************************
  *  version.rc
  *
- *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
+ *  Copyright (C) 2012-2014 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@
 #define MODULE_NAME		"KDScript"
 #define PACKAGE_NAME		"KDScript"
 #define AUTHOR_NAME		"Kevin Daughtridge"
-#define COPYRIGHT_YEAR		"2013"
-#define VERSION_NUMBER		0,7,0,0
-#define VERSION_STRING		"0.7.0 beta"
+#define COPYRIGHT_YEAR		"2014"
+#define VERSION_NUMBER		0,9,0,0
+#define VERSION_STRING		"0.9.0"
 
 #include <Thief/version.rc>
 
