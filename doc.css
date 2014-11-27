@@ -1,17 +1,27 @@
-html { background-color: #040408; }
+/* Copyright (C) 2012-2014 Kevin Daughtridge <kevin@kdau.com>
+ *
+ * KDScript palette:
+ *	background: #100808 light, #080404 dark
+ *	text: #edd light, #a99 dark
+ *	drawing: #baa light, #766 dark
+ *	highlight: #c33 bright, #d88 subtle, #700 dark
+ *	code/pre: #e0c0c0 foreground, #040202 background
+ */
+
+html { background-color: #080404; }
 body
 {
-	width: 60em; margin: 0em 0em 0em 10em; padding: 0em 2em; background-color: #080810;
-	font-family: serif; font-size: 11pt; color: #eee;
+	width: 60em; margin: 0em 0em 0em 10em; padding: 0em 2em; background-color: #100808;
+	font-family: serif; font-size: 11pt; color: #edd;
 }
 
 #trail { position: absolute; top: 1em; left: 12em; margin: 0em; padding: 0em; }
 
-address { margin: 6em 0em 0em 0em; border-top: 1px solid #aab; padding: 0.5em 0em 3em 0em; color: #aab; }
+address { margin: 6em 0em 0em 0em; border-top: 1px solid #766; padding: 0.5em 0em 3em 0em; color: #a99; }
 
 h1, h2, h3, h4
 {
-	clear: both; margin: 2em 0em 0em 0em; border-bottom: 1px dotted #aab; padding-top: 1em;
+	clear: both; margin: 2em 0em 0em 0em; border-bottom: 1px dotted #baa; padding-top: 1em; padding-bottom: 1px;
 	font-family: Carleton, serif; font-weight: normal; font-variant: small-caps;
 }
 	h1 { font-size: 32pt; margin: 0em 0em 1em 0em; padding-top: 1.25em; border-bottom-style: solid; }
@@ -33,10 +43,10 @@ ul, ol { margin: 1em 2em 1em 2em; padding: 0em; line-height: 150%; font-size: 10
 
 dl
 {
-	margin: 1em 2em 1em 2em; padding: 0em; border-bottom: 1px dotted #667;
+	margin: 1em 2em 1em 2em; padding: 0em; border-bottom: 1px dotted #766;
 	line-height: 150%; font-size: 10pt;
 }
-	dt, dd { border-top: 1px dotted #667; padding-top: 0.75em; }
+	dt, dd { border-top: 1px dotted #766; padding-top: 0.75em; }
 		dt { clear: left; float: left; width: 15em; margin: 0em; font-weight: bold; }
 		dd { margin: 0em 0em 0.75em 15em; }
 	dl.primary { margin-top: 2em; border: none; }
@@ -50,24 +60,23 @@ dl
 
 table { margin: 2em 2em 2em 2em; border-collapse: collapse; font-size: 10pt; }
 	caption { font-style: italic; }
-	th, td { border: 1px dotted #667; padding: 0.5em 0.75em; vertical-align: middle; text-align: left; }
-		thead th { background-color: #667; color: #000; border-style: solid; }
-			thead th a:link, thead th a:visited { color: #228; border-color: #228; border-width: 2px; }
+	th, td { border: 1px dotted #766; padding: 0.5em 0.75em; vertical-align: middle; text-align: left; }
+		thead th { background-color: #766; color: #080404; border-style: solid; }
+			thead th a:link, thead th a:visited { color: #700; border-color: #700; border-width: 2px; }
 	col.identifier { width: 15em; }
 	col.type { width: 8em; }
 	col.description { width: 35em; }
 	col.values { width: 15em; }
 
-pre { margin: 1em; border: 1px dotted #667; padding: 0.5em!important; line-height: 150%; }
-	pre.wrap { white-space: pre-wrap; }
-
-a:link, a:visited { color: #77f; text-decoration: none; border-bottom: 1px dotted #77f; }
+a:link, a:visited { color: #c33; text-decoration: none; border-bottom: 1px dotted #c33; }
 	a:link:hover, a:visited:hover { border-bottom-style: solid; }
 
-code, pre { background-color: #000; color: #c0e0c0; padding: 1px; font-weight: normal; }
+code, pre { background-color: #040202; color: #e0c0c0; padding: 1px; font-weight: normal; }
 	a:link code, a:visited code { background-color: transparent; color: inherit; }
+	pre { margin: 1em; border: 1px dotted #766; padding: 0.5em!important; line-height: 150%; }
+		pre.wrap { white-space: pre-wrap; }
 
-strong, .important, .notice { color: #bbf; border-color: #bbf; }
+strong, .important, .notice { color: #d88; border-color: #d88; }
 	li.notice { font-weight: bold; }
 	div.notice, p.notice
 	{
@@ -76,10 +85,10 @@ strong, .important, .notice { color: #bbf; border-color: #bbf; }
 	}
 		div.notice > :first-child { margin-top: 0.5em; }
 
-.disabled { color: #667; }
+.disabled { color: #766; }
 
-img.figure { border: 1px dotted #667; padding: 2px; background-color: #080810; }
-	a:link img.figure, a:visited img.figure { border-color: #77f; }
+img.figure { border: 1px dotted #766; padding: 2px; background-color: #100808; }
+	a:link img.figure, a:visited img.figure { border-color: #c33; }
 	a:link img.figure:hover, a:visited img.figure:hover { border-style: solid; }
 	img.figure.left { margin-left: 0em; }
 
