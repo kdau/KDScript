@@ -1,5 +1,5 @@
 /******************************************************************************
- *  KDSubtitled.cc: HUDSubtitle, KDSubtitled, KDSubtitledAI, KDSubtitledVO
+ *  KDSubtitled.cc: *DEPRECATED* HUDSubtitle, KDSubtitled{,AI,VO}
  *
  *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
  *

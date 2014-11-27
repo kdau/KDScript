@@ -58,8 +58,8 @@ THIEF_MODULE (MODULE_NAME,
 	THIEF_SCRIPT ("KDRenewable", "Script", KDRenewable),
 	THIEF_SCRIPT ("KDShortText", "Script", KDShortText),
 	THIEF_SCRIPT ("KDStatMeter", "KDHUDElement", KDStatMeter),
-	THIEF_SCRIPT ("KDSubtitledAI", "KDSubtitled", KDSubtitledAI),
-	THIEF_SCRIPT ("KDSubtitledVO", "KDSubtitled", KDSubtitledVO),
+	THIEF_SCRIPT ("KDSubtitledAI", "KDSubtitled", KDSubtitledAI), // deprecated
+	THIEF_SCRIPT ("KDSubtitledVO", "KDSubtitled", KDSubtitledVO), // deprecated
 	THIEF_SCRIPT ("KDSyncGlobalFog", "Script", KDSyncGlobalFog),
 	THIEF_SCRIPT ("KDToolSight", "KDHUDElement", KDToolSight),
 	THIEF_SCRIPT ("KDTrapEnvMap", "TrapTrigger", KDTrapEnvMap),
