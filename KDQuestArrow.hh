@@ -41,10 +41,6 @@ private:
 	Message::Result on_ai_mode_change (AIModeMessage&);
 
 	Message::Result on_property_change (PropertyMessage&);
-	Message::Result on_quest_change (QuestMessage&);
-
-	void update_image ();
-	void update_objective ();
 	void update_text ();
 
 	static const ZIndex PRIORITY;
@@ -52,11 +48,8 @@ private:
 	static const int PADDING;
 
 	Persistent<bool> enabled;
-
 	Parameter<Objective> objective;
-	Persistent<Objective::Number> old_objective;
-
-	Parameter<float> range;
+	Parameter<float> range; float distance;
 	Parameter<bool> obscured;
 
 	Parameter<Image> image;

@@ -37,8 +37,8 @@ KDQuestArrow::KDQuestArrow (const String& _name, const Object& _host)
 	: KDHUDElement (_name, _host, PRIORITY),
 	  THIEF_PERSISTENT (enabled),
 	  THIEF_PARAMETER_FULL (objective, "quest_arrow_goal"),
-	  THIEF_PERSISTENT_FULL (old_objective, Objective::NONE),
 	  THIEF_PARAMETER_FULL (range, "quest_arrow_range", 0.0f),
+	  distance (0.0f),
 	  THIEF_PARAMETER_FULL (obscured, "quest_arrow_obscured", false),
 	  THIEF_PARAMETER_FULL (image, "quest_arrow_image",
 		Symbol::ARROW, false, true),
@@ -54,9 +54,7 @@ KDQuestArrow::KDQuestArrow (const String& _name, const Object& _host)
 	listen_message ("Contained", &KDQuestArrow::on_contained);
 	listen_message ("Slain", &KDQuestArrow::on_off);
 	listen_message ("AIModeChange", &KDQuestArrow::on_ai_mode_change);
-
 	listen_message ("PropertyChange", &KDQuestArrow::on_property_change);
-	listen_message ("QuestChange", &KDQuestArrow::on_quest_change);
 }
 
 
@@ -71,11 +69,11 @@ KDQuestArrow::initialize ()
 			!Player ().has_touched (host ()));
 
 	ObjectProperty::subscribe ("DesignNote", host ());
-	update_objective ();
-	update_text ();
 
 	// for quest_arrow_text == "@name"
 	ObjectProperty::subscribe ("GameName", host ());
+
+	update_text ();
 }
 
 void
@@ -84,25 +82,32 @@ KDQuestArrow::deinitialize ()
 	KDHUDElement::deinitialize ();
 	ObjectProperty::unsubscribe ("DesignNote", host ());
 	ObjectProperty::unsubscribe ("GameName", host ());
-
-	if (old_objective != Objective::NONE)
-	{
-		Objective old (old_objective);
-		old.state.unsubscribe (host ());
-		old.visible.unsubscribe (host ());
-	}
 }
 
 
 
+static String
+subst_distance (const String& text, int distance)
+{
+	size_t pos = text.find ("%{@distance}");
+	return (pos == String::npos) ? text : text.substr (0, pos) +
+		std::to_string (distance) + text.substr (pos + 12);
+}
+
 bool
 KDQuestArrow::prepare ()
 {
+	// Confirm that the arrow is enabled.
 	if (!enabled) return false;
 
+	// Confirm that the objective is visible and incomplete, if required.
+	if (objective->number != Objective::NONE && (!objective->visible ||
+			objective->state != Objective::State::INCOMPLETE))
+		return false;
+
 	// Confirm that the object is within range, if required.
-	if (range != 0.0f && host ().get_location ().distance
-			(Player ().get_location ()) > range)
+	distance = host ().get_location ().distance (Player ().get_location ());
+	if (range != 0.0f && distance > range)
 		return false;
 
 	// Confirm that the object is actually visible, if required.
@@ -113,7 +118,7 @@ KDQuestArrow::prepare ()
 	CanvasSize canvas = Engine::get_canvas_size (),
 		image_size = image->bitmap
 			? image->bitmap->get_size () : SYMBOL_SIZE,
-		text_size = get_text_size (text),
+		text_size = get_text_size (subst_distance (text, 9999)),
 		elem_size;
 	elem_size.w = image_size.w + PADDING + text_size.w;
 	elem_size.h = std::max (image_size.h, text_size.h);
@@ -175,10 +180,13 @@ KDQuestArrow::redraw ()
 		draw_symbol (image->symbol, SYMBOL_SIZE, image_pos,
 			direction, shadow);
 
-	if (shadow)
-		draw_text_shadowed (text, text_pos);
+	if (text.empty ())
+		;
+	else if (shadow)
+		draw_text_shadowed (subst_distance (text, distance),
+			text_pos);
 	else
-		draw_text (text, text_pos);
+		draw_text (subst_distance (text, distance), text_pos);
 }
 
 
@@ -220,59 +228,13 @@ KDQuestArrow::on_ai_mode_change (AIModeMessage& message)
 Message::Result
 KDQuestArrow::on_property_change (PropertyMessage& message)
 {
-	if (message.property == Property ("DesignNote"))
-	{
-		schedule_redraw ();
-		update_objective ();
-		update_text ();
-	}
-	else if (message.property == Property ("GameName"))
+	if (message.property == Property ("DesignNote") ||
+		message.property == Property ("GameName"))
 	{
 		schedule_redraw ();
 		update_text ();
 	}
 	return Message::HALT;
-}
-
-Message::Result
-KDQuestArrow::on_quest_change (QuestMessage&)
-{
-	if (objective->number != Objective::NONE)
-		enabled = (objective->visible &&
-			objective->state == Objective::State::INCOMPLETE);
-	return Message::HALT;
-}
-
-
-
-void
-KDQuestArrow::update_objective ()
-{
-	// Don't update if the objective has not changed.
-	if (objective->number == old_objective) return;
-
-	// Unsubscribe from any old objective.
-	if (old_objective != Objective::NONE)
-	{
-		Objective old (old_objective);
-		old.state.unsubscribe (host ());
-		old.visible.unsubscribe (host ());
-	}
-
-	// Identify the new objective, if any.
-	old_objective = objective->number;
-	if (objective->number == Objective::NONE) return;
-
-	// Update the enabled state.
-	enabled = (objective->visible &&
-		objective->state == Objective::State::INCOMPLETE);
-
-	// Subscribe to the new objective.
-	objective->state.subscribe (host ());
-	objective->visible.subscribe (host ());
-
-	// In case text == "@objective", update it.
-	update_text ();
 }
 
 void
