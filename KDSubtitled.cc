@@ -1,7 +1,7 @@
 /******************************************************************************
  *  KDSubtitled.cc: *DEPRECATED* HUDSubtitle, KDSubtitled{,AI,VO}
  *
- *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
+ *  Copyright (C) 2013-2014 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@ KDSubtitled::start_subtitle (const Being& speaker, const SoundSchema& schema)
 
 	// Get subtitle text.
 	String text =
-		Mission::get_text ("strings", "subtitles", schema.get_name ());
+		Interface::get_text ("strings", "subtitles", schema.get_name ());
 	if (text.empty ())
 		return false;
 
@@ -143,7 +143,7 @@ KDSubtitled::start_subtitle (const Being& speaker, const SoundSchema& schema)
 	// Get or calculate the schema duration.
 	Time duration = ScriptHost (schema).script_timing.exists ()
 		? ScriptHost (schema).script_timing
-		: Mission::calc_text_duration (text, 700ul);
+		: Interface::calc_text_duration (text, 700ul);
 
 	// Get subtitle color.
 	Parameter<Color> schema_color (schema, "subtitle_color", DEFAULT_COLOR),
@@ -167,7 +167,7 @@ KDSubtitled::start_subtitle (const Being& speaker, const SoundSchema& schema)
 		start_timer ("FinishSubtitle", duration, false, schema);
 	else
 		// Go the old-fashioned way.
-		Mission::show_text (text, duration, color);
+		Interface::show_text (text, duration, color);
 
 	log (Log::VERBOSE, "Subtitled schema %|| on speaker %||.", schema,
 		speaker);

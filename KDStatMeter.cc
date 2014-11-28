@@ -1,7 +1,7 @@
 /******************************************************************************
  *  KDStatMeter.cc
  *
- *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
+ *  Copyright (C) 2013-2014 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -481,14 +481,14 @@ KDStatMeter::update_text ()
 		{}
 
 	else if (_text->front () != '@')
-		text = Mission::get_text ("strings", "hud", _text);
+		text = Interface::get_text ("strings", "hud", _text);
 
 	else if (_text == "@name")
 	{
 		if (prop_obj != Object::NONE)
 			text = prop_obj->get_display_name ();
 		else
-			text = Mission::get_text ("strings", "hud", quest_var);
+			text = Interface::get_text ("strings", "hud", quest_var);
 	}
 
 	else if (_text == "@description")

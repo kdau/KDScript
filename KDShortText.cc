@@ -1,7 +1,7 @@
 /******************************************************************************
  *  KDShortText.cc
  *
- *  Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
+ *  Copyright (C) 2012-2014 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,8 +54,8 @@ KDShortText::show_text ()
 	String msgid = host_as<Readable> ().book_name;
 	if (msgid.empty ()) msgid = text;
 
-	String msgstr = Mission::get_text ("strings", "short", msgid);
+	String msgstr = Interface::get_text ("strings", "short", msgid);
 	if (!msgstr.empty ())
-		Mission::show_text (msgstr, text_time, text_color);
+		Interface::show_text (msgstr, text_time, text_color);
 }
 

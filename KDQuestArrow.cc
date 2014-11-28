@@ -1,7 +1,7 @@
 /******************************************************************************
  *  KDQuestArrow.cc
  *
- *  Copyright (C) 2013 Kevin Daughtridge <kevin@kdau.com>
+ *  Copyright (C) 2013-2014 Kevin Daughtridge <kevin@kdau.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -284,7 +284,7 @@ KDQuestArrow::update_text ()
 		{}
 
 	else if (_text->front () != '@')
-		text = Mission::get_text ("strings", "hud", _text);
+		text = Interface::get_text ("strings", "hud", _text);
 
 	else if (_text == "@name")
 		text = host ().get_display_name ();
@@ -305,7 +305,7 @@ KDQuestArrow::update_text ()
 				std::to_string (Mission::get_number ());
 			String msgid = "text_" +
 				std::to_string (objective->number);
-			text = Mission::get_text (dir, "goals", msgid);
+			text = Interface::get_text (dir, "goals", msgid);
 		}
 	}
 #else // !IS_THIEF2
