@@ -1,7 +1,7 @@
 #******************************************************************************
 #   Makefile
 #
-#   Copyright (C) 2012-2013 Kevin Daughtridge <kevin@kdau.com>
+#   Copyright (C) 2012-2014 Kevin Daughtridge <kevin@kdau.com>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@ SCRIPT_HEADERS = \
 	KDQuestArrow.hh \
 	KDRenewable.hh \
 	KDShortText.hh \
+	KDSnuffable.hh \
 	KDStatMeter.hh \
 	KDSubtitled.hh \
 	KDSyncGlobalFog.hh \

@@ -30,6 +30,7 @@
 #include "KDQuestArrow.hh"
 #include "KDRenewable.hh"
 #include "KDShortText.hh"
+#include "KDSnuffable.hh"
 #include "KDStatMeter.hh"
 #include "KDSubtitled.hh"
 #include "KDSyncGlobalFog.hh"
@@ -57,6 +58,7 @@ THIEF_MODULE (MODULE_NAME,
 	THIEF_SCRIPT ("KDQuestArrow", "KDHUDElement", KDQuestArrow),
 	THIEF_SCRIPT ("KDRenewable", "Script", KDRenewable),
 	THIEF_SCRIPT ("KDShortText", "Script", KDShortText),
+	THIEF_SCRIPT ("KDSnuffable", "Script", KDSnuffable),
 	THIEF_SCRIPT ("KDStatMeter", "KDHUDElement", KDStatMeter),
 	THIEF_SCRIPT ("KDSubtitledAI", "KDSubtitled", KDSubtitledAI), // deprecated
 	THIEF_SCRIPT ("KDSubtitledVO", "KDSubtitled", KDSubtitledVO), // deprecated
