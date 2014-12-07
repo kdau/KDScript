@@ -33,6 +33,7 @@ SCRIPT_HEADERS = \
 	KDOptionalReverse.hh \
 	KDQuestArrow.hh \
 	KDRenewable.hh \
+	KDRoomAmbient.hh \
 	KDShortText.hh \
 	KDSnuffable.hh \
 	KDStatMeter.hh \
@@ -42,7 +43,8 @@ SCRIPT_HEADERS = \
 	KDTrapEnvMap.hh \
 	KDTrapFog.hh \
 	KDTrapNextMission.hh \
-	KDTrapWeather.hh
+	KDTrapWeather.hh \
+	KDScriptDemo.hh
 
 include $(THIEFLIBDIR)/module.mk
 

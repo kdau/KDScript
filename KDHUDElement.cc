@@ -43,8 +43,7 @@ void
 KDHUDElement::initialize ()
 {
 	Script::initialize ();
-	if (Engine::get_mode () == Engine::Mode::GAME)
-		HUDElement::initialize (priority);
+	HUDElement::initialize (priority);
 }
 
 void

@@ -29,6 +29,7 @@
 #include "KDOptionalReverse.hh"
 #include "KDQuestArrow.hh"
 #include "KDRenewable.hh"
+#include "KDRoomAmbient.hh"
 #include "KDShortText.hh"
 #include "KDSnuffable.hh"
 #include "KDStatMeter.hh"
@@ -39,15 +40,7 @@
 #include "KDTrapFog.hh"
 #include "KDTrapNextMission.hh"
 #include "KDTrapWeather.hh"
-
-class KDScriptDemo : public Script
-{
-public:
-	KDScriptDemo (const String& name, const Object& host);
-
-private:
-	Message::Result on_sim (SimMessage&);
-};
+#include "KDScriptDemo.hh"
 
 THIEF_MODULE (MODULE_NAME,
 	THIEF_SCRIPT ("KDCarried", "Script", KDCarried),
@@ -57,6 +50,7 @@ THIEF_MODULE (MODULE_NAME,
 	THIEF_SCRIPT ("KDOptionalReverse", "Script", KDOptionalReverse),
 	THIEF_SCRIPT ("KDQuestArrow", "KDHUDElement", KDQuestArrow),
 	THIEF_SCRIPT ("KDRenewable", "Script", KDRenewable),
+	THIEF_SCRIPT ("KDRoomAmbient", "Script", KDRoomAmbient),
 	THIEF_SCRIPT ("KDShortText", "Script", KDShortText),
 	THIEF_SCRIPT ("KDSnuffable", "Script", KDSnuffable),
 	THIEF_SCRIPT ("KDStatMeter", "KDHUDElement", KDStatMeter),
@@ -70,27 +64,4 @@ THIEF_MODULE (MODULE_NAME,
 	THIEF_SCRIPT ("KDTrapWeather", "TrapTrigger", KDTrapWeather),
 	THIEF_SCRIPT ("KDScriptDemo", "Script", KDScriptDemo),
 )
-
-
-
-// KDScriptDemo
-
-KDScriptDemo::KDScriptDemo (const String& _name, const Object& _host)
-	: Script (_name, _host)
-{
-	listen_message ("Sim", &KDScriptDemo::on_sim);
-}
-
-Message::Result
-KDScriptDemo::on_sim (SimMessage& message)
-{
-	if (message.event == SimMessage::START)
-	{
-		for (auto& enable : ScriptParamsLink::get_all_by_data
-				(host (), "Enable"))
-			enable.get_dest ().remove_metaprop (Object ("FrobInert"));
-		host ().destroy ();
-	}
-	return Message::HALT;
-}
 
