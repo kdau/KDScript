@@ -23,7 +23,7 @@
 
 #include "KDHUDElement.hh"
 
-class KDToolSight : public KDHUDElement
+class KDToolSight : public Script, public KDHUDElement
 {
 public:
 	KDToolSight (const String& name, const Object& host);

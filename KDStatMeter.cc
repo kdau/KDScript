@@ -45,7 +45,8 @@ KDStatMeter::PRIORITY = 0;
 
 
 KDStatMeter::KDStatMeter (const String& _name, const Object& _host)
-	: KDHUDElement (_name, _host, PRIORITY),
+	: Script (_name, _host),
+	  KDHUDElement (PRIORITY),
 
 	  THIEF_PERSISTENT (enabled),
 	  THIEF_PARAMETER_FULL (style, "stat_meter_style", Style::PROGRESS),
@@ -95,6 +96,7 @@ KDStatMeter::KDStatMeter (const String& _name, const Object& _host)
 void
 KDStatMeter::initialize ()
 {
+	Script::initialize ();
 	KDHUDElement::initialize ();
 
 	if (!enabled.exists ())
@@ -108,8 +110,9 @@ KDStatMeter::initialize ()
 void
 KDStatMeter::deinitialize ()
 {
-	KDHUDElement::deinitialize ();
 	ObjectProperty::unsubscribe ("DesignNote", host ());
+	KDHUDElement::deinitialize ();
+	Script::deinitialize ();
 }
 
 

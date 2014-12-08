@@ -48,22 +48,19 @@ THIEF_ENUM_CODING (KDHUDElement::Symbol, CODE, CODE,
 
 
 
-KDHUDElement::KDHUDElement (const String& _name, const Object& _host,
-		ZIndex _priority)
-	: Script (_name, _host), priority (_priority)
+KDHUDElement::KDHUDElement (ZIndex _priority)
+	: priority (_priority)
 {}
 
 void
 KDHUDElement::initialize ()
 {
-	Script::initialize ();
 	HUDElement::initialize (priority);
 }
 
 void
 KDHUDElement::deinitialize ()
 {
-	Script::deinitialize ();
 	HUDElement::deinitialize ();
 }
 

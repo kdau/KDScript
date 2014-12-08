@@ -27,7 +27,8 @@ const CanvasSize
 KDToolSight::SYMBOL_SIZE = { 24, 24 };
 
 KDToolSight::KDToolSight (const String& _name, const Object& _host)
-	: KDHUDElement (_name, _host, PRIORITY),
+	: Script (_name, _host),
+	  KDHUDElement (PRIORITY),
 	  selected (false),
 	  THIEF_PARAMETER_FULL (when_remote, "tool_sight_when_remote", false),
 	  THIEF_PARAMETER_FULL (deselect_on_use, "tool_sight_deselect", false),
@@ -48,6 +49,7 @@ KDToolSight::KDToolSight (const String& _name, const Object& _host)
 void
 KDToolSight::initialize ()
 {
+	Script::initialize ();
 	KDHUDElement::initialize ();
 	ObjectProperty::subscribe ("DesignNote", host ());
 }
@@ -55,8 +57,9 @@ KDToolSight::initialize ()
 void
 KDToolSight::deinitialize ()
 {
-	KDHUDElement::deinitialize ();
 	ObjectProperty::unsubscribe ("DesignNote", host ());
+	KDHUDElement::deinitialize ();
+	Script::deinitialize ();
 }
 
 bool

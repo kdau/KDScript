@@ -24,7 +24,7 @@
 #include <Thief/Thief.hh>
 using namespace Thief;
 
-class KDHUDElement : public Script, public HUDElement
+class KDHUDElement : public HUDElement
 {
 public:
 	enum class Position
@@ -59,8 +59,7 @@ public:
 	};
 
 protected:
-	KDHUDElement (const String& name, const Object& host,
-		ZIndex priority);
+	KDHUDElement (ZIndex priority);
 
 	virtual void initialize ();
 	virtual void deinitialize ();

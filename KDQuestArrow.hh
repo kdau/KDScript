@@ -23,7 +23,7 @@
 
 #include "KDHUDElement.hh"
 
-class KDQuestArrow : public KDHUDElement
+class KDQuestArrow : public Script, public KDHUDElement
 {
 public:
 	KDQuestArrow (const String& name, const Object& host);

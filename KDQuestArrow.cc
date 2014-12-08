@@ -34,7 +34,8 @@ KDQuestArrow::PADDING = 8;
 
 
 KDQuestArrow::KDQuestArrow (const String& _name, const Object& _host)
-	: KDHUDElement (_name, _host, PRIORITY),
+	: Script (_name, _host),
+	  KDHUDElement (PRIORITY),
 	  THIEF_PERSISTENT (enabled),
 	  THIEF_PARAMETER_FULL (objective, "quest_arrow_goal"),
 	  THIEF_PARAMETER_FULL (range, "quest_arrow_range", 0.0f),
@@ -62,6 +63,7 @@ KDQuestArrow::KDQuestArrow (const String& _name, const Object& _host)
 void
 KDQuestArrow::initialize ()
 {
+	Script::initialize ();
 	KDHUDElement::initialize ();
 
 	if (!enabled.exists ())
@@ -79,9 +81,10 @@ KDQuestArrow::initialize ()
 void
 KDQuestArrow::deinitialize ()
 {
-	KDHUDElement::deinitialize ();
 	ObjectProperty::unsubscribe ("DesignNote", host ());
 	ObjectProperty::unsubscribe ("GameName", host ());
+	KDHUDElement::deinitialize ();
+	Script::deinitialize ();
 }
 
 

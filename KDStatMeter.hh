@@ -23,7 +23,7 @@
 
 #include "KDHUDElement.hh"
 
-class KDStatMeter : public KDHUDElement
+class KDStatMeter : public Script, public KDHUDElement
 {
 public:
 	KDStatMeter (const String& name, const Object& host);
