@@ -27,6 +27,13 @@ using namespace Thief;
 class KDHUDElement : public Script, public HUDElement
 {
 public:
+	enum class Position
+	{
+		NW,   NORTH,  NE,
+		WEST, CENTER, EAST,
+		SW,   SOUTH,  SE
+	};
+
 	enum class Symbol
 	{
 		NONE,
@@ -58,6 +65,11 @@ protected:
 	virtual void initialize ();
 	virtual void deinitialize ();
 
+	static const int MARGIN;
+
+	CanvasPoint calculate_position (Position type, const CanvasSize& element,
+		const CanvasPoint& offset = CanvasPoint (), int margin = MARGIN);
+
 	static const Color SHADOW_COLOR;
 	static const CanvasPoint SHADOW_OFFSET;
 
@@ -83,15 +95,18 @@ struct ParameterConfig<KDHUDElement::Image> : public ParameterBase::Config
 	ParameterConfig (KDHUDElement::Symbol _default_value
 				= KDHUDElement::Symbol::NONE,
 			bool _animated = false, bool _directional = false,
-			bool _inheritable = true)
+			bool _symbolic = true, bool _inheritable = true)
 		: ParameterBase::Config (_inheritable),
 		  default_value (_default_value),
-		  animated (_animated), directional (_directional)
+		  animated (_animated),
+		  directional (_directional),
+		  symbolic (_symbolic)
 	{}
 
 	KDHUDElement::Symbol default_value;
 	bool animated;
 	bool directional;
+	bool symbolic;
 };
 
 template<> bool Parameter<KDHUDElement::Image>::decode (const String& raw) const;

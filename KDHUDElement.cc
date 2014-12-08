@@ -20,7 +20,21 @@
 
 #include "KDHUDElement.hh"
 
+
+
 namespace Thief {
+
+THIEF_ENUM_CODING (KDHUDElement::Position, CODE, CODE,
+	THIEF_ENUM_VALUE (NW, "nw"),
+	THIEF_ENUM_VALUE (NORTH, "north", "n"),
+	THIEF_ENUM_VALUE (NE, "ne"),
+	THIEF_ENUM_VALUE (WEST, "west", "w"),
+	THIEF_ENUM_VALUE (CENTER, "center", "c"),
+	THIEF_ENUM_VALUE (EAST, "east", "e"),
+	THIEF_ENUM_VALUE (SW, "sw"),
+	THIEF_ENUM_VALUE (SOUTH, "south", "s"),
+	THIEF_ENUM_VALUE (SE, "se"),
+)
 
 THIEF_ENUM_CODING (KDHUDElement::Symbol, CODE, CODE,
 	THIEF_ENUM_VALUE (NONE, "@none"),
@@ -51,6 +65,48 @@ KDHUDElement::deinitialize ()
 {
 	Script::deinitialize ();
 	HUDElement::deinitialize ();
+}
+
+
+const int
+KDHUDElement::MARGIN = 16;
+
+CanvasPoint
+KDHUDElement::calculate_position (Position type, const CanvasSize& element,
+	const CanvasPoint& offset, int margin)
+{
+	CanvasSize canvas = Engine::get_canvas_size ();
+	CanvasPoint result;
+
+	// Calculate the X coordinate.
+	switch (type)
+	{
+	case Position::NW: case Position::WEST: case Position::SW: default:
+		result.x = margin;
+		break;
+	case Position::NORTH: case Position::CENTER: case Position::SOUTH:
+		result.x = (canvas.w - element.w) / 2;
+		break;
+	case Position::NE: case Position::EAST: case Position::SE:
+		result.x = canvas.w - margin - element.w;
+		break;
+	}
+
+	// Calculate the Y coordinate.
+	switch (type)
+	{
+	case Position::NW: case Position::NORTH: case Position::NE: default:
+		result.y = margin;
+		break;
+	case Position::WEST: case Position::CENTER: case Position::EAST:
+		result.y = (canvas.h - element.h) / 2;
+		break;
+	case Position::SW: case Position::SOUTH: case Position::SE:
+		result.y = canvas.h - margin - element.h;
+		break;
+	}
+
+	return result + offset;
 }
 
 
@@ -174,6 +230,10 @@ Parameter<KDHUDElement::Image>::decode (const String& raw) const
 
 	else if (raw.front () == '@') // Interpret as a symbol name.
 	{
+		if (!config.symbolic)
+			throw std::runtime_error ("A non-symbolic HUD element "
+				"cannot have a symbolic image.");
+
 		value.symbol = KDHUDElement::Symbol
 			(EnumCoding::get<KDHUDElement::Symbol> ().decode (raw));
 		value.bitmap = nullptr;

@@ -62,19 +62,10 @@ bool
 KDToolSight::prepare ()
 {
 	if (!selected) return false;
-
-	// Get canvas, image, and text sizes and calculate the element size.
-	CanvasSize canvas = Engine::get_canvas_size (),
-		elem_size = image->bitmap
-			? image->bitmap->get_size () : SYMBOL_SIZE;
-
-	// Calculate the center of the canvas and the position of the element.
-	CanvasPoint canvas_center (canvas.w / 2, canvas.h / 2),
-		elem_pos (canvas_center.x - elem_size.w / 2 + offset_x,
-			canvas_center.y - elem_size.h / 2 + offset_y);
-
-	set_position (elem_pos);
-	set_size (elem_size);
+	auto size = image->bitmap ? image->bitmap->get_size () : SYMBOL_SIZE;
+	set_position (calculate_position (Position::CENTER, size,
+		CanvasPoint (offset_x, offset_y)));
+	set_size (size);
 	return true;
 }
 

@@ -30,18 +30,6 @@ THIEF_ENUM_CODING (KDStatMeter::Style, CODE, CODE,
 	THIEF_ENUM_VALUE (GEM, "gem"),
 )
 
-THIEF_ENUM_CODING (KDStatMeter::Position, CODE, CODE,
-	THIEF_ENUM_VALUE (NW, "nw"),
-	THIEF_ENUM_VALUE (NORTH, "north", "n"),
-	THIEF_ENUM_VALUE (NE, "ne"),
-	THIEF_ENUM_VALUE (WEST, "west", "w"),
-	THIEF_ENUM_VALUE (CENTER, "center", "c"),
-	THIEF_ENUM_VALUE (EAST, "east", "e"),
-	THIEF_ENUM_VALUE (SW, "sw"),
-	THIEF_ENUM_VALUE (SOUTH, "south", "s"),
-	THIEF_ENUM_VALUE (SE, "se"),
-)
-
 THIEF_ENUM_CODING (KDStatMeter::Orient, CODE, CODE,
 	THIEF_ENUM_VALUE (HORIZ, "horiz"),
 	THIEF_ENUM_VALUE (VERT, "vert"),
@@ -54,9 +42,6 @@ THIEF_ENUM_CODING (KDStatMeter::Orient, CODE, CODE,
 const HUDElement::ZIndex
 KDStatMeter::PRIORITY = 0;
 
-const int
-KDStatMeter::MARGIN = 16;
-
 
 
 KDStatMeter::KDStatMeter (const String& _name, const Object& _host)
@@ -64,7 +49,8 @@ KDStatMeter::KDStatMeter (const String& _name, const Object& _host)
 
 	  THIEF_PERSISTENT (enabled),
 	  THIEF_PARAMETER_FULL (style, "stat_meter_style", Style::PROGRESS),
-	  THIEF_PARAMETER_FULL (image, "stat_meter_image", Symbol::NONE, true, false),
+	  THIEF_PARAMETER_FULL (image, "stat_meter_image",
+		Symbol::NONE, true, false),
 	  THIEF_PARAMETER_FULL (spacing, "stat_meter_spacing", 8),
 	  THIEF_PARAMETER_FULL (_text, "stat_meter_text"),
 
@@ -182,13 +168,10 @@ KDStatMeter::prepare ()
 	else
 		value_tier = Tier::MEDIUM;
 
-	// Get the sizes of the canvas and the text.
-	CanvasSize canvas = Engine::get_canvas_size (),
-		text_size = get_text_size (text);
-
-	// Calculate the size of the meter.
+	// Calculate the sizes of the meter and text.
 	CanvasSize request_size = get_request_size (),
-		meter_size = request_size;
+		meter_size = request_size,
+		text_size = get_text_size (text);
 	if (style == Style::UNITS)
 	{
 		if (orient == Orient::HORIZ)
@@ -220,20 +203,18 @@ KDStatMeter::prepare ()
 	}
 
 	// Calculate the element position and relative positions of meter/text.
-	CanvasPoint elem_pos;
+	CanvasPoint elem_pos = calculate_position (position, elem_size,
+		CanvasPoint (offset_x, offset_y));
 	switch (position)
 	{
 	case Position::NW: case Position::WEST: case Position::SW: default:
-		elem_pos.x = MARGIN;
 		meter_pos.x = text_pos.x = 0;
 		break;
 	case Position::NORTH: case Position::CENTER: case Position::SOUTH:
-		elem_pos.x = (canvas.w - elem_size.w) / 2;
 		meter_pos.x = std::max (0, (text_size.w - meter_size.w) / 2);
 		text_pos.x = std::max (0, (meter_size.w - text_size.w) / 2);
 		break;
 	case Position::NE: case Position::EAST: case Position::SE:
-		elem_pos.x = canvas.w - MARGIN - elem_size.w;
 		meter_pos.x = std::max (0, text_size.w - meter_size.w);
 		text_pos.x = std::max (0, meter_size.w - text_size.w);
 		break;
@@ -241,24 +222,22 @@ KDStatMeter::prepare ()
 	switch (position)
 	{
 	case Position::NW: case Position::NORTH: case Position::NE: default:
-		elem_pos.y = MARGIN;
 		meter_pos.y = 0;
 		text_pos.y = meter_size.h + spacing; // text below
 		break;
 	case Position::WEST: case Position::CENTER: case Position::EAST:
-		elem_pos.y = (canvas.h - elem_size.h) / 2;
 		meter_pos.y = 0;
 		text_pos.y = meter_size.h + spacing; // text below
 		break;
 	case Position::SW: case Position::SOUTH: case Position::SE:
-		elem_pos.y = canvas.h - MARGIN - elem_size.h;
 		meter_pos.y = show_text ? (text_size.h + spacing) : 0;
 		text_pos.y = 0; // text above
 		break;
 	}
 
-	set_position (elem_pos + CanvasPoint (offset_x, offset_y));
+	set_position (elem_pos);
 	set_size (elem_size);
+
 	// If this script ever becomes an overlay, it won't be able to redraw
 	// every frame. It would need to subscribe to the qvar/property.
 	schedule_redraw ();

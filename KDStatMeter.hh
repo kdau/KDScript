@@ -30,12 +30,6 @@ public:
 
 	enum class Style { PROGRESS, UNITS, GEM };
 
-	enum class Position
-	{
-		NW,   NORTH,  NE,
-		WEST, CENTER, EAST,
-		SW,   SOUTH,  SE
-	};
 
 	enum class Orient { HORIZ, VERT };
 
@@ -58,7 +52,6 @@ private:
 	void update_range ();
 
 	static const ZIndex PRIORITY;
-	static const int MARGIN;
 
 	Persistent<bool> enabled;
 
