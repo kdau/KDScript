@@ -29,6 +29,7 @@ KDToolSight::SYMBOL_SIZE = { 24, 24 };
 KDToolSight::KDToolSight (const String& _name, const Object& _host)
 	: KDHUDElement (_name, _host, PRIORITY),
 	  selected (false),
+	  THIEF_PARAMETER_FULL (when_remote, "tool_sight_when_remote", false),
 	  THIEF_PARAMETER_FULL (deselect_on_use, "tool_sight_deselect", false),
 	  THIEF_PARAMETER_FULL (image, "tool_sight_image",
 	  	Symbol::CROSSHAIRS, false, false),
@@ -62,6 +63,8 @@ bool
 KDToolSight::prepare ()
 {
 	if (!selected) return false;
+	try { if (!when_remote && Camera::is_remote ()) return false; }
+	catch (...) {} // probably because of pre-1.22 NewDark; proceed anyway
 	auto size = image->bitmap ? image->bitmap->get_size () : SYMBOL_SIZE;
 	set_position (calculate_position (Position::CENTER, size,
 		CanvasPoint (offset_x, offset_y)));

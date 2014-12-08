@@ -46,6 +46,7 @@ private:
 	static const CanvasSize SYMBOL_SIZE;
 
 	bool selected; // not persistent because selection isn't
+	Parameter<bool> when_remote;
 	Parameter<bool> deselect_on_use;
 
 	Parameter<Image> image;
