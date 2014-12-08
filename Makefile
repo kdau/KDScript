@@ -43,6 +43,7 @@ SCRIPT_HEADERS = \
 	KDTrapEnvMap.hh \
 	KDTrapFog.hh \
 	KDTrapNextMission.hh \
+	KDTrapShowImage.hh \
 	KDTrapWeather.hh \
 	KDScriptDemo.hh
 
@@ -54,4 +55,6 @@ $(bindir1)/KDStatMeter.o: KDHUDElement.hh
 $(bindir2)/KDStatMeter.o: KDHUDElement.hh
 $(bindir1)/KDToolSight.o: KDHUDElement.hh
 $(bindir2)/KDToolSight.o: KDHUDElement.hh
+$(bindir1)/KDTrapShowImage.o: KDHUDElement.hh
+$(bindir2)/KDTrapShowImage.o: KDHUDElement.hh
 

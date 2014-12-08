@@ -39,6 +39,7 @@
 #include "KDTrapEnvMap.hh"
 #include "KDTrapFog.hh"
 #include "KDTrapNextMission.hh"
+#include "KDTrapShowImage.hh"
 #include "KDTrapWeather.hh"
 #include "KDScriptDemo.hh"
 
@@ -61,6 +62,7 @@ THIEF_MODULE (MODULE_NAME,
 	THIEF_SCRIPT ("KDTrapEnvMap", "TrapTrigger", KDTrapEnvMap),
 	THIEF_SCRIPT ("KDTrapFog", "TrapTrigger", KDTrapFog),
 	THIEF_SCRIPT ("KDTrapNextMission", "TrapTrigger", KDTrapNextMission),
+	THIEF_SCRIPT ("KDTrapShowImage", "TrapTrigger", KDTrapShowImage),
 	THIEF_SCRIPT ("KDTrapWeather", "TrapTrigger", KDTrapWeather),
 	THIEF_SCRIPT ("KDScriptDemo", "Script", KDScriptDemo),
 )
